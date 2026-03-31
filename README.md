@@ -30,11 +30,11 @@ AG Grid-powered web editor for tower capability architecture data. Part of the I
 | Flows | 47 (5 groups) | Integration flow data — base, data arch, tech arch, interface, endpoint |
 | Business Drivers | 5 | Strategic drivers and priorities |
 | Success Criteria | 5 | Metrics, targets, baselines |
-| Business Architecture | 23 | BPMN-style process steps |
 | NFRs | 5 | Non-functional requirements |
 | Security Controls | 5 | Security concerns and approaches |
-| SAP Dev Status | 6 | Transport requests, build progress |
 | Recommendations | 7 | Architecture recommendations |
+
+> **Note:** SAP Dev Status is auto-generated from SAP OData API, and Business Architecture (BPMN) is fetched from Signavio/BIC API — neither is architect input.
 
 ## Quick Start
 
