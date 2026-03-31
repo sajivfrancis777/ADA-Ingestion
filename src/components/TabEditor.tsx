@@ -4,6 +4,7 @@
  */
 import { useState, useCallback, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
+import { themeQuartz } from 'ag-grid-community';
 import { TAB_DEFINITIONS, defaultColDef } from '../grids/columnDefs';
 import type { WorkbookData } from '../utils/xlsxUtils';
 import type { ColDef, ColGroupDef, RowEditingStoppedEvent } from 'ag-grid-community';
@@ -84,9 +85,10 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
       </div>
 
       {/* AG Grid */}
-      <div className="ag-theme-alpine grid-container">
+      <div className="grid-container">
         <AgGridReact
           ref={gridRef}
+          theme={themeQuartz}
           key={tab.name} // Force remount on tab switch for clean state
           columnDefs={tab.columns as (ColDef | ColGroupDef)[]}
           defaultColDef={defaultColDef}
