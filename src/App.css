@@ -1,0 +1,288 @@
+/* ─── IAO Architecture Input Portal ─── */
+
+:root {
+  --intel-blue: #0071c5;
+  --intel-dark: #00285a;
+  --intel-light: #e8f0fe;
+  --header-bg: #1F4E79;
+  --success-green: #28a745;
+  --danger-red: #dc3545;
+  --warning-amber: #ffc107;
+  --text-primary: #333;
+  --text-secondary: #666;
+  --border-color: #ddd;
+  --bg-page: #f5f7fa;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+/* ─── App Layout ─── */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ─── Header ─── */
+
+.app-header {
+  background: linear-gradient(135deg, var(--intel-dark), var(--header-bg));
+  color: white;
+  padding: 12px 24px;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.app-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.header-subtitle {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+/* ─── Controls bar (tower selector + toolbar) ─── */
+
+.app-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  background: white;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* ─── Tower Selector ─── */
+
+.tower-selector {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.selector-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selector-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.selector-group select {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+  min-width: 200px;
+}
+
+.selector-group select:focus {
+  outline: none;
+  border-color: var(--intel-blue);
+  box-shadow: 0 0 0 2px rgba(0, 113, 197, 0.15);
+}
+
+/* ─── Toolbar ─── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toolbar-left {
+  display: flex;
+  gap: 8px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.file-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding: 4px 12px;
+  background: var(--intel-light);
+  border-radius: 4px;
+}
+
+/* ─── Buttons ─── */
+
+.btn {
+  padding: 6px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: white;
+  transition: all 0.15s ease;
+}
+
+.btn:hover {
+  background: #f0f0f0;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--intel-blue);
+  color: white;
+  border-color: var(--intel-blue);
+}
+
+.btn-primary:hover {
+  background: #005ea2;
+}
+
+.btn-success {
+  background: var(--success-green);
+  color: white;
+  border-color: var(--success-green);
+}
+
+.btn-success:hover {
+  background: #218838;
+}
+
+.btn-add {
+  color: var(--success-green);
+  border-color: var(--success-green);
+}
+
+.btn-add:hover {
+  background: #e6f7e9;
+}
+
+.btn-delete {
+  color: var(--danger-red);
+  border-color: var(--danger-red);
+}
+
+.btn-delete:hover {
+  background: #fde8ea;
+}
+
+/* ─── Dirty banner ─── */
+
+.dirty-banner {
+  background: var(--warning-amber);
+  color: #333;
+  padding: 6px 24px;
+  font-size: 13px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* ─── Tab Editor ─── */
+
+.tab-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Tab ribbon */
+.tab-ribbon {
+  display: flex;
+  background: white;
+  border-bottom: 2px solid var(--border-color);
+  padding: 0 24px;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab-btn:hover {
+  color: var(--intel-blue);
+  background: var(--intel-light);
+}
+
+.tab-btn.active {
+  color: var(--intel-blue);
+  border-bottom-color: var(--intel-blue);
+  font-weight: 600;
+}
+
+.tab-count {
+  font-size: 11px;
+  background: var(--intel-blue);
+  color: white;
+  border-radius: 10px;
+  padding: 1px 7px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Row toolbar */
+.row-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 24px;
+  background: #fafbfc;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.row-info {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+/* Grid container */
+.grid-container {
+  flex: 1;
+  overflow: hidden;
+}
