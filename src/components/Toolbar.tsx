@@ -1,17 +1,19 @@
 /**
- * Toolbar — Load XLSX, Download XLSX, and file info display.
+ * Toolbar — Load XLSX, Download XLSX, and file context display.
  */
 import { useRef } from 'react';
 
 interface ToolbarProps {
   tower: string;
   cap: string;
+  release: string;
+  state: string;
   hasData: boolean;
   onLoadFile: (data: ArrayBuffer) => void;
   onDownload: () => void;
 }
 
-export default function Toolbar({ tower, cap, hasData, onLoadFile, onDownload }: ToolbarProps) {
+export default function Toolbar({ tower, cap, release, state, hasData, onLoadFile, onDownload }: ToolbarProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,9 +26,11 @@ export default function Toolbar({ tower, cap, hasData, onLoadFile, onDownload }:
       }
     };
     reader.readAsArrayBuffer(file);
-    // Reset so the same file can be re-loaded
     e.target.value = '';
   };
+
+  const prefix = release === 'All' ? '' : `${release}_`;
+  const filename = `${prefix}${state}Flows.xlsx`;
 
   return (
     <div className="toolbar">
@@ -51,6 +55,7 @@ export default function Toolbar({ tower, cap, hasData, onLoadFile, onDownload }:
       </div>
       <div className="toolbar-right">
         <span className="file-info">{tower} / {cap}</span>
+        <span className="file-badge">{filename}</span>
       </div>
     </div>
   );
