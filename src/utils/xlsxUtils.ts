@@ -44,7 +44,19 @@ export function loadWorkbook(data: ArrayBuffer): WorkbookData {
         const firstVal = String(row[fields[0]] ?? '');
         return !firstVal.startsWith('e.g.');
       });
-      result[tab.name] = filtered;
+      // Coerce numeric-looking strings to actual numbers (fixes "Invalid Number" in AG Grid)
+      const coerced = filtered.map(row => {
+        const out: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(row)) {
+          if (typeof v === 'string' && v !== '' && !isNaN(Number(v))) {
+            out[k] = Number(v);
+          } else {
+            out[k] = v;
+          }
+        }
+        return out;
+      });
+      result[tab.name] = coerced;
     } else {
       result[tab.name] = [];
     }

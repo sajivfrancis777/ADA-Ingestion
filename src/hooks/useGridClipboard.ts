@@ -4,12 +4,15 @@
  * AG Grid Community does NOT include ClipboardModule (Enterprise only).
  * This hook adds Excel-like keyboard shortcuts:
  *   Ctrl+C  — copy selected cells / rows as TSV
- *   Ctrl+V  — paste TSV from system clipboard into grid starting at focused cell
+ *   Ctrl+V  — paste TSV from system clipboard (via native paste event)
  *   Ctrl+X  — cut (copy + clear)
  *   Delete  — clear selected cells
  *   Ctrl+A  — select all rows
+ *
+ * Paste uses the native 'paste' event (works on HTTP and HTTPS) rather than
+ * navigator.clipboard.readText() which requires Clipboard API permissions.
  */
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import type { GridApi, ColDef, ColGroupDef } from 'ag-grid-community';
 
 /** Extract flat field names from columns (handles grouped columns). */
@@ -32,7 +35,7 @@ function rowsToTsv(rows: Record<string, unknown>[], fields: string[]): string {
   return [header, ...dataLines].join('\n');
 }
 
-/** Parse TSV text into row objects mapped to field names. */
+/** Parse TSV/CSV text into row objects mapped to field names. */
 function tsvToRows(tsv: string, fields: string[]): Record<string, unknown>[] {
   const lines = tsv.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.length > 0);
   if (lines.length === 0) return [];
@@ -68,46 +71,27 @@ interface UseGridClipboardOptions {
 
 export function useGridClipboard({ api, containerRef, columns, onDataChanged }: UseGridClipboardOptions) {
   const fields = getFields(columns);
+  const pendingPaste = useRef(false);
 
-  const handleCopy = useCallback(async (cut: boolean) => {
-    if (!api) return;
-    const selected = api.getSelectedRows();
-    if (selected.length === 0) return;
-    const tsv = rowsToTsv(selected, fields);
-    try { await navigator.clipboard.writeText(tsv); } catch { /* fallback: ignore */ }
-    if (cut) {
-      // Clear the cells of selected rows (keep rows, blank out values)
-      selected.forEach(row => { fields.forEach(f => { row[f] = ''; }); });
-      api.applyTransaction({ update: selected });
-      onDataChanged();
-    }
-  }, [api, fields, onDataChanged]);
-
-  const handlePaste = useCallback(async () => {
-    if (!api) return;
-    let tsv: string;
-    try { tsv = await navigator.clipboard.readText(); } catch { return; }
-    if (!tsv.trim()) return;
-
+  const doPaste = useCallback((tsv: string) => {
+    if (!api || !tsv.trim()) return;
     const newRows = tsvToRows(tsv, fields);
     if (newRows.length === 0) return;
 
-    // Strategy: if rows are selected, replace them with pasted data.
-    // Otherwise append pasted rows at the end.
+    // Strategy: if rows are selected, overwrite starting from first selected row.
+    // Otherwise fill into existing empty rows or append.
     const selected = api.getSelectedRows();
-    if (selected.length > 0) {
-      // Overwrite existing rows starting from first selected
-      const allRows: Record<string, unknown>[] = [];
-      api.forEachNode(n => { if (n.data) allRows.push(n.data); });
-      const startIdx = allRows.indexOf(selected[0]);
+    const allRows: Record<string, unknown>[] = [];
+    api.forEachNode(n => { if (n.data) allRows.push(n.data); });
 
+    if (selected.length > 0) {
+      const startIdx = allRows.indexOf(selected[0]);
       const toUpdate: Record<string, unknown>[] = [];
       const toAdd: Record<string, unknown>[] = [];
 
       newRows.forEach((nr, i) => {
         const targetIdx = startIdx + i;
         if (targetIdx < allRows.length) {
-          // Merge pasted data into existing row
           const existing = allRows[targetIdx];
           Object.entries(nr).forEach(([k, v]) => { existing[k] = v; });
           toUpdate.push(existing);
@@ -115,20 +99,42 @@ export function useGridClipboard({ api, containerRef, columns, onDataChanged }: 
           toAdd.push(nr);
         }
       });
-
       api.applyTransaction({ update: toUpdate, add: toAdd });
     } else {
-      // Append as new rows
-      api.applyTransaction({ add: newRows });
+      // Fill into empty rows first, then add overflow
+      const toUpdate: Record<string, unknown>[] = [];
+      const toAdd: Record<string, unknown>[] = [];
+      newRows.forEach((nr, i) => {
+        if (i < allRows.length) {
+          const existing = allRows[i];
+          Object.entries(nr).forEach(([k, v]) => { existing[k] = v; });
+          toUpdate.push(existing);
+        } else {
+          toAdd.push(nr);
+        }
+      });
+      api.applyTransaction({ update: toUpdate, add: toAdd });
     }
     onDataChanged();
+  }, [api, fields, onDataChanged]);
+
+  const handleCopy = useCallback(async (cut: boolean) => {
+    if (!api) return;
+    const selected = api.getSelectedRows();
+    if (selected.length === 0) return;
+    const tsv = rowsToTsv(selected, fields);
+    try { await navigator.clipboard.writeText(tsv); } catch { /* ignore */ }
+    if (cut) {
+      selected.forEach(row => { fields.forEach(f => { row[f] = ''; }); });
+      api.applyTransaction({ update: selected });
+      onDataChanged();
+    }
   }, [api, fields, onDataChanged]);
 
   const handleDelete = useCallback(() => {
     if (!api) return;
     const selected = api.getSelectedRows();
     if (selected.length === 0) return;
-    // Clear cell values (not delete rows — more predictable for architects)
     selected.forEach(row => { fields.forEach(f => { row[f] = ''; }); });
     api.applyTransaction({ update: selected });
     onDataChanged();
@@ -157,13 +163,13 @@ export function useGridClipboard({ api, containerRef, columns, onDataChanged }: 
         e.preventDefault();
         void handleCopy(true);
       } else if (ctrl && e.key === 'v') {
-        e.preventDefault();
-        void handlePaste();
+        // Set flag — the actual data comes from the 'paste' event
+        pendingPaste.current = true;
+        // Do NOT preventDefault — let the native paste event fire
       } else if (ctrl && e.key === 'a') {
         e.preventDefault();
         handleSelectAll();
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
-        // Only if not in an editor
         if (!active?.closest('.ag-cell-edit-wrapper')) {
           e.preventDefault();
           handleDelete();
@@ -171,7 +177,25 @@ export function useGridClipboard({ api, containerRef, columns, onDataChanged }: 
       }
     };
 
+    // Native paste event — this is the reliable way to get clipboard data
+    // Works on both HTTP and HTTPS without Clipboard API permissions
+    const onPaste = (e: ClipboardEvent) => {
+      const active = document.activeElement;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) return;
+
+      const text = e.clipboardData?.getData('text/plain');
+      if (text) {
+        e.preventDefault();
+        doPaste(text);
+      }
+      pendingPaste.current = false;
+    };
+
     el.addEventListener('keydown', onKeyDown);
-    return () => el.removeEventListener('keydown', onKeyDown);
-  }, [containerRef, handleCopy, handlePaste, handleDelete, handleSelectAll]);
+    el.addEventListener('paste', onPaste);
+    return () => {
+      el.removeEventListener('keydown', onKeyDown);
+      el.removeEventListener('paste', onPaste);
+    };
+  }, [containerRef, handleCopy, handleDelete, handleSelectAll, doPaste]);
 }
