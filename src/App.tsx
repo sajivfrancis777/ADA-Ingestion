@@ -2,7 +2,9 @@
  * IAO Architecture Input Portal — Main Application
  *
  * Provides tower/capability/release/state selectors, 6-tab AG Grid editor,
- * and XLSX load/download via SheetJS. Pre-loads DS-020 sample data.
+ * and XLSX load/download via SheetJS.
+ * Pre-loads DS-020 template data for ALL capabilities as a gold standard
+ * that architects can overwrite with their own data.
  */
 import { useState, useCallback } from 'react';
 import TowerSelector from './components/TowerSelector';
@@ -14,8 +16,8 @@ import type { WorkbookData } from './utils/xlsxUtils';
 import type { Release, FlowState } from './components/TowerSelector';
 import ds020Sample from './data/ds020_sample.json';
 
-/** Load sample data for DS-020 (only our 6 input tabs) */
-function getSampleData(): WorkbookData {
+/** Load DS-020 template data as starting point for any capability. */
+function getTemplateData(): WorkbookData {
   const blank = createBlankWorkbook();
   const sample = ds020Sample as Record<string, Record<string, unknown>[]>;
   for (const key of Object.keys(blank)) {
@@ -32,8 +34,8 @@ export default function App() {
   const [cap, setCap] = useState(firstCap);
   const [release, setRelease] = useState<Release>('All');
   const [state, setState] = useState<FlowState>('Current');
-  // Pre-load DS-020 sample data for FPR / DS-020
-  const [data, setData] = useState<WorkbookData>(getSampleData);
+  // Pre-load DS-020 template data for all capabilities
+  const [data, setData] = useState<WorkbookData>(getTemplateData);
   const [dirty, setDirty] = useState(false);
 
   const handleTowerChange = useCallback((newTower: string) => {
@@ -43,12 +45,7 @@ export default function App() {
     setTower(newTower);
     const newCaps = CAPABILITIES[newTower] ?? [];
     if (newCaps.length > 0) setCap(newCaps[0].id);
-    // Load sample for FPR/DS-020, blank for others
-    if (newTower === 'FPR') {
-      setData(getSampleData());
-    } else {
-      setData(createBlankWorkbook());
-    }
+    setData(getTemplateData());
     setDirty(false);
   }, [dirty]);
 
@@ -57,14 +54,9 @@ export default function App() {
       return;
     }
     setCap(newCap);
-    // Load sample for DS-020, blank for others
-    if (tower === 'FPR' && newCap === 'DS-020') {
-      setData(getSampleData());
-    } else {
-      setData(createBlankWorkbook());
-    }
+    setData(getTemplateData());
     setDirty(false);
-  }, [dirty, tower]);
+  }, [dirty]);
 
   const handleLoadFile = useCallback((buffer: ArrayBuffer) => {
     const wb = loadWorkbook(buffer);
