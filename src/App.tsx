@@ -10,6 +10,7 @@ import { useState, useCallback } from 'react';
 import TowerSelector from './components/TowerSelector';
 import Toolbar from './components/Toolbar';
 import TabEditor from './components/TabEditor';
+import FileTree from './components/FileTree';
 import { TOWERS, CAPABILITIES } from './data/towerRegistry';
 import { loadWorkbook, downloadWorkbook, createBlankWorkbook } from './utils/xlsxUtils';
 import type { WorkbookData } from './utils/xlsxUtils';
@@ -37,6 +38,7 @@ export default function App() {
   // Pre-load DS-020 template data for all capabilities
   const [data, setData] = useState<WorkbookData>(getTemplateData);
   const [dirty, setDirty] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleTowerChange = useCallback((newTower: string) => {
     if (dirty && !window.confirm('You have unsaved changes. Switch tower? Changes will be lost.')) {
@@ -86,39 +88,51 @@ export default function App() {
         <span className="header-subtitle">IDM 2.0 Capability Data Editor</span>
       </header>
 
-      {/* Tower / Capability / Release / State selectors + file toolbar */}
-      <div className="app-controls">
-        <TowerSelector
+      {/* Sidebar + Main content */}
+      <div className="app-body">
+        <FileTree
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(c => !c)}
           selectedTower={tower}
           selectedCap={cap}
-          selectedRelease={release}
-          selectedState={state}
-          onTowerChange={handleTowerChange}
-          onCapChange={handleCapChange}
-          onReleaseChange={setRelease}
-          onStateChange={setState}
+          onSelectCap={handleCapChange}
         />
-        <Toolbar
-          tower={tower}
-          cap={cap}
-          release={release}
-          state={state}
-          hasData={hasData}
-          onLoadFile={handleLoadFile}
-          onDownload={handleDownload}
-        />
-      </div>
+        <div className="app-main">
+          {/* Tower / Capability / Release / State selectors + file toolbar */}
+          <div className="app-controls">
+            <TowerSelector
+              selectedTower={tower}
+              selectedCap={cap}
+              selectedRelease={release}
+              selectedState={state}
+              onTowerChange={handleTowerChange}
+              onCapChange={handleCapChange}
+              onReleaseChange={setRelease}
+              onStateChange={setState}
+            />
+            <Toolbar
+              tower={tower}
+              cap={cap}
+              release={release}
+              state={state}
+              hasData={hasData}
+              onLoadFile={handleLoadFile}
+              onDownload={handleDownload}
+            />
+          </div>
 
-      {/* Dirty indicator */}
-      {dirty && (
-        <div className="dirty-banner">
-          Unsaved changes — click <strong>Download XLSX</strong> to save
+          {/* Dirty indicator */}
+          {dirty && (
+            <div className="dirty-banner">
+              Unsaved changes — click <strong>Download XLSX</strong> to save
+            </div>
+          )}
+
+          {/* Embedded sheet editor */}
+          <div className="sheet-frame">
+            <TabEditor data={data} onChange={handleTabChange} />
+          </div>
         </div>
-      )}
-
-      {/* Embedded sheet editor */}
-      <div className="sheet-frame">
-        <TabEditor data={data} onChange={handleTabChange} />
       </div>
     </div>
   );
