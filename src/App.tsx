@@ -12,22 +12,34 @@ import Toolbar from './components/Toolbar';
 import TabEditor from './components/TabEditor';
 import FileTree from './components/FileTree';
 import { TOWERS, CAPABILITIES } from './data/towerRegistry';
+import { generateSampleData } from './data/sampleDataGenerator';
 import { loadWorkbook, downloadWorkbook, createBlankWorkbook } from './utils/xlsxUtils';
 import { resolveFilePath, fetchFileContent, parseFileInfo } from './utils/githubFetch';
+import { saveToLocal, loadFromLocal, getLastSaved } from './utils/localSave';
 import type { WorkbookData } from './utils/xlsxUtils';
 import type { Release, FlowState } from './components/TowerSelector';
 import ds020Sample from './data/ds020_sample.json';
 
-/** Load DS-020 template data as starting point for any capability. */
-function getTemplateData(): WorkbookData {
-  const blank = createBlankWorkbook();
-  const sample = ds020Sample as Record<string, Record<string, unknown>[]>;
-  for (const key of Object.keys(blank)) {
-    if (sample[key] && sample[key].length > 0) {
-      blank[key] = sample[key];
+/**
+ * Load template data for a tower/capability.
+ * DS-020 uses the curated JSON sample; all others use generated data.
+ */
+function getTemplateData(towerId?: string, capId?: string): WorkbookData {
+  // DS-020 has rich hand-curated data — use it
+  if (capId === 'DS-020' || !towerId || !capId) {
+    const blank = createBlankWorkbook();
+    const sample = ds020Sample as Record<string, Record<string, unknown>[]>;
+    for (const key of Object.keys(blank)) {
+      if (sample[key] && sample[key].length > 0) {
+        blank[key] = sample[key];
+      }
     }
+    return blank;
   }
-  return blank;
+  // All other capabilities — generate contextual sample data
+  const capInfo = CAPABILITIES[towerId]?.find(c => c.id === capId);
+  const capName = capInfo?.name?.replace(/^[A-Z0-9-]+ /, '') ?? capId;
+  return generateSampleData(towerId, capId, capName);
 }
 
 export default function App() {
@@ -36,13 +48,19 @@ export default function App() {
   const [cap, setCap] = useState(firstCap);
   const [release, setRelease] = useState<Release>('All');
   const [state, setState] = useState<FlowState>('Current');
-  // Pre-load DS-020 template data for all capabilities
-  const [data, setData] = useState<WorkbookData>(getTemplateData);
+  // Load from localStorage if available, otherwise template
+  const [data, setData] = useState<WorkbookData>(() =>
+    loadFromLocal(TOWERS[0].id, firstCap, 'All', 'Current') ?? getTemplateData(TOWERS[0].id, firstCap)
+  );
   const [dirty, setDirty] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [loadingFile, setLoadingFile] = useState<string | undefined>();
   const [loadedFile, setLoadedFile] = useState<string | undefined>();
   const [fetchError, setFetchError] = useState<string | undefined>();
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [lastSaved, setLastSaved] = useState<string | null>(
+    () => getLastSaved(TOWERS[0].id, firstCap, 'All', 'Current')
+  );
 
   const handleTowerChange = useCallback((newTower: string) => {
     if (dirty && !window.confirm('You have unsaved changes. Switch tower? Changes will be lost.')) {
@@ -50,19 +68,26 @@ export default function App() {
     }
     setTower(newTower);
     const newCaps = CAPABILITIES[newTower] ?? [];
-    if (newCaps.length > 0) setCap(newCaps[0].id);
-    setData(getTemplateData());
+    const newCap = newCaps.length > 0 ? newCaps[0].id : '';
+    if (newCaps.length > 0) setCap(newCap);
+    setData(loadFromLocal(newTower, newCap, release, state) ?? getTemplateData(newTower, newCap));
     setDirty(false);
-  }, [dirty]);
+    setSaveStatus('idle');
+    setLastSaved(getLastSaved(newTower, newCap, release, state));
+    setLoadedFile(undefined);
+  }, [dirty, release, state]);
 
   const handleCapChange = useCallback((newCap: string) => {
     if (dirty && !window.confirm('You have unsaved changes. Switch capability? Changes will be lost.')) {
       return;
     }
     setCap(newCap);
-    setData(getTemplateData());
+    setData(loadFromLocal(tower, newCap, release, state) ?? getTemplateData(tower, newCap));
     setDirty(false);
-  }, [dirty]);
+    setSaveStatus('idle');
+    setLastSaved(getLastSaved(tower, newCap, release, state));
+    setLoadedFile(undefined);
+  }, [dirty, tower, release, state]);
 
   const handleLoadFile = useCallback((buffer: ArrayBuffer) => {
     const wb = loadWorkbook(buffer);
@@ -80,7 +105,23 @@ export default function App() {
   const handleTabChange = useCallback((tabName: string, rows: Record<string, unknown>[]) => {
     setData(prev => ({ ...prev, [tabName]: rows }));
     setDirty(true);
+    setSaveStatus('idle');
   }, []);
+
+  const handleSave = useCallback(() => {
+    setSaveStatus('saving');
+    const ok = saveToLocal(tower, cap, release, state, data);
+    if (ok) {
+      setSaveStatus('saved');
+      setDirty(false);
+      setLastSaved(new Date().toISOString());
+      // Reset to idle after 3 seconds
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } else {
+      setSaveStatus('idle');
+      alert('Save failed — browser storage may be full.');
+    }
+  }, [tower, cap, release, state, data]);
 
   const handleFileClick = useCallback(async (fileTower: string, capId: string, filename: string) => {
     if (dirty && !window.confirm('You have unsaved changes. Open file from GitHub? Changes will be lost.')) {
@@ -101,10 +142,25 @@ export default function App() {
       setRelease(info.release as Release);
       setState(info.state as FlowState);
 
-      // Resolve the actual repo path and fetch
+      // 1. Check localStorage first
+      const local = loadFromLocal(fileTower, capId, info.release, info.state);
+      if (local) {
+        setData(local);
+        setDirty(false);
+        setLoadedFile(`${filename} (from saved draft)`);
+        setLastSaved(getLastSaved(fileTower, capId, info.release, info.state));
+        setSaveStatus('idle');
+        return;
+      }
+
+      // 2. Try GitHub
       const repoPath = await resolveFilePath(fileTower, capId, filename);
       if (!repoPath) {
-        setFetchError(`${filename} not found in the repo yet. Upload it via the toolbar.`);
+        setData(getTemplateData(fileTower, capId));
+        setDirty(false);
+        setLoadedFile(`${filename} (template — not yet in repo)`);
+        setSaveStatus('idle');
+        setLastSaved(null);
         return;
       }
       const buffer = await fetchFileContent(repoPath);
@@ -113,6 +169,9 @@ export default function App() {
       setDirty(false);
       setLoadedFile(filename);
     } catch (err) {
+      // On error, still fall back to template data so user has something
+      setData(getTemplateData(fileTower, capId));
+      setDirty(false);
       setFetchError(err instanceof Error ? err.message : 'Failed to fetch file');
     } finally {
       setLoadingFile(undefined);
@@ -125,6 +184,7 @@ export default function App() {
     <div className="app">
       {/* Header */}
       <header className="app-header">
+        <img src="favicon.ico" alt="IAO" className="header-logo" />
         <h1>IAO Architecture — Input Portal</h1>
         <span className="header-subtitle">IDM 2.0 Capability Data Editor</span>
       </header>
@@ -159,7 +219,11 @@ export default function App() {
               release={release}
               state={state}
               hasData={hasData}
+              dirty={dirty}
+              saveStatus={saveStatus}
+              lastSaved={lastSaved}
               onLoadFile={handleLoadFile}
+              onSave={handleSave}
               onDownload={handleDownload}
             />
           </div>
@@ -176,15 +240,18 @@ export default function App() {
             </div>
           )}
           {loadedFile && !dirty && !loadingFile && (
-            <div className="loaded-banner">
-              ✅ Loaded <strong>{loadedFile}</strong> from GitHub
+            <div className={`loaded-banner ${loadedFile.includes('template') ? 'loaded-template' : ''}`}>
+              {loadedFile.includes('template')
+                ? <>📋 <strong>{loadedFile}</strong> — edit and Download XLSX when ready</>
+                : <>✅ Loaded <strong>{loadedFile}</strong> from GitHub</>
+              }
             </div>
           )}
 
           {/* Dirty indicator */}
           {dirty && (
             <div className="dirty-banner">
-              Unsaved changes — click <strong>Download XLSX</strong> to save
+              Unsaved changes — click <strong>Save</strong> to persist or <strong>Download XLSX</strong> to export
             </div>
           )}
 

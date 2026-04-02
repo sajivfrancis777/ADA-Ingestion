@@ -9,6 +9,7 @@ import { AgGridReact } from 'ag-grid-react';
 import { themeQuartz, colorSchemeLightCold } from 'ag-grid-community';
 import { TAB_DEFINITIONS, defaultColDef } from '../grids/columnDefs';
 import { useGridClipboard } from '../hooks/useGridClipboard';
+import type { GridClipboardEvent } from '../hooks/useGridClipboard';
 import type { WorkbookData } from '../utils/xlsxUtils';
 import type { ColDef, ColGroupDef, CellValueChangedEvent, GridReadyEvent } from 'ag-grid-community';
 
@@ -38,6 +39,8 @@ interface TabEditorProps {
 
 export default function TabEditor({ data, onChange }: TabEditorProps) {
   const [activeTab, setActiveTab] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>();
   const gridRef = useRef<AgGridReact>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -99,12 +102,28 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
     onChange(tab.name, rows);
   }, [tab.name, onChange]);
 
+  const showToast = useCallback((msg: string) => {
+    clearTimeout(toastTimer.current);
+    setToast(msg);
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  const handleClipboardEvent = useCallback((evt: GridClipboardEvent) => {
+    const labels: Record<string, string> = {
+      'copy': '📋 Copied', 'cut': '✂️ Cut', 'paste': '📥 Pasted',
+      'delete': '🗑️ Cleared', 'select-all': '☑️ Selected',
+    };
+    const label = labels[evt.action] ?? evt.action;
+    showToast(`${label} ${evt.rows} row${evt.rows !== 1 ? 's' : ''} × ${evt.cols} column${evt.cols !== 1 ? 's' : ''}`);
+  }, [showToast]);
+
   // Wire up custom clipboard (Ctrl+C/V/X, Delete, Ctrl+A)
   useGridClipboard({
     api: gridRef.current?.api ?? null,
     containerRef,
     columns: tab.columns as (ColDef | ColGroupDef)[],
     onDataChanged: notifyParent,
+    onClipboardEvent: handleClipboardEvent,
   });
 
   const addRow = useCallback(() => {
@@ -133,6 +152,9 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
 
   return (
     <div className="tab-editor" ref={containerRef} tabIndex={0}>
+      {/* Clipboard toast */}
+      {toast && <div className="clipboard-toast">{toast}</div>}
+
       {/* Tab ribbon */}
       <div className="tab-ribbon">
         {TAB_DEFINITIONS.map((t, i) => (

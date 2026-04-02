@@ -62,14 +62,21 @@ function tsvToRows(tsv: string, fields: string[]): Record<string, unknown>[] {
   });
 }
 
+export interface GridClipboardEvent {
+  action: 'copy' | 'cut' | 'paste' | 'delete' | 'select-all';
+  rows: number;
+  cols: number;
+}
+
 interface UseGridClipboardOptions {
   api: GridApi | null;
   containerRef: React.RefObject<HTMLDivElement | null>;
   columns: (ColDef | ColGroupDef)[];
   onDataChanged: () => void;
+  onClipboardEvent?: (evt: GridClipboardEvent) => void;
 }
 
-export function useGridClipboard({ api, containerRef, columns, onDataChanged }: UseGridClipboardOptions) {
+export function useGridClipboard({ api, containerRef, columns, onDataChanged, onClipboardEvent }: UseGridClipboardOptions) {
   const fields = getFields(columns);
   const pendingPaste = useRef(false);
 
@@ -77,6 +84,9 @@ export function useGridClipboard({ api, containerRef, columns, onDataChanged }: 
     if (!api || !tsv.trim()) return;
     const newRows = tsvToRows(tsv, fields);
     if (newRows.length === 0) return;
+
+    // Count columns with actual data
+    const colCount = new Set(newRows.flatMap(r => Object.keys(r).filter(k => r[k] !== ''))).size;
 
     // Strategy: if rows are selected, overwrite starting from first selected row.
     // Otherwise fill into existing empty rows or append.
@@ -116,7 +126,8 @@ export function useGridClipboard({ api, containerRef, columns, onDataChanged }: 
       api.applyTransaction({ update: toUpdate, add: toAdd });
     }
     onDataChanged();
-  }, [api, fields, onDataChanged]);
+    onClipboardEvent?.({ action: 'paste', rows: newRows.length, cols: colCount });
+  }, [api, fields, onDataChanged, onClipboardEvent]);
 
   const handleCopy = useCallback(async (cut: boolean) => {
     if (!api) return;
@@ -124,12 +135,16 @@ export function useGridClipboard({ api, containerRef, columns, onDataChanged }: 
     if (selected.length === 0) return;
     const tsv = rowsToTsv(selected, fields);
     try { await navigator.clipboard.writeText(tsv); } catch { /* ignore */ }
+    const colCount = fields.length;
     if (cut) {
       selected.forEach(row => { fields.forEach(f => { row[f] = ''; }); });
       api.applyTransaction({ update: selected });
       onDataChanged();
+      onClipboardEvent?.({ action: 'cut', rows: selected.length, cols: colCount });
+    } else {
+      onClipboardEvent?.({ action: 'copy', rows: selected.length, cols: colCount });
     }
-  }, [api, fields, onDataChanged]);
+  }, [api, fields, onDataChanged, onClipboardEvent]);
 
   const handleDelete = useCallback(() => {
     if (!api) return;
@@ -138,12 +153,16 @@ export function useGridClipboard({ api, containerRef, columns, onDataChanged }: 
     selected.forEach(row => { fields.forEach(f => { row[f] = ''; }); });
     api.applyTransaction({ update: selected });
     onDataChanged();
-  }, [api, fields, onDataChanged]);
+    onClipboardEvent?.({ action: 'delete', rows: selected.length, cols: fields.length });
+  }, [api, fields, onDataChanged, onClipboardEvent]);
 
   const handleSelectAll = useCallback(() => {
     if (!api) return;
     api.selectAll();
-  }, [api]);
+    let count = 0;
+    api.forEachNode(() => count++);
+    onClipboardEvent?.({ action: 'select-all', rows: count, cols: fields.length });
+  }, [api, fields, onClipboardEvent]);
 
   useEffect(() => {
     const el = containerRef.current;
