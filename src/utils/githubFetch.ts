@@ -3,13 +3,26 @@
  *
  * Uses the Git Trees API (one call, cached) to discover all file paths,
  * then the Git Blobs API to fetch content as ArrayBuffer.
- * Works without authentication for public repos (60 req/hr limit).
+ *
+ * Auth: If VITE_GITHUB_TOKEN is set, uses it for 5,000 req/hr.
+ * Otherwise falls back to unauthenticated (60 req/hr).
+ * Long-term: replace with Azure Function proxy.
  */
 
 const OWNER = 'sajivfrancis777';
 const REPO = 'IAO-Architecture';
 const API_BASE = `https://api.github.com/repos/${OWNER}/${REPO}`;
 const BRANCH = 'main';
+
+/* ── Auth headers ──────────────────────────────────────────────── */
+
+const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN as string | undefined;
+
+function apiHeaders(): Record<string, string> {
+  const h: Record<string, string> = { Accept: 'application/vnd.github.v3+json' };
+  if (GITHUB_TOKEN) h.Authorization = `Bearer ${GITHUB_TOKEN}`;
+  return h;
+}
 
 /* ── Types ─────────────────────────────────────────────────────── */
 
@@ -33,13 +46,24 @@ let pathIndex: Map<string, string> | null = null;
 
 /**
  * Fetch the full recursive tree from GitHub and build a path→SHA index.
- * Result is cached for the lifetime of the page.
+ * Result is cached in memory (page lifetime) + sessionStorage (tab lifetime).
  */
 async function ensureIndex(): Promise<Map<string, string>> {
   if (pathIndex) return pathIndex;
 
+  // Try sessionStorage first (survives soft navigations, not hard refresh)
+  const CACHE_KEY = 'iao-github-tree';
+  const cached = sessionStorage.getItem(CACHE_KEY);
+  if (cached) {
+    try {
+      const entries: [string, string][] = JSON.parse(cached);
+      pathIndex = new Map(entries);
+      return pathIndex;
+    } catch { /* invalid cache, refetch */ }
+  }
+
   const res = await fetch(`${API_BASE}/git/trees/${BRANCH}?recursive=1`, {
-    headers: { Accept: 'application/vnd.github.v3+json' },
+    headers: apiHeaders(),
   });
 
   if (!res.ok) {
@@ -57,6 +81,12 @@ async function ensureIndex(): Promise<Map<string, string>> {
       pathIndex.set(entry.path, entry.sha);
     }
   }
+
+  // Cache in sessionStorage to avoid re-fetching on soft navigations
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify([...pathIndex]));
+  } catch { /* storage full — fine, we have it in memory */ }
+
   return pathIndex;
 }
 
@@ -113,7 +143,7 @@ export async function fetchFileContent(repoPath: string): Promise<ArrayBuffer> {
   if (!sha) throw new Error(`File not found in repo: ${repoPath}`);
 
   const res = await fetch(`${API_BASE}/git/blobs/${sha}`, {
-    headers: { Accept: 'application/vnd.github.v3+json' },
+    headers: apiHeaders(),
   });
 
   if (!res.ok) {
