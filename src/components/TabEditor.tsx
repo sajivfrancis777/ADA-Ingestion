@@ -1,13 +1,30 @@
 /**
- * TabEditor — 8-tab ribbon editor using AG Grid Community.
+ * TabEditor — 6-tab ribbon editor using AG Grid Community.
  * Each tab maps to one XLSX worksheet with its own column definitions.
+ * Excel-like UX: compact rows, row numbers, clipboard paste, visible grid lines.
  */
 import { useState, useCallback, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { themeQuartz } from 'ag-grid-community';
+import { themeQuartz, colorSchemeLightCold } from 'ag-grid-community';
 import { TAB_DEFINITIONS, defaultColDef } from '../grids/columnDefs';
 import type { WorkbookData } from '../utils/xlsxUtils';
-import type { ColDef, ColGroupDef, RowEditingStoppedEvent } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, CellValueChangedEvent } from 'ag-grid-community';
+
+/** Custom Excel-like theme: compact rows, visible borders */
+const excelTheme = themeQuartz.withPart(colorSchemeLightCold).withParams({
+  rowHeight: 28,
+  headerHeight: 32,
+  fontSize: 13,
+  borderColor: '#c8d6e5',
+  headerBackgroundColor: '#dfe6ed',
+  headerTextColor: '#2c3e50',
+  oddRowBackgroundColor: '#ffffff',
+  rowBorder: true,
+  columnBorder: true,
+  wrapperBorder: true,
+  headerColumnBorder: true,
+  cellHorizontalPadding: 6,
+});
 
 interface TabEditorProps {
   data: WorkbookData;
@@ -84,23 +101,22 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
         </span>
       </div>
 
-      {/* AG Grid */}
+      {/* AG Grid — Excel-like */}
       <div className="grid-container">
         <AgGridReact
           ref={gridRef}
-          theme={themeQuartz}
-          key={tab.name} // Force remount on tab switch for clean state
+          theme={excelTheme}
+          key={tab.name}
           columnDefs={tab.columns as (ColDef | ColGroupDef)[]}
           defaultColDef={defaultColDef}
           rowData={rowData}
           rowSelection="multiple"
-          onCellValueChanged={onCellValueChanged}
-          onRowEditingStopped={(e: RowEditingStoppedEvent) => { void e; onCellValueChanged(); }}
+          onCellValueChanged={(_e: CellValueChangedEvent) => onCellValueChanged()}
           undoRedoCellEditing={true}
           undoRedoCellEditingLimit={20}
           enableCellTextSelection={true}
           suppressRowClickSelection={true}
-          animateRows={true}
+          clipboardDelimiter="\t"
         />
       </div>
     </div>

@@ -31,7 +31,9 @@ const defaultColDef: ColDef = {
   resizable: true,
   sortable: true,
   filter: true,
-  minWidth: 80,
+  minWidth: 60,
+  wrapHeaderText: true,
+  autoHeaderHeight: true,
 };
 
 // ─── Tab 1: Flows (47 columns, 5 groups) ────────────────────────
