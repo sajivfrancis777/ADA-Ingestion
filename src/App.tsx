@@ -13,6 +13,7 @@ import TabEditor from './components/TabEditor';
 import FileTree from './components/FileTree';
 import { TOWERS, CAPABILITIES } from './data/towerRegistry';
 import { loadWorkbook, downloadWorkbook, createBlankWorkbook } from './utils/xlsxUtils';
+import { resolveFilePath, fetchFileContent, parseFileInfo } from './utils/githubFetch';
 import type { WorkbookData } from './utils/xlsxUtils';
 import type { Release, FlowState } from './components/TowerSelector';
 import ds020Sample from './data/ds020_sample.json';
@@ -39,6 +40,9 @@ export default function App() {
   const [data, setData] = useState<WorkbookData>(getTemplateData);
   const [dirty, setDirty] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [loadingFile, setLoadingFile] = useState<string | undefined>();
+  const [loadedFile, setLoadedFile] = useState<string | undefined>();
+  const [fetchError, setFetchError] = useState<string | undefined>();
 
   const handleTowerChange = useCallback((newTower: string) => {
     if (dirty && !window.confirm('You have unsaved changes. Switch tower? Changes will be lost.')) {
@@ -78,6 +82,43 @@ export default function App() {
     setDirty(true);
   }, []);
 
+  const handleFileClick = useCallback(async (fileTower: string, capId: string, filename: string) => {
+    if (dirty && !window.confirm('You have unsaved changes. Open file from GitHub? Changes will be lost.')) {
+      return;
+    }
+    setFetchError(undefined);
+    setLoadingFile(filename);
+    try {
+      // Auto-sync tower + capability if different from current
+      if (fileTower !== tower) {
+        setTower(fileTower);
+      }
+      if (capId !== cap) {
+        setCap(capId);
+      }
+      // Auto-sync release + state from filename
+      const info = parseFileInfo(filename);
+      setRelease(info.release as Release);
+      setState(info.state as FlowState);
+
+      // Resolve the actual repo path and fetch
+      const repoPath = await resolveFilePath(fileTower, capId, filename);
+      if (!repoPath) {
+        setFetchError(`${filename} not found in the repo yet. Upload it via the toolbar.`);
+        return;
+      }
+      const buffer = await fetchFileContent(repoPath);
+      const wb = loadWorkbook(buffer);
+      setData(wb);
+      setDirty(false);
+      setLoadedFile(filename);
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : 'Failed to fetch file');
+    } finally {
+      setLoadingFile(undefined);
+    }
+  }, [dirty, tower, cap]);
+
   const hasData = Object.values(data).some(rows => rows.length > 0);
 
   return (
@@ -96,6 +137,8 @@ export default function App() {
           selectedTower={tower}
           selectedCap={cap}
           onSelectCap={handleCapChange}
+          onFileClick={handleFileClick}
+          loadingFile={loadingFile}
         />
         <div className="app-main">
           {/* Tower / Capability / Release / State selectors + file toolbar */}
@@ -120,6 +163,23 @@ export default function App() {
               onDownload={handleDownload}
             />
           </div>
+
+          {/* Status banners */}
+          {loadingFile && (
+            <div className="loading-banner">
+              ⏳ Loading <strong>{loadingFile}</strong> from GitHub…
+            </div>
+          )}
+          {fetchError && (
+            <div className="error-banner" onClick={() => setFetchError(undefined)}>
+              ⚠️ {fetchError} <span className="dismiss">✕</span>
+            </div>
+          )}
+          {loadedFile && !dirty && !loadingFile && (
+            <div className="loaded-banner">
+              ✅ Loaded <strong>{loadedFile}</strong> from GitHub
+            </div>
+          )}
 
           {/* Dirty indicator */}
           {dirty && (

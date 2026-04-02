@@ -252,6 +252,71 @@ body {
   color: #7b1fa2;
 }
 
+/* XLSX file nodes — clickable */
+.ft-xlsx {
+  cursor: pointer;
+}
+.ft-xlsx:hover {
+  background: rgba(0, 113, 197, 0.08);
+}
+.ft-xlsx .ft-name {
+  color: var(--intel-blue);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+.ft-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Tab info line below the search */
+.ft-info-tabs {
+  font-size: 10px;
+  color: #888;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+/* ─── Status banners ─── */
+
+.loading-banner {
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 8px 24px;
+  font-size: 13px;
+  text-align: center;
+  flex-shrink: 0;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.error-banner {
+  background: #fdecea;
+  color: #c62828;
+  padding: 8px 24px;
+  font-size: 13px;
+  text-align: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.error-banner .dismiss {
+  margin-left: 12px;
+  font-weight: 700;
+}
+
+.loaded-banner {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 6px 24px;
+  font-size: 13px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
 /* ─── Header ─── */
 
 .app-header {

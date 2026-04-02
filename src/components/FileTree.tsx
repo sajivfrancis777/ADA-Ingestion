@@ -3,13 +3,14 @@
  * for towers/capabilities in the Architecture repo.
  *
  * Static tree derived from towerRegistry + naming conventions.
- * When Azure Functions are ready, this will call the GitHub Contents API
- * to show live files with real CRUD operations.
+ * Clicking an XLSX file fetches it from GitHub and opens it in the editor.
+ * CSVs are consolidated as tabs within each XLSX workbook.
  */
 import { useState, useMemo } from 'react';
 import { TOWERS, CAPABILITIES } from '../data/towerRegistry';
 
 const RELEASES = ['R3', 'R4', 'R5'] as const;
+const XLSX_TABS = ['Flows', 'Business Drivers', 'Success Criteria', 'NFRs', 'Security Controls', 'Recommendations'];
 
 interface FileNode {
   name: string;
@@ -18,25 +19,20 @@ interface FileNode {
   icon?: string;
   /** Tag shown next to file name */
   tag?: string;
+  /** For file nodes: metadata for fetching from GitHub */
+  meta?: { tower: string; capId: string };
 }
 
-/** Build the expected file list for a capability's input/data folder. */
-function buildCapabilityFiles(_capId: string): FileNode[] {
+/** Build the expected XLSX file list for a capability. */
+function buildCapabilityFiles(tower: string, capId: string): FileNode[] {
   const files: FileNode[] = [
-    { name: 'CurrentFlows.xlsx', type: 'file', icon: '📊', tag: 'universal' },
-    { name: 'FutureFlows.xlsx', type: 'file', icon: '📊', tag: 'universal' },
+    { name: 'CurrentFlows.xlsx', type: 'file', icon: '📊', tag: 'universal', meta: { tower, capId } },
+    { name: 'FutureFlows.xlsx', type: 'file', icon: '📊', tag: 'universal', meta: { tower, capId } },
   ];
   for (const r of RELEASES) {
-    files.push({ name: `${r}_CurrentFlows.xlsx`, type: 'file', icon: '📊', tag: r });
-    files.push({ name: `${r}_FutureFlows.xlsx`, type: 'file', icon: '📊', tag: r });
+    files.push({ name: `${r}_CurrentFlows.xlsx`, type: 'file', icon: '📊', tag: r, meta: { tower, capId } });
+    files.push({ name: `${r}_FutureFlows.xlsx`, type: 'file', icon: '📊', tag: r, meta: { tower, capId } });
   }
-  files.push(
-    { name: 'BusinessDrivers.csv', type: 'file', icon: '📄' },
-    { name: 'SuccessCriteria.csv', type: 'file', icon: '📄' },
-    { name: 'NFRs.csv', type: 'file', icon: '📄' },
-    { name: 'SecurityControls.csv', type: 'file', icon: '📄' },
-    { name: 'Recommendations.csv', type: 'file', icon: '📄' },
-  );
   return files;
 }
 
@@ -65,7 +61,7 @@ function buildTree(): FileNode[] {
               name: 'data',
               type: 'folder' as const,
               icon: '📂',
-              children: buildCapabilityFiles(cap.id),
+              children: buildCapabilityFiles(tower.id, cap.id),
             },
             {
               name: 'bpmn',
@@ -86,16 +82,22 @@ function TreeNode({
   depth,
   selectedCap,
   onSelectCap,
+  onFileClick,
+  loadingFile,
 }: {
   node: FileNode;
   depth: number;
   selectedCap: string;
   onSelectCap: (capId: string) => void;
+  onFileClick?: (tower: string, capId: string, filename: string) => void;
+  loadingFile?: string;
 }) {
   const [open, setOpen] = useState(depth < 1);
   const isFolder = node.type === 'folder';
   const isCapFolder = depth === 1;
   const isActive = isCapFolder && node.name === selectedCap;
+  const isXlsx = !isFolder && node.name.endsWith('.xlsx');
+  const isLoading = loadingFile === node.name;
 
   const handleClick = () => {
     if (isFolder) {
@@ -104,6 +106,9 @@ function TreeNode({
     if (isCapFolder) {
       onSelectCap(node.name);
     }
+    if (isXlsx && node.meta && onFileClick) {
+      onFileClick(node.meta.tower, node.meta.capId, node.name);
+    }
   };
 
   const paddingLeft = 12 + depth * 16;
@@ -111,15 +116,15 @@ function TreeNode({
   return (
     <>
       <div
-        className={`ft-node ${isActive ? 'ft-active' : ''} ${isFolder ? 'ft-folder' : 'ft-file'}`}
+        className={`ft-node ${isActive ? 'ft-active' : ''} ${isFolder ? 'ft-folder' : 'ft-file'} ${isXlsx ? 'ft-xlsx' : ''} ${isLoading ? 'ft-loading' : ''}`}
         style={{ paddingLeft }}
         onClick={handleClick}
-        title={isCapFolder ? `Select ${node.name}` : node.name}
+        title={isXlsx ? `Click to open ${node.name} from GitHub` : isCapFolder ? `Select ${node.name}` : node.name}
       >
         {isFolder && (
           <span className={`ft-arrow ${open ? 'ft-arrow-open' : ''}`}>▶</span>
         )}
-        <span className="ft-icon">{node.icon ?? (isFolder ? '📁' : '📄')}</span>
+        <span className="ft-icon">{isLoading ? '⏳' : (node.icon ?? (isFolder ? '📁' : '📄'))}</span>
         <span className="ft-name">{node.name}</span>
         {node.tag && <span className={`ft-tag ft-tag-${node.tag.toLowerCase()}`}>{node.tag}</span>}
       </div>
@@ -130,6 +135,8 @@ function TreeNode({
           depth={depth + 1}
           selectedCap={selectedCap}
           onSelectCap={onSelectCap}
+          onFileClick={onFileClick}
+          loadingFile={loadingFile}
         />
       ))}
     </>
@@ -163,12 +170,16 @@ export default function FileTree({
   selectedTower,
   selectedCap,
   onSelectCap,
+  onFileClick,
+  loadingFile,
 }: {
   collapsed: boolean;
   onToggle: () => void;
   selectedTower: string;
   selectedCap: string;
   onSelectCap: (capId: string) => void;
+  onFileClick?: (tower: string, capId: string, filename: string) => void;
+  loadingFile?: string;
 }) {
   const [search, setSearch] = useState('');
   const tree = useMemo(buildTree, []);
@@ -202,7 +213,8 @@ export default function FileTree({
       </div>
       <div className="ft-info">
         <span>Tower: <strong>{selectedTower}</strong></span>
-        <span className="ft-info-hint">Static view — live CRUD when Azure Functions ready</span>
+        <span className="ft-info-hint">Click any XLSX to open from GitHub</span>
+        <span className="ft-info-tabs">Each XLSX contains {XLSX_TABS.length} tabs: {XLSX_TABS.join(', ')}</span>
       </div>
       <div className="ft-tree">
         {filtered.length === 0 && (
@@ -215,6 +227,8 @@ export default function FileTree({
             depth={0}
             selectedCap={selectedCap}
             onSelectCap={onSelectCap}
+            onFileClick={onFileClick}
+            loadingFile={loadingFile}
           />
         ))}
       </div>
