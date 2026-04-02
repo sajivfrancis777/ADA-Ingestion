@@ -3,7 +3,7 @@
  */
 import { TOWERS, CAPABILITIES, type TowerInfo, type CapabilityInfo } from '../data/towerRegistry';
 
-export const RELEASES = ['All', 'R1', 'R2', 'R3', 'R4'] as const;
+export const RELEASES = ['All', 'R1', 'R2', 'R3', 'R4', 'R5'] as const;
 export const STATES = ['Current', 'Future'] as const;
 export type Release = typeof RELEASES[number];
 export type FlowState = typeof STATES[number];
