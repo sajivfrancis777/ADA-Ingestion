@@ -21,7 +21,7 @@ interface TreeEntry {
 }
 
 export interface FileInfo {
-  /** 'All' for universal files, 'R3'/'R4'/'R5' for release-specific */
+  /** 'All' for universal files, 'R1'-'R5' for release-specific */
   release: string;
   /** 'Current' or 'Future' */
   state: string;

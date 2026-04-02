@@ -9,7 +9,7 @@
 import { useState, useMemo } from 'react';
 import { TOWERS, CAPABILITIES } from '../data/towerRegistry';
 
-const RELEASES = ['R3', 'R4', 'R5'] as const;
+const RELEASES = ['R1', 'R2', 'R3', 'R4', 'R5'] as const;
 const XLSX_TABS = ['Flows', 'Business Drivers', 'Success Criteria', 'NFRs', 'Security Controls', 'Recommendations'];
 
 interface FileNode {
