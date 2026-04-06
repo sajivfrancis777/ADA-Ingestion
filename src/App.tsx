@@ -11,11 +11,13 @@ import TowerSelector from './components/TowerSelector';
 import Toolbar from './components/Toolbar';
 import TabEditor from './components/TabEditor';
 import FileTree from './components/FileTree';
+import GitHubTokenModal from './components/GitHubTokenModal';
 import { TOWERS, CAPABILITIES } from './data/towerRegistry';
 import { generateSampleData } from './data/sampleDataGenerator';
 import { loadWorkbook, downloadWorkbook, createBlankWorkbook } from './utils/xlsxUtils';
 import { resolveFilePath, fetchFileContent, parseFileInfo } from './utils/githubFetch';
 import { saveToLocal, loadFromLocal, getLastSaved } from './utils/localSave';
+import { saveToGitHub, hasWriteToken } from './utils/githubSave';
 import type { WorkbookData } from './utils/xlsxUtils';
 import type { Release, FlowState } from './components/TowerSelector';
 import ds020Sample from './data/ds020_sample.json';
@@ -61,6 +63,10 @@ export default function App() {
   const [lastSaved, setLastSaved] = useState<string | null>(
     () => getLastSaved(TOWERS[0].id, firstCap, 'All', 'Current')
   );
+  const [githubStatus, setGithubStatus] = useState<'idle' | 'pushing' | 'pushed' | 'error'>('idle');
+  const [githubMessage, setGithubMessage] = useState<string>('');
+  const [tokenModalOpen, setTokenModalOpen] = useState(false);
+  const [hasToken, setHasToken] = useState(() => hasWriteToken());
 
   const handleTowerChange = useCallback((newTower: string) => {
     if (dirty && !window.confirm('You have unsaved changes. Switch tower? Changes will be lost.')) {
@@ -122,6 +128,28 @@ export default function App() {
       alert('Save failed — browser storage may be full.');
     }
   }, [tower, cap, release, state, data]);
+
+  const handlePushToGitHub = useCallback(async () => {
+    // Auto-save locally first
+    saveToLocal(tower, cap, release, state, data);
+    setGithubStatus('pushing');
+    setGithubMessage('');
+    const result = await saveToGitHub(tower, cap, release, state, data);
+    if (result.ok) {
+      setGithubStatus('pushed');
+      setGithubMessage(result.message);
+      setDirty(false);
+      setTimeout(() => setGithubStatus('idle'), 4000);
+    } else {
+      setGithubStatus('error');
+      setGithubMessage(result.message);
+    }
+  }, [tower, cap, release, state, data]);
+
+  const handleTokenModalClose = useCallback(() => {
+    setTokenModalOpen(false);
+    setHasToken(hasWriteToken());
+  }, []);
 
   const handleFileClick = useCallback(async (fileTower: string, capId: string, filename: string) => {
     if (dirty && !window.confirm('You have unsaved changes. Open file from GitHub? Changes will be lost.')) {
@@ -221,10 +249,15 @@ export default function App() {
               hasData={hasData}
               dirty={dirty}
               saveStatus={saveStatus}
+              githubStatus={githubStatus}
+              githubMessage={githubMessage}
+              hasGitHubToken={hasToken}
               lastSaved={lastSaved}
               onLoadFile={handleLoadFile}
               onSave={handleSave}
+              onPushToGitHub={handlePushToGitHub}
               onDownload={handleDownload}
+              onOpenTokenSettings={() => setTokenModalOpen(true)}
             />
           </div>
 
@@ -261,6 +294,9 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* GitHub token settings modal */}
+      <GitHubTokenModal open={tokenModalOpen} onClose={handleTokenModalClose} />
     </div>
   );
 }

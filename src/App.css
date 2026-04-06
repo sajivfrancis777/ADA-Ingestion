@@ -515,6 +515,137 @@ body {
   50% { box-shadow: 0 0 0 4px rgba(0,113,197,.1); }
 }
 
+/* ─── GitHub push button ─── */
+
+.btn-github {
+  background: #24292e;
+  color: white;
+  border-color: #24292e;
+}
+
+.btn-github:hover {
+  background: #1b1f23;
+}
+
+.btn-github:disabled {
+  background: #586069;
+  border-color: #586069;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-error {
+  background: #fff5f5;
+  color: #c53030;
+  border-color: #fc8181;
+}
+
+.btn-icon {
+  min-width: auto;
+  padding: 6px 10px;
+  font-size: 16px;
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.btn-icon:hover {
+  background: var(--bg-hover);
+  color: var(--intel-blue);
+}
+
+.github-error {
+  font-size: 11px;
+  color: #c53030;
+  margin-right: 12px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Modal ─── */
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 440px;
+  max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(0,0,0,.2);
+}
+
+.modal-content h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: var(--intel-blue);
+}
+
+.modal-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.modal-desc code {
+  background: #f0f4f8;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: monospace;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: var(--intel-blue);
+  box-shadow: 0 0 0 2px rgba(0,113,197,.15);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.modal-status {
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #f0f4f8;
+  color: var(--text-secondary);
+}
+
+.modal-status.status-ok {
+  background: #f0fff4;
+  color: #276749;
+}
+
+.modal-status.status-err {
+  background: #fff5f5;
+  color: #c53030;
+}
+
 .save-timestamp {
   font-size: 11px;
   color: var(--text-secondary);

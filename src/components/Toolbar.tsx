@@ -1,5 +1,5 @@
 /**
- * Toolbar — Load XLSX, Save, Download XLSX, and file context display.
+ * Toolbar — Load XLSX, Save, Push to GitHub, Download XLSX, and file context display.
  */
 import { useRef } from 'react';
 
@@ -11,15 +11,21 @@ interface ToolbarProps {
   hasData: boolean;
   dirty: boolean;
   saveStatus: 'idle' | 'saving' | 'saved';
+  githubStatus: 'idle' | 'pushing' | 'pushed' | 'error';
+  githubMessage?: string;
+  hasGitHubToken: boolean;
   lastSaved?: string | null;
   onLoadFile: (data: ArrayBuffer) => void;
   onSave: () => void;
+  onPushToGitHub: () => void;
   onDownload: () => void;
+  onOpenTokenSettings: () => void;
 }
 
 export default function Toolbar({
   tower, cap, release, state, hasData, dirty,
-  saveStatus, lastSaved, onLoadFile, onSave, onDownload,
+  saveStatus, githubStatus, githubMessage, hasGitHubToken,
+  lastSaved, onLoadFile, onSave, onPushToGitHub, onDownload, onOpenTokenSettings,
 }: ToolbarProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -41,6 +47,9 @@ export default function Toolbar({
 
   const saveLabel = saveStatus === 'saving' ? 'Saving…'
     : saveStatus === 'saved' ? '✓ Saved' : 'Save';
+
+  const ghLabel = githubStatus === 'pushing' ? 'Pushing…'
+    : githubStatus === 'pushed' ? '✓ Pushed' : 'Push to GitHub';
 
   const lastSavedLabel = lastSaved
     ? `Last saved: ${new Date(lastSaved).toLocaleTimeString()}`
@@ -68,6 +77,23 @@ export default function Toolbar({
           {saveLabel}
         </button>
         <button
+          className={`btn ${githubStatus === 'pushed' ? 'btn-save' : githubStatus === 'error' ? 'btn-error' : 'btn-github'}`}
+          onClick={onPushToGitHub}
+          disabled={!hasData || githubStatus === 'pushing' || !hasGitHubToken}
+          title={hasGitHubToken
+            ? (githubMessage || 'Commit data to the IAO-Architecture GitHub repo')
+            : 'Set up GitHub token first (click ⚙)'}
+        >
+          {ghLabel}
+        </button>
+        <button
+          className="btn btn-icon"
+          onClick={onOpenTokenSettings}
+          title="GitHub token settings"
+        >
+          ⚙
+        </button>
+        <button
           className="btn btn-success"
           onClick={onDownload}
           disabled={!hasData}
@@ -76,6 +102,9 @@ export default function Toolbar({
         </button>
       </div>
       <div className="toolbar-right">
+        {githubMessage && githubStatus === 'error' && (
+          <span className="github-error" title={githubMessage}>⚠ {githubMessage}</span>
+        )}
         {lastSavedLabel && <span className="save-timestamp">{lastSavedLabel}</span>}
         <span className="file-info">{tower} / {cap}</span>
         <span className="file-badge">{filename}</span>
