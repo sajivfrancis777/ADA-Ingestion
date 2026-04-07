@@ -89,6 +89,8 @@ const flowsColumns: (ColDef | ColGroupDef)[] = [
     headerName: 'Data Architecture',
     marryChildren: true,
     children: [
+      { field: 'Source DB Platform', width: 160 },
+      { field: 'Target DB Platform', width: 160 },
       { field: 'Data Entity', width: 160 },
       { field: 'Data Format', width: 130 },
       { field: 'Data Classification', width: 160, ...selectEditor(DATA_CLASS_VALUES) },
@@ -123,8 +125,6 @@ const flowsColumns: (ColDef | ColGroupDef)[] = [
     headerName: 'Endpoint Details',
     marryChildren: true,
     children: [
-      { field: 'Source DB Platform', width: 160 },
-      { field: 'Target DB Platform', width: 160 },
       { field: 'Source Schema/Object', width: 180 },
       { field: 'Target Schema/Object', width: 180 },
       { field: 'Source Tech Platform', width: 160 },
