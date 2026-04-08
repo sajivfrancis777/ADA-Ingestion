@@ -6,7 +6,7 @@
  * Pre-loads DS-020 template data for ALL capabilities as a gold standard
  * that architects can overwrite with their own data.
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import TowerSelector from './components/TowerSelector';
 import Toolbar from './components/Toolbar';
 import TabEditor from './components/TabEditor';
@@ -67,6 +67,44 @@ export default function App() {
   const [githubMessage, setGithubMessage] = useState<string>('');
   const [tokenModalOpen, setTokenModalOpen] = useState(false);
   const [hasToken, setHasToken] = useState(() => hasWriteToken());
+  const [sourceRepoPath, setSourceRepoPath] = useState<string | undefined>();
+  const autoFetchId = useRef(0);
+  const dirtyRef = useRef(false);
+
+  // Keep dirtyRef in sync for the async effect
+  useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
+
+  /**
+   * Auto-fetch the XLSX for the current tower/cap/release/state from GitHub
+   * whenever navigation changes. Shows real repo data instead of template.
+   * Skips if localStorage has a saved draft or if the user has unsaved edits.
+   */
+  useEffect(() => {
+    if (loadFromLocal(tower, cap, release, state)) return;
+
+    const id = ++autoFetchId.current;
+    const prefix = release === 'All' ? '' : `${release}_`;
+    const filename = `${prefix}${state}Flows.xlsx`;
+
+    (async () => {
+      try {
+        const repoPath = await resolveFilePath(tower, cap, filename);
+        if (!repoPath || id !== autoFetchId.current) return;
+        setLoadingFile(filename);
+        const buffer = await fetchFileContent(repoPath);
+        if (id !== autoFetchId.current || dirtyRef.current) return;
+        const wb = loadWorkbook(buffer);
+        setData(wb);
+        setDirty(false);
+        setLoadedFile(filename);
+        setSourceRepoPath(repoPath);
+      } catch {
+        // keep template data — user can still work
+      } finally {
+        if (id === autoFetchId.current) setLoadingFile(undefined);
+      }
+    })();
+  }, [tower, cap, release, state]);
 
   const handleTowerChange = useCallback((newTower: string) => {
     if (dirty && !window.confirm('You have unsaved changes. Switch tower? Changes will be lost.')) {
@@ -81,6 +119,7 @@ export default function App() {
     setSaveStatus('idle');
     setLastSaved(getLastSaved(newTower, newCap, release, state));
     setLoadedFile(undefined);
+    setSourceRepoPath(undefined);
   }, [dirty, release, state]);
 
   const handleCapChange = useCallback((newCap: string) => {
@@ -93,6 +132,7 @@ export default function App() {
     setSaveStatus('idle');
     setLastSaved(getLastSaved(tower, newCap, release, state));
     setLoadedFile(undefined);
+    setSourceRepoPath(undefined);
   }, [dirty, tower, release, state]);
 
   const handleLoadFile = useCallback((buffer: ArrayBuffer) => {
@@ -134,7 +174,7 @@ export default function App() {
     saveToLocal(tower, cap, release, state, data);
     setGithubStatus('pushing');
     setGithubMessage('');
-    const result = await saveToGitHub(tower, cap, release, state, data);
+    const result = await saveToGitHub(tower, cap, release, state, data, sourceRepoPath);
     if (result.ok) {
       setGithubStatus('pushed');
       setGithubMessage(result.message);
@@ -144,7 +184,7 @@ export default function App() {
       setGithubStatus('error');
       setGithubMessage(result.message);
     }
-  }, [tower, cap, release, state, data]);
+  }, [tower, cap, release, state, data, sourceRepoPath]);
 
   const handleTokenModalClose = useCallback(() => {
     setTokenModalOpen(false);
@@ -196,6 +236,7 @@ export default function App() {
       setData(wb);
       setDirty(false);
       setLoadedFile(filename);
+      setSourceRepoPath(repoPath);
     } catch (err) {
       // On error, still fall back to template data so user has something
       setData(getTemplateData(fileTower, capId));

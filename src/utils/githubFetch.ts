@@ -113,6 +113,35 @@ export async function resolveFilePath(
 }
 
 /**
+ * Find the base directory path for a capability's input data folder.
+ * Returns e.g. "towers/FPR/DS Provide Decision Support/DS-020/input/data/"
+ * by scanning the tree index for ANY file in that capability's input/data/ dir.
+ */
+export async function resolveCapabilityBasePath(
+  tower: string,
+  capId: string,
+): Promise<string | null> {
+  const index = await ensureIndex();
+  const marker = `/${capId}/input/data/`;
+
+  for (const [path] of index) {
+    if (path.startsWith(`towers/${tower}/`) && path.includes(marker)) {
+      return path.substring(0, path.indexOf(marker) + marker.length);
+    }
+  }
+  return null;
+}
+
+/**
+ * Invalidate the cached tree index so subsequent calls refetch from GitHub.
+ * Called after saving to ensure new/updated files are discovered.
+ */
+export function invalidateTreeCache(): void {
+  pathIndex = null;
+  sessionStorage.removeItem('iao-github-tree');
+}
+
+/**
  * List actual XLSX/BPMN files that exist for a capability in the repo.
  */
 export async function listCapabilityFiles(

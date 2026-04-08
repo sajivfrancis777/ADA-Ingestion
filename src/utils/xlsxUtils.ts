@@ -66,9 +66,10 @@ export function loadWorkbook(data: ArrayBuffer): WorkbookData {
 }
 
 /**
- * Convert WorkbookData into an XLSX file and trigger browser download.
+ * Build an XLSX workbook object from WorkbookData.
+ * Shared by downloadWorkbook() and workbookToXlsxBase64().
  */
-export function downloadWorkbook(data: WorkbookData, filename: string): void {
+function buildXlsxWorkbook(data: WorkbookData): XLSX.WorkBook {
   const wb = XLSX.utils.book_new();
 
   for (const tab of TAB_DEFINITIONS) {
@@ -79,16 +80,26 @@ export function downloadWorkbook(data: WorkbookData, filename: string): void {
     const ws = XLSX.utils.json_to_sheet(rows, { header: fields });
 
     // Set column widths to match our template
-    ws['!cols'] = fields.map((_f, i) => {
-      // Approximate: use the width from column defs (AG Grid width / 7 ≈ Excel width)
-      const colDefs = getFieldNames(tab.columns);
-      return { wch: Math.max(colDefs[i]?.length ?? 10, 12) };
-    });
+    ws['!cols'] = fields.map(f => ({ wch: Math.max(f.length, 12) }));
 
     XLSX.utils.book_append_sheet(wb, ws, tab.name);
   }
+  return wb;
+}
 
-  XLSX.writeFile(wb, filename);
+/**
+ * Convert WorkbookData into an XLSX file and trigger browser download.
+ */
+export function downloadWorkbook(data: WorkbookData, filename: string): void {
+  XLSX.writeFile(buildXlsxWorkbook(data), filename);
+}
+
+/**
+ * Convert WorkbookData to base64-encoded XLSX binary.
+ * Used by githubSave to write XLSX directly to the Architecture repo.
+ */
+export function workbookToXlsxBase64(data: WorkbookData): string {
+  return XLSX.write(buildXlsxWorkbook(data), { type: 'base64', bookType: 'xlsx' });
 }
 
 /**

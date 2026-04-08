@@ -1,13 +1,16 @@
 /**
- * GitHub Contents API — save workbook data as JSON to the IAO-Architecture repo.
+ * GitHub Contents API — save workbook data as XLSX to the IAO-Architecture repo.
  *
  * Commits directly via the GitHub Contents API (PUT /repos/.../contents/...).
  * Requires a PAT with `contents:write` scope on the target repo.
  *
- * File path pattern:
- *   data/input-portal/{tower}/{capId}/{release}_{state}.json
+ * Writes XLSX (not JSON) to the canonical tower path so the document-generation
+ * pipeline can read the same file without any conversion step:
+ *   towers/{tower}/<L1 folder>/{capId}/input/data/{release_}{state}Flows.xlsx
  */
 import type { WorkbookData } from './xlsxUtils';
+import { workbookToXlsxBase64 } from './xlsxUtils';
+import { resolveFilePath, resolveCapabilityBasePath, invalidateTreeCache } from './githubFetch';
 
 const OWNER = 'sajivfrancis777';
 const REPO  = 'IAO-Architecture';
@@ -49,21 +52,13 @@ function authHeaders(token: string): Record<string, string> {
 }
 
 /**
- * Build the repo path for the saved JSON.
- * e.g. data/input-portal/FPR/DS-020/All_Current.json
+ * Build the XLSX filename from release + state.
+ * e.g. ('All','Current') → 'CurrentFlows.xlsx'
+ *      ('R1','Future')   → 'R1_FutureFlows.xlsx'
  */
-function buildPath(tower: string, cap: string, release: string, state: string): string {
-  return `data/input-portal/${tower}/${cap}/${release}_${state}.json`;
-}
-
-/**
- * Base64-encode a UTF-8 string for the GitHub Contents API.
- */
-function utf8ToBase64(str: string): string {
-  const bytes = new TextEncoder().encode(str);
-  let binary = '';
-  for (const b of bytes) binary += String.fromCharCode(b);
-  return btoa(binary);
+function buildFilename(release: string, state: string): string {
+  const prefix = release === 'All' ? '' : `${release}_`;
+  return `${prefix}${state}Flows.xlsx`;
 }
 
 /* ── Core save function ────────────────────────────────────────── */
@@ -76,8 +71,11 @@ export interface SaveResult {
 }
 
 /**
- * Save workbook data as JSON to the GitHub repo.
+ * Save workbook data as XLSX to the canonical tower path in the GitHub repo.
  * Creates or updates the file via the Contents API.
+ *
+ * @param knownRepoPath  If already known (e.g. from a previous fetch), pass it
+ *                       to skip path resolution.
  */
 export async function saveToGitHub(
   tower: string,
@@ -85,6 +83,7 @@ export async function saveToGitHub(
   release: string,
   state: string,
   data: WorkbookData,
+  knownRepoPath?: string,
   commitMessage?: string,
 ): Promise<SaveResult> {
   const token = getWriteToken();
@@ -92,7 +91,30 @@ export async function saveToGitHub(
     return { ok: false, message: 'No GitHub write token configured. Click ⚙ to set one.' };
   }
 
-  const path = buildPath(tower, cap, release, state);
+  // ── Resolve the target repo path ──────────────────────────────
+  const filename = buildFilename(release, state);
+  let path = knownRepoPath;
+
+  if (!path) {
+    // Try to find the exact file first
+    path = (await resolveFilePath(tower, cap, filename)) ?? undefined;
+  }
+
+  if (!path) {
+    // File doesn't exist yet — derive base path from any sibling file
+    const basePath = await resolveCapabilityBasePath(tower, cap);
+    if (basePath) {
+      path = `${basePath}${filename}`;
+    }
+  }
+
+  if (!path) {
+    return {
+      ok: false,
+      message: `Cannot resolve repo path for ${tower}/${cap}. Ensure the capability directory exists in the repo.`,
+    };
+  }
+
   const headers = authHeaders(token);
 
   // 1. Check if file already exists (get its SHA for update)
@@ -113,9 +135,8 @@ export async function saveToGitHub(
     return { ok: false, message: `Network error checking file: ${e instanceof Error ? e.message : 'unknown'}` };
   }
 
-  // 2. Prepare content
-  const json = JSON.stringify(data, null, 2);
-  const content = utf8ToBase64(json);
+  // 2. Convert WorkbookData → XLSX binary (base64)
+  const content = workbookToXlsxBase64(data);
   const msg = commitMessage ?? `Update ${tower}/${cap} ${release} ${state} flows`;
 
   // 3. Create or update via PUT
@@ -135,8 +156,8 @@ export async function saveToGitHub(
 
     if (putRes.ok || putRes.status === 201) {
       const result = await putRes.json();
-      // Invalidate sessionStorage tree cache so FileTree picks up the new file
-      sessionStorage.removeItem('iao-github-tree');
+      // Invalidate tree cache so FileTree picks up the new/updated file
+      invalidateTreeCache();
       return {
         ok: true,
         message: existingSha ? 'Updated on GitHub' : 'Created on GitHub',
