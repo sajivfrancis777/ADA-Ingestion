@@ -8,19 +8,13 @@
       "Target System": "XEUS",
       "Target Lane": "Boundary Applications",
       "Interface / Technology": "Direct",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "MES Routes",
-      "Flow Purpose": "Sends manufacturing route definitions from MES to XEUS engine",
-      "Notes / Corrections": "MES Routes are sent from MES300 to Xeus",
-      "Process/System Owner": "FTS - IF Forecast to Stock",
-      "Data Owner": "Srivastava, Devendra",
-      "Applicable Scope": "Intel Foundry",
-      "Src Product Owner Email": "vivek.matkar@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/41275",
-      "Tgt Business Owner": "Ashish Gupta",
-      "Tgt Product Owner Email": "robert.derber@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/35612"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "MES Route to ICOST",
@@ -30,20 +24,13 @@
       "Target System": "ICOST",
       "Target Lane": "ECA Platform",
       "Interface / Technology": "Internal",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "FSM/ATM SF Routes & Cycle Times",
-      "Flow Purpose": "XEUS computes factory standard routes and cycle times and feeds ICOST",
-      "Notes / Corrections": "Xeus sends FSM/ATM SF Routes & Cycle Times to ICOST.",
-      "Process/System Owner": "FTS - IF Forecast to Stock",
-      "Data Owner": "Srivastava, Devendra",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Ashish Gupta",
-      "Src Product Owner Email": "robert.derber@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/35612",
-      "Tgt Business Owner": "Joey Huang",
-      "Tgt Product Owner Email": "juan.c.murillo.hidalgo@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/9008"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "WorkStream Route to ICOST",
@@ -53,21 +40,13 @@
       "Target System": "MARS",
       "Target Lane": "Boundary Applications",
       "Interface / Technology": "Direct",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "WorkStream Routes",
-      "Flow Purpose": "Sends work order route data to MARS for forecast and scheduling",
-      "Process/System Owner": "FTS - IF Forecast to Stock",
-      "Data Owner": "Srivastava, Devendra",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Ashwin K Subramanian",
-      "Src Product Owner": "S, Nagendra M",
-      "Src Product Owner Email": "jayesh.kumar.kashyap@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/37871",
-      "Tgt Business Owner": "Matthew Young",
-      "Tgt Product Owner": "Kasture, Apoorv",
-      "Tgt Product Owner Email": "mike.koch@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/33537"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "WS Forecast to ICOST",
@@ -77,20 +56,13 @@
       "Target System": "ICOST",
       "Target Lane": "ECA Platform",
       "Interface / Technology": "Internal",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "Forecast ASP / Forecast Units",
-      "Flow Purpose": "MARS computes forecast ASP and units and feeds ICOST",
-      "Process/System Owner": "FTS - IF Forecast to Stock",
-      "Data Owner": "Srivastava, Devendra",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Matthew Young",
-      "Src Product Owner": "Kasture, Apoorv",
-      "Src Product Owner Email": "mike.koch@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/33537",
-      "Tgt Business Owner": "Joey Huang",
-      "Tgt Product Owner Email": "juan.c.murillo.hidalgo@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/9008"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "ATM Cycle Times to ICOST",
@@ -100,18 +72,13 @@
       "Target System": "ICOST",
       "Target Lane": "ECA Platform",
       "Interface / Technology": "Internal",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "ATM Cycle Times",
-      "Flow Purpose": "Feeds Assembly Test and Mark cycle time data into ICOST",
-      "Process/System Owner": "FTS - IF Forecast to Stock",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Randall Goodwin",
-      "Src Product Owner Email": "randall.s.goodwin@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/119",
-      "Tgt Business Owner": "Joey Huang",
-      "Tgt Product Owner Email": "juan.c.murillo.hidalgo@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/9008"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "SPEED BOM to ECC",
@@ -121,21 +88,13 @@
       "Target System": "SAP PO",
       "Target Lane": "Middleware & Integration",
       "Interface / Technology": "SAP PO",
-      "Direction": "->",
       "Frequency": "Event-Driven",
       "Data Description": "Material Master & BOMs",
-      "Flow Purpose": "Sends product structure and BOMs to SAP PO for routing to ECC",
-      "Process/System Owner": "MD - Master Data Team",
-      "Data Owner": "Nicole Boscia / Barb McLeod",
-      "Applicable Scope": "Intel Foundry / Intel Products / CFIN",
-      "Src Web Address": "https://speed.intel.com/5/home",
-      "Src Business Owner": "Viswakanth Ankireddi\nRajesh Nair",
-      "Src Product Owner": "Chacko, Johnson",
-      "Src Product Owner Email": "harini.kalyanasundaram@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/31517",
-      "Tgt Business Owner": "Lavaughn Urbano; Jorge Alpizar Jimenez; PHILIP NG CHUN HONG",
-      "Tgt Product Owner Email": "vijay.pericherla@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/21195"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "SPEED BOM to ECC",
@@ -145,19 +104,13 @@
       "Target System": "SAP ECC",
       "Target Lane": "ERP Systems",
       "Interface / Technology": "SAP PO",
-      "Direction": "->",
       "Frequency": "Event-Driven",
       "Data Description": "Material BOMs, RM Std Cost, RM Inv",
-      "Flow Purpose": "Combined delivery: Material BOMs (from SPEED) + RM Std Cost (from Finance HANA) + RM Inventory (from CIBR) to ECC",
-      "Process/System Owner": "MD - Master Data Team",
-      "Data Owner": "Nicole Boscia / Barb McLeod",
-      "Applicable Scope": "Intel Foundry / Intel Products / CFIN",
-      "Src Business Owner": "Lavaughn Urbano; Jorge Alpizar Jimenez; PHILIP NG CHUN HONG",
-      "Src Product Owner Email": "vijay.pericherla@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/21195",
-      "Tgt Business Owner": "Jennifer LaVine",
-      "Tgt Product Owner Email": "anil.thota@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/23736"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "SPEED BOM to EDW",
@@ -167,21 +120,13 @@
       "Target System": "EDW",
       "Target Lane": "Reporting",
       "Interface / Technology": "Direct",
-      "Direction": "->",
       "Frequency": "Batch",
       "Data Description": "Product BOMs",
-      "Flow Purpose": "Sends product BOMs to EDW for reporting",
-      "Process/System Owner": "MD - Master Data Team",
-      "Data Owner": "Nicole Boscia / Barb McLeod",
-      "Applicable Scope": "Intel Foundry / Intel Products",
-      "Src Web Address": "https://speed.intel.com/5/home",
-      "Src Business Owner": "Viswakanth Ankireddi\nRajesh Nair",
-      "Src Product Owner": "Chacko, Johnson",
-      "Src Product Owner Email": "harini.kalyanasundaram@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/31517",
-      "Tgt Business Owner": "Udaya Srinivas Chandhu Yalla",
-      "Tgt Product Owner Email": "sangeetha.sudha.vinjamuri@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/4010"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "Master Data to ECC",
@@ -191,20 +136,13 @@
       "Target System": "SAP ECC",
       "Target Lane": "ERP Systems",
       "Interface / Technology": "MDG",
-      "Direction": "->",
       "Frequency": "Event-Driven",
       "Data Description": "Master Data",
-      "Flow Purpose": "Master data governance push to ECC",
-      "Process/System Owner": "MD - Master Data Team",
-      "Data Owner": "MDG Corp",
-      "Applicable Scope": "Intel Foundry / Intel Products / CFIN",
-      "Src Business Owner": "Subhajit Ray\nCraig Chvatal\nViswakanth Ankireddi",
-      "Src Product Owner": "Sachdeva, Sachin",
-      "Src Product Owner Email": "sachin.sachdeva@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/40068",
-      "Tgt Business Owner": "Jennifer LaVine",
-      "Tgt Product Owner Email": "anil.thota@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/23736"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "CIBR RM Inv to ECC",
@@ -214,18 +152,13 @@
       "Target System": "SAP PO",
       "Target Lane": "Middleware & Integration",
       "Interface / Technology": "SAP PO",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "RM Inv Consumption & Subcon Inv Data",
-      "Flow Purpose": "Sends raw material inventory consumption and subcon inventory data to SAP PO",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Heather Heagney",
-      "Src Product Owner Email": "ramesh.m@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/237",
-      "Tgt Business Owner": "Lavaughn Urbano; Jorge Alpizar Jimenez; PHILIP NG CHUN HONG",
-      "Tgt Product Owner Email": "vijay.pericherla@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/21195"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "CIBR RM Inv to ECC",
@@ -235,18 +168,13 @@
       "Target System": "SAP ECC",
       "Target Lane": "ERP Systems",
       "Interface / Technology": "SAP PO",
-      "Direction": "->",
       "Frequency": "Event-Driven",
       "Data Description": "RM Inv Consumption & Subcon Inv Data",
-      "Flow Purpose": "SAP PO delivers CIBR data to ECC (combined with SPEED BOMs and Finance HANA cost)",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Lavaughn Urbano; Jorge Alpizar Jimenez; PHILIP NG CHUN HONG",
-      "Src Product Owner Email": "vijay.pericherla@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/21195",
-      "Tgt Business Owner": "Jennifer LaVine",
-      "Tgt Product Owner Email": "anil.thota@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/23736"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "ECC Replication to DWH",
@@ -256,19 +184,13 @@
       "Target System": "SideCar",
       "Target Lane": "Middleware & Integration",
       "Interface / Technology": "SLT",
-      "Direction": "->",
       "Frequency": "Real-Time/NRT",
       "Data Description": "SLT: Financials, BOMs, Routes",
-      "Flow Purpose": "Replicates financial data and BOMs and routes from ECC to SideCar via SLT",
-      "Process/System Owner": "FPR - Product Costing",
-      "Data Owner": "Kavita Srimali",
-      "Applicable Scope": "Intel Foundry / Intel Products",
-      "Src Business Owner": "Jennifer LaVine",
-      "Src Product Owner Email": "anil.thota@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/23736",
-      "Tgt Business Owner": "Hina Chopra",
-      "Tgt Product Owner Email": "troy.g.jorgenson@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/42993"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "ECC Replication to DWH",
@@ -278,19 +200,13 @@
       "Target System": "Azure ADF",
       "Target Lane": "Data Warehouse",
       "Interface / Technology": "CIF",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "CIF Data",
-      "Flow Purpose": "Transfers master and transactional data to the data lake",
-      "Process/System Owner": "FPR - Product Costing",
-      "Data Owner": "Kavita Srimali",
-      "Applicable Scope": "Intel Foundry / Intel Products",
-      "Src Business Owner": "Hina Chopra",
-      "Src Product Owner Email": "troy.g.jorgenson@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/42993",
-      "Tgt Business Owner": "Udaya Srinivas Chandhu Yalla",
-      "Tgt Product Owner Email": "sachin.arora@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/25794"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "ECC Replication to DWH",
@@ -300,18 +216,13 @@
       "Target System": "DataBricks",
       "Target Lane": "Data Warehouse",
       "Interface / Technology": "ADF Pipeline",
-      "Direction": "->",
       "Frequency": "Batch",
       "Data Description": "Transform Data",
-      "Flow Purpose": "Transforms ingested data in DataBricks",
-      "Process/System Owner": "FPR - Product Costing",
-      "Data Owner": "Kavita Srimali",
-      "Applicable Scope": "Intel Foundry / Intel Products",
-      "Src Business Owner": "Udaya Srinivas Chandhu Yalla",
-      "Src Product Owner Email": "sachin.arora@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/25794",
-      "Tgt Product Owner Email": "nihar.kanike@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/41458"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "ECC Replication to DWH",
@@ -321,20 +232,13 @@
       "Target System": "SnowFlake",
       "Target Lane": "Data Warehouse",
       "Interface / Technology": "Internal",
-      "Direction": "->",
       "Frequency": "Batch",
       "Data Description": "Stores Data",
-      "Flow Purpose": "Persists transformed data into SnowFlake",
-      "Process/System Owner": "FPR - Product Costing",
-      "Data Owner": "Kavita Srimali",
-      "Applicable Scope": "Intel Foundry / Intel Products",
-      "Src Product Owner Email": "nihar.kanike@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/41458",
-      "Tgt Web Address": "https://portal.azure.com",
-      "Tgt Business Owner": "Chitra Suresh\nVeena Jayaram",
-      "Tgt Product Owner": "Loh, Sean Yit",
-      "Tgt Product Owner Email": "sachin.arora@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/35811"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "Corp/IP Inv Mvt to ECA",
@@ -344,20 +248,13 @@
       "Target System": "ECA",
       "Target Lane": "ECA Platform",
       "Interface / Technology": "SLT",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "Inv Mvt Conf (561 MvT) BOH Transfer",
-      "Flow Purpose": "Inventory movement confirmations and BOH transfers from Corp/IP to ECA",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry / Intel Products",
-      "Src Business Owner": "Sridhar Rajappa",
-      "Src Product Owner": "Mansour, Sarmad S",
-      "Src Product Owner Email": "joshua.wise@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/41363",
-      "Tgt Web Address": "https://apps.powerapps.com/play/e/default-46c98d88-e344-4ed4-8496-4ed7712e255d/a/3602917c-1c84-448f-9f2f-0840daefa3d1?tenantId=46c98d88-e344-4ed4-8496-4ed7712e255d&source=portal",
-      "Tgt Business Owner": "Kenneth Burns; Nitasha NS",
-      "Tgt Product Owner Email": "anjali.prasad@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/43119"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "Corp/IP Master Data to ECA",
@@ -367,20 +264,13 @@
       "Target System": "ECA",
       "Target Lane": "ECA Platform",
       "Interface / Technology": "SLT",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "Master data: Finance, Materials (BOM), Plant Calendar",
-      "Flow Purpose": "Sends finance and materials master data and plant calendar to ECA",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry / Intel Products",
-      "Src Business Owner": "Sridhar Rajappa",
-      "Src Product Owner": "Mansour, Sarmad S",
-      "Src Product Owner Email": "joshua.wise@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/41363",
-      "Tgt Web Address": "https://apps.powerapps.com/play/e/default-46c98d88-e344-4ed4-8496-4ed7712e255d/a/3602917c-1c84-448f-9f2f-0840daefa3d1?tenantId=46c98d88-e344-4ed4-8496-4ed7712e255d&source=portal",
-      "Tgt Business Owner": "Kenneth Burns; Nitasha NS",
-      "Tgt Product Owner Email": "anjali.prasad@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/43119"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "ECA Costing Chain",
@@ -390,20 +280,13 @@
       "Target System": "CIBR",
       "Target Lane": "ECA Platform",
       "Interface / Technology": "Internal",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "Inv Mvt Conf (ECA to CIBR)",
-      "Flow Purpose": "Forwards inventory movement confirmations for cost bridge processing",
-      "Process/System Owner": "FPR - Product Costing",
-      "Data Owner": "Kavita Srimali",
-      "Applicable Scope": "Intel Foundry",
-      "Src Web Address": "https://apps.powerapps.com/play/e/default-46c98d88-e344-4ed4-8496-4ed7712e255d/a/3602917c-1c84-448f-9f2f-0840daefa3d1?tenantId=46c98d88-e344-4ed4-8496-4ed7712e255d&source=portal",
-      "Src Business Owner": "Kenneth Burns; Nitasha NS",
-      "Src Product Owner Email": "anjali.prasad@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/43119",
-      "Tgt Business Owner": "Heather Heagney",
-      "Tgt Product Owner Email": "ramesh.m@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/237"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "ECA Costing Chain",
@@ -413,19 +296,13 @@
       "Target System": "ICOST",
       "Target Lane": "ECA Platform",
       "Interface / Technology": "Internal",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "WIP & FG",
-      "Flow Purpose": "Sends work-in-progress and finished goods costing data to ICOST",
-      "Process/System Owner": "FPR - Product Costing",
-      "Data Owner": "Kavita Srimali",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Heather Heagney",
-      "Src Product Owner Email": "ramesh.m@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/237",
-      "Tgt Business Owner": "Joey Huang",
-      "Tgt Product Owner Email": "juan.c.murillo.hidalgo@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/9008"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "ECA Costing Chain",
@@ -435,20 +312,13 @@
       "Target System": "ICOST",
       "Target Lane": "ECA Platform",
       "Interface / Technology": "Internal",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "Cost Data",
-      "Flow Purpose": "Delivers cost data from ECA engine to ICOST for GL posting calculation",
-      "Process/System Owner": "FPR - Product Costing",
-      "Data Owner": "Kavita Srimali",
-      "Applicable Scope": "Intel Foundry",
-      "Src Web Address": "https://apps.powerapps.com/play/e/default-46c98d88-e344-4ed4-8496-4ed7712e255d/a/3602917c-1c84-448f-9f2f-0840daefa3d1?tenantId=46c98d88-e344-4ed4-8496-4ed7712e255d&source=portal",
-      "Src Business Owner": "Kenneth Burns; Nitasha NS",
-      "Src Product Owner Email": "anjali.prasad@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/43119",
-      "Tgt Business Owner": "Joey Huang",
-      "Tgt Product Owner Email": "juan.c.murillo.hidalgo@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/9008"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "GL Posting to ECC/CFIN",
@@ -458,19 +328,13 @@
       "Target System": "SAP BODS",
       "Target Lane": "Middleware & Integration",
       "Interface / Technology": "SAP BODS",
-      "Direction": "->",
       "Frequency": "Batch",
       "Data Description": "GL Postings",
-      "Flow Purpose": "Sends GL postings from ICOST to SAP BODS for ETL processing",
-      "Process/System Owner": "FPR - Product Costing",
-      "Data Owner": "Kavita Srimali",
-      "Applicable Scope": "Intel Foundry / CFIN",
-      "Src Business Owner": "Joey Huang",
-      "Src Product Owner Email": "juan.c.murillo.hidalgo@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/9008",
-      "Tgt Business Owner": "Praveen Mahadevaiah",
-      "Tgt Product Owner Email": "brijesh.shukla@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/19207"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "GL Posting to ECC/CFIN",
@@ -480,19 +344,13 @@
       "Target System": "SAP ECC",
       "Target Lane": "ERP Systems",
       "Interface / Technology": "SAP BODS",
-      "Direction": "->",
       "Frequency": "Batch",
       "Data Description": "GL Postings",
-      "Flow Purpose": "SAP BODS delivers GL postings to SAP ECC",
-      "Process/System Owner": "FPR - Product Costing",
-      "Data Owner": "Kavita Srimali",
-      "Applicable Scope": "Intel Foundry / CFIN",
-      "Src Business Owner": "Praveen Mahadevaiah",
-      "Src Product Owner Email": "brijesh.shukla@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/19207",
-      "Tgt Business Owner": "Jennifer LaVine",
-      "Tgt Product Owner Email": "anil.thota@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/23736"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "GL Posting to ECC/CFIN",
@@ -502,20 +360,13 @@
       "Target System": "CFIN S/4",
       "Target Lane": "ERP Systems",
       "Interface / Technology": "Replication",
-      "Direction": "->",
       "Frequency": "Near Real-Time",
       "Data Description": "Replicated GL Postings",
-      "Flow Purpose": "ECC replicates GL postings to CFIN S/4 HANA",
-      "Process/System Owner": "FPR - Product Costing",
-      "Data Owner": "Kavita Srimali",
-      "Applicable Scope": "Intel Foundry / CFIN",
-      "Src Business Owner": "Jennifer LaVine",
-      "Src Product Owner Email": "anil.thota@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/23736",
-      "Tgt Business Owner": "Matthew Cummings",
-      "Tgt Product Owner": "Mansour, Sarmad S",
-      "Tgt Product Owner Email": "pooja.gopala.poojary@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/41052"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "ECC to EDW Reporting",
@@ -525,18 +376,13 @@
       "Target System": "EDW",
       "Target Lane": "Reporting",
       "Interface / Technology": "ETL",
-      "Direction": "->",
       "Frequency": "Batch",
       "Data Description": "Finance Master Data, G/L Spending, BOM, Materials, Order Details",
-      "Flow Purpose": "Sends financial master data and GL spending and BOMs to EDW for reporting",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Jennifer LaVine",
-      "Src Product Owner Email": "anil.thota@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/23736",
-      "Tgt Business Owner": "Udaya Srinivas Chandhu Yalla",
-      "Tgt Product Owner Email": "sangeetha.sudha.vinjamuri@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/4010"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "EDW Feedback to ICOST",
@@ -546,18 +392,13 @@
       "Target System": "ICOST",
       "Target Lane": "ECA Platform",
       "Interface / Technology": "ETL",
-      "Direction": "->",
       "Frequency": "Batch",
       "Data Description": "Inventory Data, Cost Data, GL Transactions",
-      "Flow Purpose": "Feeds inventory and cost and GL transaction data back to ICOST",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Udaya Srinivas Chandhu Yalla",
-      "Src Product Owner Email": "sangeetha.sudha.vinjamuri@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/4010",
-      "Tgt Business Owner": "Joey Huang",
-      "Tgt Product Owner Email": "juan.c.murillo.hidalgo@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/9008"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "EDW Feedback to CIBR",
@@ -567,18 +408,13 @@
       "Target System": "CIBR",
       "Target Lane": "ECA Platform",
       "Interface / Technology": "ETL",
-      "Direction": "->",
       "Frequency": "Batch",
       "Data Description": "Cost & Inventory Data",
-      "Flow Purpose": "Feeds cost and inventory data to CIBR",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Udaya Srinivas Chandhu Yalla",
-      "Src Product Owner Email": "sangeetha.sudha.vinjamuri@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/4010",
-      "Tgt Business Owner": "Heather Heagney",
-      "Tgt Product Owner Email": "ramesh.m@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/237"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "FCA to ICOST",
@@ -588,18 +424,13 @@
       "Target System": "ICOST",
       "Target Lane": "ECA Platform",
       "Interface / Technology": "Direct",
-      "Direction": "->",
       "Frequency": "Batch",
       "Data Description": "Financial Cost Data",
-      "Flow Purpose": "Sends financial cost analysis data to ICOST",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Diego Alfaro Bergueiro",
-      "Src Product Owner Email": "alfred.siang.huat.teoh@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/44990",
-      "Tgt Business Owner": "Joey Huang",
-      "Tgt Product Owner Email": "juan.c.murillo.hidalgo@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/9008"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "ECC to Finance HANA",
@@ -609,19 +440,13 @@
       "Target System": "Finance HANA",
       "Target Lane": "Data Warehouse",
       "Interface / Technology": "SLT",
-      "Direction": "->",
       "Frequency": "Real-Time/NRT",
       "Data Description": "Finance Data",
-      "Flow Purpose": "Replicates financial data to Finance HANA for in-memory analytics",
-      "Process/System Owner": "FPR - Product Costing",
-      "Data Owner": "Kavita Srimali",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Jennifer LaVine",
-      "Src Product Owner Email": "anil.thota@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/23736",
-      "Tgt Business Owner": "Hina Chopra",
-      "Tgt Product Owner Email": "troy.g.jorgenson@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/42993"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "RM Std Fluctuations Alert",
@@ -631,20 +456,13 @@
       "Target System": "APIGEE",
       "Target Lane": "Middleware & Integration",
       "Interface / Technology": "APIGEE",
-      "Direction": "->",
       "Frequency": "Event-Driven",
       "Data Description": "RM Std Major Fluctuations",
-      "Flow Purpose": "Sends raw material standard cost major fluctuation alerts via APIGEE",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Hina Chopra",
-      "Src Product Owner Email": "troy.g.jorgenson@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/42993",
-      "Tgt Web Address": "https://api-portal-internal.intel.com",
-      "Tgt Business Owner": "Ravindra B Neralakatte",
-      "Tgt Product Owner": "Shetty, Harinakshi",
-      "Tgt Product Owner Email": "hariprasad.devaraj@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/22790"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "RM Std Fluctuations Alert",
@@ -654,20 +472,13 @@
       "Target System": "PEGA",
       "Target Lane": "Reporting",
       "Interface / Technology": "APIGEE",
-      "Direction": "->",
       "Frequency": "Event-Driven",
       "Data Description": "RM Std Major Fluctuations",
-      "Flow Purpose": "Delivers fluctuation alerts to PEGA for business process handling",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Web Address": "https://api-portal-internal.intel.com",
-      "Src Business Owner": "Ravindra B Neralakatte",
-      "Src Product Owner": "Shetty, Harinakshi",
-      "Src Product Owner Email": "hariprasad.devaraj@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/22790",
-      "Tgt Business Owner": "Jansen Besecker",
-      "Tgt Product Owner Email": "satrajit.maitra@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/43163"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "Finance HANA to BOBJ",
@@ -677,17 +488,13 @@
       "Target System": "BOBJ",
       "Target Lane": "Reporting",
       "Interface / Technology": "Direct",
-      "Direction": "->",
       "Frequency": "Batch",
       "Data Description": "Financial Analytics Data",
-      "Flow Purpose": "Stores financial analytics data in Business Objects for reporting",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Hina Chopra",
-      "Src Product Owner Email": "troy.g.jorgenson@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/42993",
-      "Tgt Product Owner Email": "charux.nanda@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/17651"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "RM Std Cost Update to ECC",
@@ -697,18 +504,13 @@
       "Target System": "SAP PO",
       "Target Lane": "Middleware & Integration",
       "Interface / Technology": "SAP PO",
-      "Direction": "->",
       "Frequency": "Event-Driven",
       "Data Description": "RM Std Cost Update",
-      "Flow Purpose": "Sends raw material standard cost updates back to SAP PO",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Hina Chopra",
-      "Src Product Owner Email": "troy.g.jorgenson@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/42993",
-      "Tgt Business Owner": "Lavaughn Urbano; Jorge Alpizar Jimenez; PHILIP NG CHUN HONG",
-      "Tgt Product Owner Email": "vijay.pericherla@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/21195"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "RM Std Cost Update to ECC",
@@ -718,18 +520,13 @@
       "Target System": "SAP ECC",
       "Target Lane": "ERP Systems",
       "Interface / Technology": "SAP PO",
-      "Direction": "->",
       "Frequency": "Event-Driven",
       "Data Description": "RM Std Cost Update",
-      "Flow Purpose": "SAP PO delivers RM Std Cost updates to ECC (combined with SPEED BOMs and CIBR data)",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Lavaughn Urbano; Jorge Alpizar Jimenez; PHILIP NG CHUN HONG",
-      "Src Product Owner Email": "vijay.pericherla@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/21195",
-      "Tgt Business Owner": "Jennifer LaVine",
-      "Tgt Product Owner Email": "anil.thota@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/23736"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "IBP Demand Planning (Legacy)",
@@ -739,21 +536,13 @@
       "Target System": "ECA",
       "Target Lane": "ECA Platform",
       "Interface / Technology": "Direct",
-      "Direction": "->",
       "Frequency": "Event-Driven",
       "Data Description": "LCM Reserves, Financial Projections",
-      "Flow Purpose": "IBP is the legacy demand planning engine providing LCM reserves and financial projections to ECA; staggered R3/R4/R5 releases create overlap with Blue Yonder",
-      "Process/System Owner": "FPR - Revenue",
-      "Data Owner": "Leena Saxena / Abirami S",
-      "Applicable Scope": "Intel Foundry / Intel Products",
-      "Src Business Owner": "Barry J Scott",
-      "Src Product Owner": "Shukla, Brijesh",
-      "Src Product Owner Email": "suchita.sahu@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/40709",
-      "Tgt Web Address": "https://apps.powerapps.com/play/e/default-46c98d88-e344-4ed4-8496-4ed7712e255d/a/3602917c-1c84-448f-9f2f-0840daefa3d1?tenantId=46c98d88-e344-4ed4-8496-4ed7712e255d&source=portal",
-      "Tgt Business Owner": "Kenneth Burns; Nitasha NS",
-      "Tgt Product Owner Email": "anjali.prasad@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/43119"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "ECC GL to EDW",
@@ -763,18 +552,13 @@
       "Target System": "EDW",
       "Target Lane": "Reporting",
       "Interface / Technology": "ETL",
-      "Direction": "->",
       "Frequency": "Batch",
       "Data Description": "G/L Spending",
-      "Flow Purpose": "Sends general ledger spending data to EDW",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Jennifer LaVine",
-      "Src Product Owner Email": "anil.thota@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/23736",
-      "Tgt Business Owner": "Udaya Srinivas Chandhu Yalla",
-      "Tgt Product Owner Email": "sangeetha.sudha.vinjamuri@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/4010"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     },
     {
       "Flow Chain": "ECC BOH to EDW",
@@ -784,18 +568,13 @@
       "Target System": "EDW",
       "Target Lane": "Reporting",
       "Interface / Technology": "ETL",
-      "Direction": "->",
       "Frequency": "Batch",
       "Data Description": "BOH Transfer 711 MvT",
-      "Flow Purpose": "Sends balance on hand transfer (711 movement type) data to EDW",
-      "Process/System Owner": "FPR - Product Costing",
-      "Applicable Scope": "Intel Foundry",
-      "Src Business Owner": "Jennifer LaVine",
-      "Src Product Owner Email": "anil.thota@intel.com",
-      "Src IAPM URL": "https://iapm.intel.com/#/app/23736",
-      "Tgt Business Owner": "Udaya Srinivas Chandhu Yalla",
-      "Tgt Product Owner Email": "sangeetha.sudha.vinjamuri@intel.com",
-      "Tgt IAPM URL": "https://iapm.intel.com/#/app/4010"
+      "Source DB Platform": "",
+      "Target DB Platform": "",
+      "Target Tech Platform": "",
+      "Source Tech Platform": "",
+      "Integration Pattern": ""
     }
   ],
   "Business Drivers": [
@@ -856,2474 +635,6 @@
       "Measure": "All 24 flow chains verified in target state",
       "Baseline": "0% (pre-migration)",
       "Owner": "Tower Architect"
-    }
-  ],
-  "Business Architecture": [
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "1",
-      "Step Name": "Perform Cumulative  Costing Run Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Analyst",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "2",
-      "Step Name": "DS-020-020-010 Check Material Master Data",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Analyst",
-      "Preceding Step": "1",
-      "Following Step": "3",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "3",
-      "Step Name": "Is Price Control = S ?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Analyst",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "2",
-      "Following Step": "4, 5"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "4",
-      "Step Name": "DS-020-020-020 Check for Existing Cost Estimate for the P...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Analyst",
-      "Preceding Step": "3",
-      "Following Step": "6",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "5",
-      "Step Name": "DS-020-020-040 Calculate Moving Average Price for the Mat...",
-      "Step Type": "serviceTask",
-      "Lane / Role": "Cost Analyst",
-      "Preceding Step": "3",
-      "Following Step": "7",
-      "Automation Level": "Automated"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "6",
-      "Step Name": "DS-020-020-030 Reset the Existing Cost Estimates for the ...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Analyst",
-      "Preceding Step": "4",
-      "Following Step": "8",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "7",
-      "Step Name": "DS-020-020-050 Update Moving Average Price for the Material",
-      "Step Type": "serviceTask",
-      "Lane / Role": "Cost Analyst",
-      "Preceding Step": "5",
-      "Following Step": "9",
-      "Automation Level": "Automated"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "8",
-      "Step Name": "Is Procurement  Type = E?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Analyst",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "No / Yes",
-      "Preceding Step": "6",
-      "Following Step": "10, 11"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "9",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Analyst",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "13, 15, 7",
-      "Following Step": "12"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "10",
-      "Step Name": "DS-020-020-060 Calculate Standard Price Based on PIR or P...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Analyst",
-      "Preceding Step": "8",
-      "Following Step": "13",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "11",
-      "Step Name": "DS-020-020-080 Check Production Version Then Explore Bill...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Analyst",
-      "Preceding Step": "8",
-      "Following Step": "14",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "12",
-      "Step Name": "Perform Cumulative  Costing Run  Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Analyst",
-      "Preceding Step": "9"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "13",
-      "Step Name": "DS-020-020-070 Update Standard Price Based on PIR or Plan...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Analyst",
-      "Preceding Step": "10",
-      "Following Step": "9",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "14",
-      "Step Name": "DS-020-020-090 Calculate the Standard Price Based on BOM ...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Analyst",
-      "Preceding Step": "11",
-      "Following Step": "15",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-020",
-      "Step #": "15",
-      "Step Name": "DS-020-020-100 Update the Standard Price Based on BOM and...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Analyst",
-      "Preceding Step": "14",
-      "Following Step": "9",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "1",
-      "Step Name": "Analyze and Review Cost  Estimates for Accuracy   Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "2",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "1, 10, 8",
-      "Following Step": "3"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "3",
-      "Step Name": "DS-020-030-010 Check the Procurement Type Material Master",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "2",
-      "Following Step": "4",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "4",
-      "Step Name": "Is Procurement Type  Inhouse Production?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "3",
-      "Following Step": "5, 6"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "5",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "4",
-      "Following Step": "7, 8"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "6",
-      "Step Name": "Check the Special  Procurement Key Status?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "STO / Sub Contracting / No Special Procurement Key",
-      "Preceding Step": "4",
-      "Following Step": "9, 10, 11"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "7",
-      "Step Name": "DS-020-030-020 Check the Activity Prices for Routing Acti...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "5",
-      "Following Step": "12",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "8",
-      "Step Name": "DS-020-030-030 Check the BOM",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "5",
-      "Following Step": "2",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "9",
-      "Step Name": "DS-020-030-040 Check the Standard Price of the Sending Plant",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "6",
-      "Following Step": "13",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "10",
-      "Step Name": "DS-020-030-060 Check the PIR in Material Master",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "6",
-      "Following Step": "2",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "11",
-      "Step Name": "DS-020-030-050 Check the Price Calculation as per the Val...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "6",
-      "Following Step": "13",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "12",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "7, 13",
-      "Following Step": "14"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "13",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "9, 11",
-      "Following Step": "12"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "14",
-      "Step Name": "DS-020-030-070 Validate the Standard Price of the Material",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "12",
-      "Following Step": "15",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "15",
-      "Step Name": "Discrepancies Found?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "No / Yes",
-      "Preceding Step": "14",
-      "Following Step": "16, 17"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "16",
-      "Step Name": "Activity Prices  for Routing  Components Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "15"
-    },
-    {
-      "Process ID": "DS-020-030",
-      "Step #": "17",
-      "Step Name": "DS-020-050 Perform Off-Cycle,  Unplanned Costing Run",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "15"
-    },
-    {
-      "Process ID": "DS-020-040",
-      "Step #": "1",
-      "Step Name": "Release Cost Estimates Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-040",
-      "Step #": "2",
-      "Step Name": "DS-020-040-010 Create a Costing Run",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "1",
-      "Following Step": "3",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-040",
-      "Step #": "3",
-      "Step Name": "DS-020-040-020  Select Materials for Costing",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "2",
-      "Following Step": "4",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-040",
-      "Step #": "4",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "3, 9",
-      "Following Step": "5"
-    },
-    {
-      "Process ID": "DS-020-040",
-      "Step #": "5",
-      "Step Name": "DS-020-040-030  Execute Costing",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "4",
-      "Following Step": "6",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-040",
-      "Step #": "6",
-      "Step Name": "DS-020-040-040 Analyze the Costs Calculated",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "5",
-      "Following Step": "7",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-040",
-      "Step #": "7",
-      "Step Name": "Discrepancies Found?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "No / Yes",
-      "Preceding Step": "6",
-      "Following Step": "8, 9"
-    },
-    {
-      "Process ID": "DS-020-040",
-      "Step #": "8",
-      "Step Name": "DS-020-040-050 Mark the Cost Estimate",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "7",
-      "Following Step": "10",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-040",
-      "Step #": "9",
-      "Step Name": "DS-020-040-080 Make Required Corrections",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "7",
-      "Following Step": "4",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-040",
-      "Step #": "10",
-      "Step Name": "DS-020-040-060 Release the Cost Estimate",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "8",
-      "Following Step": "11",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-040",
-      "Step #": "11",
-      "Step Name": "DS-020-040-070 Check the Price in Material Master",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "10",
-      "Following Step": "12",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-040",
-      "Step #": "12",
-      "Step Name": "Cost Estimates  Released",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "11"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "1",
-      "Step Name": "Off-Cycle, Unplanned  Costing Run Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "2",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "1, 6",
-      "Following Step": "3"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "3",
-      "Step Name": "DS-020-050-010  Validate the Costing Related Master Data",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "2",
-      "Following Step": "4",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "4",
-      "Step Name": "Discrepancies Found?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "No / Yes",
-      "Preceding Step": "3",
-      "Following Step": "5, 6"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "5",
-      "Step Name": "DS-020-050-030 Create Cost Estimate",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "4",
-      "Following Step": "7",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "6",
-      "Step Name": "DS-020-050-020  Make Required Corrections",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "4",
-      "Following Step": "2",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "7",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "5, 12",
-      "Following Step": "8"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "8",
-      "Step Name": "DS-020-050-040 Execute Costing Run",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "7",
-      "Following Step": "9",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "9",
-      "Step Name": "DS-020-050-050 Validate Cost",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "8",
-      "Following Step": "10",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "10",
-      "Step Name": "Discrepancies Found?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "No / Yes",
-      "Preceding Step": "9",
-      "Following Step": "11, 12"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "11",
-      "Step Name": "DS-020-050-070 Mark the Cost Estimate",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "10",
-      "Following Step": "13",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "12",
-      "Step Name": "DS-020-050-060 Make Required Corrections",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "10",
-      "Following Step": "7",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "13",
-      "Step Name": "DS-020-050-080 Release the Cost Estimate",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "11",
-      "Following Step": "14",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "14",
-      "Step Name": "DS-020-050-090 Check the Price in Material Master",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "13",
-      "Following Step": "15",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-050",
-      "Step #": "15",
-      "Step Name": "Off-Cycle, Unplanned  Costing Run Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "14"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "1",
-      "Step Name": "Material Ledger Analysis Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "2",
-      "Step Name": "DS-020-060-010 Review Standard Price of the Material for ...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "1",
-      "Following Step": "3",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "3",
-      "Step Name": "Review Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "2",
-      "Following Step": "4, 5"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "4",
-      "Step Name": "DS-020-060-020 Review Material Movements",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "3",
-      "Following Step": "6",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "5",
-      "Step Name": "DS-020-030 Analyze and Review  Cost Estimates for Accuracy",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "3"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "6",
-      "Step Name": "Review Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "4",
-      "Following Step": "7, 8"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "7",
-      "Step Name": "DS-020-060-030 Review Variances",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "6",
-      "Following Step": "9",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "8",
-      "Step Name": "DS-020-090 Review Production Orders",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "6"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "9",
-      "Step Name": "Review Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "7",
-      "Following Step": "10, 11"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "10",
-      "Step Name": "DS-020-060-040 Review Actual Cost of the Material",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "9",
-      "Following Step": "12",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "11",
-      "Step Name": "DS-020-140 Calculate Variances",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "9"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "12",
-      "Step Name": "Review Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "10",
-      "Following Step": "13, 14"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "13",
-      "Step Name": "Material Ledger Analysis Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "12"
-    },
-    {
-      "Process ID": "DS-020-060",
-      "Step #": "14",
-      "Step Name": "DS-020-100 Actual Costing",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "12"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "1",
-      "Step Name": "Cost Run  Creation Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "2",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "1, 21",
-      "Following Step": "3"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "3",
-      "Step Name": "DS-020-080-010 Check the Material Price",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "2",
-      "Following Step": "4",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "4",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "3, 8, 17, 19",
-      "Following Step": "5"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "5",
-      "Step Name": "DS-020-080-020 Verify the Cost Planning",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "4",
-      "Following Step": "6",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "6",
-      "Step Name": "Discrepancies Found?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "No / Yes",
-      "Preceding Step": "5",
-      "Following Step": "7, 8"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "7",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "6, 12",
-      "Following Step": "9"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "8",
-      "Step Name": "DS-020-080-030 Make Required Corrections to Cost Planning",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "6",
-      "Following Step": "4",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "9",
-      "Step Name": "DS-020-080-040 Verify the Activity Planning",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "7",
-      "Following Step": "10",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "10",
-      "Step Name": "Discrepancies Found?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "No / Yes",
-      "Preceding Step": "9",
-      "Following Step": "11, 12"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "11",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "10, 15",
-      "Following Step": "13"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "12",
-      "Step Name": "DS-020-080-050 Make Required Corrections to Activity Plan...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "10",
-      "Following Step": "7",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "13",
-      "Step Name": "DS-020-080-060 Verify the SKF Planning",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "11",
-      "Following Step": "14",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "14",
-      "Step Name": "Discrepancies Found?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "13",
-      "Following Step": "15, 16"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "15",
-      "Step Name": "DS-020-080-070 Make Required Corrections to SKF Planning",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "14",
-      "Following Step": "11",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "16",
-      "Step Name": "DS-020-080-080 Validate Cost Split",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "14",
-      "Following Step": "17",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "17",
-      "Step Name": "Discrepancies Found?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "16",
-      "Following Step": "4, 18"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "18",
-      "Step Name": "DS-020-080-090 Validate the Plan Rates",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "17",
-      "Following Step": "19",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "19",
-      "Step Name": "Discrepancies Found?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "18",
-      "Following Step": "4, 20"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "20",
-      "Step Name": "DS-020-080-100 Verify Standard Cost",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "19",
-      "Following Step": "21",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "21",
-      "Step Name": "Discrepancies Found?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "No / Yes",
-      "Preceding Step": "20",
-      "Following Step": "22, 2"
-    },
-    {
-      "Process ID": "DS-020-080",
-      "Step #": "22",
-      "Step Name": "Standard Prices  Updated in  Material Master",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "21"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "1",
-      "Step Name": "Production Orders  Review is Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "2",
-      "Step Name": "DS-020-090-010 Display Production Order",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "1",
-      "Following Step": "3",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "3",
-      "Step Name": "DS-020-090-020 Display Cost Analysis of Production Order",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "2",
-      "Following Step": "4",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "4",
-      "Step Name": "DS-020-090-030 Review Planned Cost and Planned Quantity",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "3",
-      "Following Step": "5",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "5",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes",
-      "Preceding Step": "4",
-      "Following Step": "6, 7"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "6",
-      "Step Name": "DS-020-090-040 Review Actual Qty and Cost for Actual Quan...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "5",
-      "Following Step": "8",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "7",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "5",
-      "Following Step": "9, 10"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "8",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "6",
-      "Following Step": "11, 12"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "9",
-      "Step Name": "M-100-080 Execute   Production Operations (IF)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "7"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "10",
-      "Step Name": "M-100-080 Execute  Production Operations (IP)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "7"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "11",
-      "Step Name": "DS-020-090-050 Review Activity Costs for the Order",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "8",
-      "Following Step": "13",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "12",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "8",
-      "Following Step": "14, 15"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "13",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "11",
-      "Following Step": "16, 17"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "14",
-      "Step Name": "M-100-080 Execute   Production Operations (IF)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "12"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "15",
-      "Step Name": "M-100-080 Execute  Production Operations (IP)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "12"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "16",
-      "Step Name": "DS-020-090-060 Review the Documented Goods Movements",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "13",
-      "Following Step": "18",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "17",
-      "Step Name": "DS-020-120 Calculate and  apply overhead for all MFG orders",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "13"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "18",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "16",
-      "Following Step": "19, 20"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "19",
-      "Step Name": "DS-020-090-070 Review the Production Order Status",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "18",
-      "Following Step": "21",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "20",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "18",
-      "Following Step": "22, 23"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "21",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "19",
-      "Following Step": "24, 25"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "22",
-      "Step Name": "M-100-170 Process Goods  Receipt from Production (IF)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "20"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "23",
-      "Step Name": "M-100-170 Process Goods  Receipt from Production (IP)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "20"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "24",
-      "Step Name": "Production Orders Review Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "21"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "25",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "21",
-      "Following Step": "26, 27"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "26",
-      "Step Name": "M-100-140 Confirm Completion  of Production Operation Ord...",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "25"
-    },
-    {
-      "Process ID": "DS-020-090",
-      "Step #": "27",
-      "Step Name": "M-100-140 Confirm Completion  of Production Operation Ord...",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "25"
-    },
-    {
-      "Process ID": "DS-020-100",
-      "Step #": "1",
-      "Step Name": "Actual Costing  initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-100",
-      "Step #": "2",
-      "Step Name": "DS-020-100-010 Run Template Allocation",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "1",
-      "Following Step": "3",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-100",
-      "Step #": "3",
-      "Step Name": "DS-020-100-020 Run Distribution Cycle",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "2",
-      "Following Step": "4",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-100",
-      "Step #": "4",
-      "Step Name": "DS-020-100-030 Perform Actual Cost Splitting",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "3",
-      "Following Step": "5",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-100",
-      "Step #": "5",
-      "Step Name": "DS-020-100-040 Execute Actual Activity Price / Rate Calcu...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "4",
-      "Following Step": "6",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-100",
-      "Step #": "6",
-      "Step Name": "DS-020-100-050 Calculate Work in Progress",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "5",
-      "Following Step": "7",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-100",
-      "Step #": "7",
-      "Step Name": "DS-020-100-060 Execute Variance Calculation",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "6",
-      "Following Step": "8",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-100",
-      "Step #": "8",
-      "Step Name": "DS-020-100-070 Execute Production Order Settlement",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "7",
-      "Following Step": "9",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-100",
-      "Step #": "9",
-      "Step Name": "DS-020-100-080 Perform Actual Costing Run",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "8",
-      "Following Step": "10",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-100",
-      "Step #": "10",
-      "Step Name": "Actual Costing Checked",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "9"
-    },
-    {
-      "Process ID": "DS-020-110",
-      "Step #": "1",
-      "Step Name": "Running of Material Ledger Report Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-110",
-      "Step #": "2",
-      "Step Name": "DS-020-110-010 Review Standard Price vs Actual Prices Report",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "1",
-      "Following Step": "3",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-110",
-      "Step #": "3",
-      "Step Name": "Review Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "2",
-      "Following Step": "4, 5"
-    },
-    {
-      "Process ID": "DS-020-110",
-      "Step #": "4",
-      "Step Name": "DS-020-110-020 Review Variances",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "3",
-      "Following Step": "6",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-110",
-      "Step #": "5",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "3, 6, 9",
-      "Following Step": "7"
-    },
-    {
-      "Process ID": "DS-020-110",
-      "Step #": "6",
-      "Step Name": "Review Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "4",
-      "Following Step": "8, 5"
-    },
-    {
-      "Process ID": "DS-020-110",
-      "Step #": "7",
-      "Step Name": "DS-020-060 Analyze Material Ledger",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "5"
-    },
-    {
-      "Process ID": "DS-020-110",
-      "Step #": "8",
-      "Step Name": "DS-020-110-030 Review Unabsorbed Variances",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "6",
-      "Following Step": "9",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-110",
-      "Step #": "9",
-      "Step Name": "Review Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "8",
-      "Following Step": "10, 5"
-    },
-    {
-      "Process ID": "DS-020-110",
-      "Step #": "10",
-      "Step Name": "Running of Material  Ledger Report Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "9"
-    },
-    {
-      "Process ID": "DS-020-120",
-      "Step #": "1",
-      "Step Name": "Overhead Calculation Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-120",
-      "Step #": "2",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "1",
-      "Following Step": "3, 4"
-    },
-    {
-      "Process ID": "DS-020-120",
-      "Step #": "3",
-      "Step Name": "DS-020-120-010 Perform Production Order Activity  Confirm...",
-      "Step Type": "serviceTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "2",
-      "Following Step": "5",
-      "Automation Level": "Automated"
-    },
-    {
-      "Process ID": "DS-020-120",
-      "Step #": "4",
-      "Step Name": "DS-020-120-020 Perform Template Allocation for COH",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "2",
-      "Following Step": "6",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-120",
-      "Step #": "5",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "3, 6",
-      "Following Step": "7"
-    },
-    {
-      "Process ID": "DS-020-120",
-      "Step #": "6",
-      "Step Name": "DS-020-120-030 Update Activity Quantity based on Template...",
-      "Step Type": "serviceTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "4",
-      "Following Step": "5",
-      "Automation Level": "Automated"
-    },
-    {
-      "Process ID": "DS-020-120",
-      "Step #": "7",
-      "Step Name": "DS-020-120-040 Apply Standard Overhead Rates on Productio...",
-      "Step Type": "serviceTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "5",
-      "Following Step": "8",
-      "Automation Level": "Automated"
-    },
-    {
-      "Process ID": "DS-020-120",
-      "Step #": "8",
-      "Step Name": "DS-020-120-050 Perform Actual Activity Rate Calculation",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "7",
-      "Following Step": "9",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-120",
-      "Step #": "9",
-      "Step Name": "DS-020-120-060 Perform Actual Costing",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "8",
-      "Following Step": "10",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-120",
-      "Step #": "10",
-      "Step Name": "Overhead Calculation Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "9"
-    },
-    {
-      "Process ID": "DS-020-130",
-      "Step #": "1",
-      "Step Name": "Calculation of  WIP Started",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-130",
-      "Step #": "2",
-      "Step Name": "DS-020-130-010 Execute Calculation of WIP",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "1",
-      "Following Step": "3",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-130",
-      "Step #": "3",
-      "Step Name": "DS-020-130-020 Validate the WIP Amount for the Current Pe...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "2",
-      "Following Step": "4",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-130",
-      "Step #": "4",
-      "Step Name": "Validation  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "3",
-      "Following Step": "5, 6"
-    },
-    {
-      "Process ID": "DS-020-130",
-      "Step #": "5",
-      "Step Name": "DS-020-130-030 Validate the WIP Reversal Amount of the Pr...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "4",
-      "Following Step": "7",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-130",
-      "Step #": "6",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "10, 7, 4",
-      "Following Step": "8"
-    },
-    {
-      "Process ID": "DS-020-130",
-      "Step #": "7",
-      "Step Name": "Validation  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "5",
-      "Following Step": "9, 6"
-    },
-    {
-      "Process ID": "DS-020-130",
-      "Step #": "8",
-      "Step Name": "DS-020-090 Review  Production Orders",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "6"
-    },
-    {
-      "Process ID": "DS-020-130",
-      "Step #": "9",
-      "Step Name": "DS-020-130-040 Review Production Order Level WIP",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "7",
-      "Following Step": "10",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-130",
-      "Step #": "10",
-      "Step Name": "Review Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "9",
-      "Following Step": "11, 6"
-    },
-    {
-      "Process ID": "DS-020-130",
-      "Step #": "11",
-      "Step Name": "Calculation of  WIP Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "10"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "1",
-      "Step Name": "Variances Calculation is Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "3"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "2",
-      "Step Name": "Production Orders  Review is Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "4"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "3",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "1, 11",
-      "Following Step": "5"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "4",
-      "Step Name": "DS-020-090-010 Display Production Order",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "2",
-      "Following Step": "6",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "5",
-      "Step Name": "DS-020-090 Review Production Orders",
-      "Step Type": "subProcess",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "3",
-      "Following Step": "7"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "6",
-      "Step Name": "DS-020-090-020 Display Cost Analysis of Production Order",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "4",
-      "Following Step": "8",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "7",
-      "Step Name": "DS-020-140-010 Execute Variance Calculation Test mode",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "5",
-      "Following Step": "9",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "8",
-      "Step Name": "DS-020-090-030 Review Planned Cost and Planned Quantity",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "6",
-      "Following Step": "10",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "9",
-      "Step Name": "DS-020-140-020 Review Variance Amounts Calculated",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "7",
-      "Following Step": "11",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "10",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes",
-      "Preceding Step": "8",
-      "Following Step": "12, 13"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "11",
-      "Step Name": "Amounts are Correct?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "9",
-      "Following Step": "14, 3"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "12",
-      "Step Name": "DS-020-090-040 Review Actual Qty and Cost for Actual Quan...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "10",
-      "Following Step": "15",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "13",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "10",
-      "Following Step": "16, 17"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "14",
-      "Step Name": "DS-020-140-030 Calculate Variances Without Test",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "11",
-      "Following Step": "18",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "15",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "12",
-      "Following Step": "19, 20"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "16",
-      "Step Name": "M-100-080 Execute   Production Operations (IF)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "13"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "17",
-      "Step Name": "M-100-080 Execute  Production Operations (IP)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "13"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "18",
-      "Step Name": "Variances Calculation is Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "14"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "19",
-      "Step Name": "DS-020-090-050 Review Activity Costs for the Order",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "15",
-      "Following Step": "21",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "20",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "15",
-      "Following Step": "22, 23"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "21",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "19",
-      "Following Step": "24, 25"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "22",
-      "Step Name": "M-100-080 Execute   Production Operations (IF)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "20"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "23",
-      "Step Name": "M-100-080 Execute  Production Operations (IP)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "20"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "24",
-      "Step Name": "DS-020-090-060 Review the Documented Goods Movements",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "21",
-      "Following Step": "26",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "25",
-      "Step Name": "DS-020-120 Calculate and  apply overhead for all MFG orders",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "21"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "26",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "24",
-      "Following Step": "27, 28"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "27",
-      "Step Name": "DS-020-090-070 Review the Production Order Status",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "26",
-      "Following Step": "29",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "28",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "26",
-      "Following Step": "30, 31"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "29",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "27",
-      "Following Step": "32, 33"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "30",
-      "Step Name": "M-100-170 Process Goods  Receipt from Production (IF)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "28"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "31",
-      "Step Name": "M-100-170 Process Goods  Receipt from Production (IP)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "28"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "32",
-      "Step Name": "Production Orders Review Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "29"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "33",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "29",
-      "Following Step": "34, 35"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "34",
-      "Step Name": "M-100-140 Confirm Completion  of Production Operation Ord...",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "33"
-    },
-    {
-      "Process ID": "DS-020-140",
-      "Step #": "35",
-      "Step Name": "M-100-140 Confirm Completion  of Production Operation Ord...",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "33"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "1",
-      "Step Name": "Variance Report  Generation is Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "4"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "2",
-      "Step Name": "Variances Calculation is Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "5"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "3",
-      "Step Name": "Production Orders  Review is Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "6"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "4",
-      "Step Name": "DS-020-140 Calculate Variances",
-      "Step Type": "subProcess",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "1",
-      "Following Step": "7"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "5",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "2, 16",
-      "Following Step": "8"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "6",
-      "Step Name": "DS-020-090-010 Display Production Order",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "3",
-      "Following Step": "9",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "7",
-      "Step Name": "DS-020-150-010 Execute Reports for Variances",
-      "Step Type": "task",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "4",
-      "Following Step": "10"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "8",
-      "Step Name": "DS-020-090 Review Production Orders",
-      "Step Type": "subProcess",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "5",
-      "Following Step": "11"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "9",
-      "Step Name": "DS-020-090-020 Display Cost Analysis of Production Order",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "6",
-      "Following Step": "12",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "10",
-      "Step Name": "DS-020-150-020 Analyze the Variances",
-      "Step Type": "task",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "7",
-      "Following Step": "13"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "11",
-      "Step Name": "DS-020-140-010 Execute Variance Calculation Test mode",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "8",
-      "Following Step": "14",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "12",
-      "Step Name": "DS-020-090-030 Review Planned Cost and Planned Quantity",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "9",
-      "Following Step": "15",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "13",
-      "Step Name": "Variance Report  Generation is Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "10"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "14",
-      "Step Name": "DS-020-140-020 Review Variance Amounts Calculated",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "11",
-      "Following Step": "16",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "15",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes",
-      "Preceding Step": "12",
-      "Following Step": "17, 18"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "16",
-      "Step Name": "Amounts are Correct?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "14",
-      "Following Step": "19, 5"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "17",
-      "Step Name": "DS-020-090-040 Review Actual Qty and Cost for Actual Quan...",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "15",
-      "Following Step": "20",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "18",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "15",
-      "Following Step": "21, 22"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "19",
-      "Step Name": "DS-020-140-030 Calculate Variances Without Test",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "16",
-      "Following Step": "23",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "20",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "17",
-      "Following Step": "24, 25"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "21",
-      "Step Name": "M-100-080 Execute   Production Operations (IF)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "18"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "22",
-      "Step Name": "M-100-080 Execute  Production Operations (IP)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "18"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "23",
-      "Step Name": "Variances Calculation is Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "19"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "24",
-      "Step Name": "DS-020-090-050 Review Activity Costs for the Order",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "20",
-      "Following Step": "26",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "25",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "20",
-      "Following Step": "27, 28"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "26",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "24",
-      "Following Step": "29, 30"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "27",
-      "Step Name": "M-100-080 Execute   Production Operations (IF)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "25"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "28",
-      "Step Name": "M-100-080 Execute  Production Operations (IP)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "25"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "29",
-      "Step Name": "DS-020-090-060 Review the Documented Goods Movements",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "26",
-      "Following Step": "31",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "30",
-      "Step Name": "DS-020-120 Calculate and  apply overhead for all MFG orders",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "26"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "31",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "29",
-      "Following Step": "32, 33"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "32",
-      "Step Name": "DS-020-090-070 Review the Production Order Status",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "31",
-      "Following Step": "34",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "33",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "31",
-      "Following Step": "35, 36"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "34",
-      "Step Name": "Review  Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "32",
-      "Following Step": "37, 38"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "35",
-      "Step Name": "M-100-170 Process Goods  Receipt from Production (IF)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "33"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "36",
-      "Step Name": "M-100-170 Process Goods  Receipt from Production (IP)",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "33"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "37",
-      "Step Name": "Production Orders Review Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "34"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "38",
-      "Step Name": "parallelGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "parallel",
-      "Preceding Step": "34",
-      "Following Step": "39, 40"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "39",
-      "Step Name": "M-100-140 Confirm Completion  of Production Operation Ord...",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "38"
-    },
-    {
-      "Process ID": "DS-020-150",
-      "Step #": "40",
-      "Step Name": "M-100-140 Confirm Completion  of Production Operation Ord...",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "38"
-    },
-    {
-      "Process ID": "DS-020-160",
-      "Step #": "1",
-      "Step Name": "Order Settlement Execution Initiated",
-      "Step Type": "startEvent",
-      "Lane / Role": "Cost Accountant",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-160",
-      "Step #": "2",
-      "Step Name": "DS-020-160-010 Execute Order Settlement in Test Run",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "1",
-      "Following Step": "3",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-160",
-      "Step #": "3",
-      "Step Name": "DS-020-160-020 Validate the Settlement Values",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "2",
-      "Following Step": "4",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-160",
-      "Step #": "4",
-      "Step Name": "Validation Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "3",
-      "Following Step": "5, 6"
-    },
-    {
-      "Process ID": "DS-020-160",
-      "Step #": "5",
-      "Step Name": "DS-020-160-030 Execute Order Settlement in Update Run",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "4",
-      "Following Step": "7",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-160",
-      "Step #": "6",
-      "Step Name": "exclusiveGateway",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Preceding Step": "9, 4",
-      "Following Step": "8"
-    },
-    {
-      "Process ID": "DS-020-160",
-      "Step #": "7",
-      "Step Name": "DS-020-160-040 Validate   Accounting Document",
-      "Step Type": "userTask",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "5",
-      "Following Step": "9",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-160",
-      "Step #": "8",
-      "Step Name": "DS-020-090 Review Production Orders",
-      "Step Type": "intermediateEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "6"
-    },
-    {
-      "Process ID": "DS-020-160",
-      "Step #": "9",
-      "Step Name": "Validation Successful?",
-      "Step Type": "gateway",
-      "Lane / Role": "Cost Accountant",
-      "Gateway Type": "exclusive",
-      "Gateway Condition": "Yes / No",
-      "Preceding Step": "7",
-      "Following Step": "10, 6"
-    },
-    {
-      "Process ID": "DS-020-160",
-      "Step #": "10",
-      "Step Name": "Order Settlement Execution Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "Cost Accountant",
-      "Preceding Step": "9"
-    },
-    {
-      "Process ID": "DS-020-170",
-      "Step #": "1",
-      "Step Name": "Product Costing Reports  Execution Started",
-      "Step Type": "startEvent",
-      "Lane / Role": "TBD",
-      "Following Step": "2"
-    },
-    {
-      "Process ID": "DS-020-170",
-      "Step #": "2",
-      "Step Name": "DS-020-170-010 Execute Cost Center Reports",
-      "Step Type": "userTask",
-      "Lane / Role": "TBD",
-      "Preceding Step": "1",
-      "Following Step": "3",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-170",
-      "Step #": "3",
-      "Step Name": "DS-020-170-020 Execute Product Costing Reports",
-      "Step Type": "userTask",
-      "Lane / Role": "TBD",
-      "Preceding Step": "2",
-      "Following Step": "4",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-170",
-      "Step #": "4",
-      "Step Name": "DS-020-170-030 Execute Production Order Reports",
-      "Step Type": "userTask",
-      "Lane / Role": "TBD",
-      "Preceding Step": "3",
-      "Following Step": "5",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-170",
-      "Step #": "5",
-      "Step Name": "DS-020-170-040 Execute Scrap Reports",
-      "Step Type": "userTask",
-      "Lane / Role": "TBD",
-      "Preceding Step": "4",
-      "Following Step": "6",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-170",
-      "Step #": "6",
-      "Step Name": "DS-020-170-050 Execute Variance Reports",
-      "Step Type": "userTask",
-      "Lane / Role": "TBD",
-      "Preceding Step": "5",
-      "Following Step": "7",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-170",
-      "Step #": "7",
-      "Step Name": "DS-020-170-060 Execute Material Ledger Reports",
-      "Step Type": "userTask",
-      "Lane / Role": "TBD",
-      "Preceding Step": "6",
-      "Following Step": "8",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-170",
-      "Step #": "8",
-      "Step Name": "DS-020-170-070 Execute Inventory Reports",
-      "Step Type": "userTask",
-      "Lane / Role": "TBD",
-      "Preceding Step": "7",
-      "Following Step": "9",
-      "Automation Level": "Manual"
-    },
-    {
-      "Process ID": "DS-020-170",
-      "Step #": "9",
-      "Step Name": "Product Costing Reports  Execution Completed",
-      "Step Type": "endEvent",
-      "Lane / Role": "TBD",
-      "Preceding Step": "8"
     }
   ],
   "NFRs": [
@@ -3437,87 +748,6 @@
       "Approach": "SOX controls, export control (EAR/ITAR) screening, data privacy (GDPR)",
       "Standard / Policy": "Intel Corporate Compliance Framework",
       "Owner": "Compliance Office"
-    }
-  ],
-  "SAP Dev Status": [
-    {
-      "Object Type": "Transport Requests",
-      "Environment": "DEV",
-      "Count": "\u2014",
-      "Notes": "To be populated post-development"
-    },
-    {
-      "Object Type": "Transport Requests",
-      "Environment": "QAS",
-      "Count": "\u2014"
-    },
-    {
-      "Object Type": "Transport Requests",
-      "Environment": "PRD",
-      "Count": "\u2014"
-    },
-    {
-      "Object Type": "Custom Code Objects",
-      "Environment": "DEV",
-      "Count": "\u2014",
-      "Notes": "CDS Views, ABAP Classes, etc."
-    },
-    {
-      "Object Type": "Custom Code Objects",
-      "Environment": "QAS",
-      "Count": "\u2014"
-    },
-    {
-      "Object Type": "Custom Code Objects",
-      "Environment": "PRD",
-      "Count": "\u2014"
-    },
-    {
-      "Object Type": "CDS Views",
-      "Environment": "DEV",
-      "Count": "\u2014",
-      "Notes": "Analytical and transactional CDS"
-    },
-    {
-      "Object Type": "CDS Views",
-      "Environment": "QAS",
-      "Count": "\u2014"
-    },
-    {
-      "Object Type": "CDS Views",
-      "Environment": "PRD",
-      "Count": "\u2014"
-    },
-    {
-      "Object Type": "Fiori Apps",
-      "Environment": "DEV",
-      "Count": "\u2014",
-      "Notes": "Custom + extended standard apps"
-    },
-    {
-      "Object Type": "Fiori Apps",
-      "Environment": "QAS",
-      "Count": "\u2014"
-    },
-    {
-      "Object Type": "Fiori Apps",
-      "Environment": "PRD",
-      "Count": "\u2014"
-    },
-    {
-      "Object Type": "BAdIs / Enhancements",
-      "Environment": "DEV",
-      "Count": "\u2014"
-    },
-    {
-      "Object Type": "BAdIs / Enhancements",
-      "Environment": "QAS",
-      "Count": "\u2014"
-    },
-    {
-      "Object Type": "BAdIs / Enhancements",
-      "Environment": "PRD",
-      "Count": "\u2014"
     }
   ],
   "Recommendations": [

@@ -5,18 +5,15 @@
 import type { ColDef, ColGroupDef } from 'ag-grid-community';
 
 // ─── Reusable cell editors ───────────────────────────────────────
-const DIRECTION_VALUES = ['->', '<-', '<->'];
 const FREQUENCY_VALUES = ['Real-Time', 'Near Real-Time', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'On-Demand', 'Batch'];
 const PRIORITY_VALUES = ['Critical', 'High', 'Medium', 'Low'];
-
-const DATA_CLASS_VALUES = ['Intel Confidential', 'Intel Secret', 'Intel Top Secret', 'Public'];
-const MASTER_TXN_VALUES = ['Master', 'Transaction', 'Reference', 'Configuration'];
-const AUTH_METHOD_VALUES = ['OAuth', 'NTLM', 'Cert', 'Basic', 'API Key', 'SSO', 'SAML'];
-const INTEGRATION_PATTERN_VALUES = ['Pub-Sub', 'Point-to-Point', 'ETL', 'ELT', 'API-Led', 'Event-Driven', 'File-Based', 'Streaming'];
-const PROTOCOL_VALUES = ['REST', 'RFC', 'SFTP', 'SOAP', 'OData', 'IDoc', 'BAPI', 'Kafka', 'AMQP', 'gRPC'];
-const ENV_VALUES = ['DEV', 'QAS', 'PRD', 'DEV,QAS,PRD', 'Sandbox'];
-const INTERFACE_TYPE_VALUES = ['Inbound', 'Outbound', 'Bidirectional'];
 const STATUS_VALUES = ['Open', 'In Progress', 'Completed', 'Blocked', 'Deferred'];
+
+// Simplified Flows dropdowns (14-column input — enrichment script fills the rest)
+const INTERFACE_VALUES = ['IDoc', 'RFC', 'BAPI', 'REST API', 'OData', 'SOAP', 'SFTP', 'File', 'CPI', 'PI/PO', 'MuleSoft', 'Kafka', 'DB Link', 'Manual', 'Other'];
+const DB_PLATFORM_VALUES = ['SAP HANA', 'Oracle', 'SQL Server', 'PostgreSQL', 'MongoDB', 'Snowflake', 'Teradata', 'DB2', 'MySQL', 'Azure SQL', 'Other'];
+const TECH_PLATFORM_VALUES = ['SAP HANA (On-Premise)', 'SAP BTP (Cloud)', 'Azure (Cloud)', 'AWS (Cloud)', 'On-Premise', 'Kubernetes', 'Other'];
+const INTEGRATION_PATTERN_VALUES = ['Point-to-Point', 'Hub-Spoke', 'Publish-Subscribe', 'Batch File', 'API Gateway', 'Database Link'];
 
 
 function selectEditor(values: string[]): Partial<ColDef> {
@@ -52,83 +49,44 @@ const defaultColDef: ColDef = {
   autoHeaderHeight: true,
 };
 
-// ─── Tab 1: Flows (47 columns, 5 groups) ────────────────────────
+// ─── Tab 1: Flows (14 simplified columns — enrichment fills the rest) ──
 const flowsColumns: (ColDef | ColGroupDef)[] = [
   {
-    headerName: 'Base',
+    headerName: 'Flow Identification',
     marryChildren: true,
     children: [
-      { field: 'Flow Chain', width: 160 },
-      { field: 'Hop #', width: 70, ...numericCol() },
-      { field: 'Source System', width: 160 },
+      { field: 'Flow Chain', width: 200 },
+      { field: 'Hop #', width: 80, ...numericCol() },
+    ],
+  },
+  {
+    headerName: 'Application Architecture',
+    marryChildren: true,
+    children: [
+      { field: 'Source System', width: 180 },
       { field: 'Source Lane', width: 160 },
-      { field: 'Target System', width: 160 },
+      { field: 'Target System', width: 180 },
       { field: 'Target Lane', width: 160 },
-      { field: 'Interface / Technology', width: 190 },
-      { field: 'Direction', width: 90, ...selectEditor(DIRECTION_VALUES) },
-      { field: 'Frequency', width: 130, ...selectEditor(FREQUENCY_VALUES) },
-      { field: 'Data Description', width: 220 },
-      { field: 'Flow Purpose', width: 260 },
-      { field: 'Notes / Corrections', width: 220 },
-      { field: 'Process/System Owner', width: 180 },
-      { field: 'Data Owner', width: 160 },
-      { field: 'Applicable Scope', width: 160 },
-      { field: 'Src Web Address', width: 190 },
-      { field: 'Src Business Owner', width: 160 },
-      { field: 'Src Product Owner', width: 160 },
-      { field: 'Src Product Owner Email', width: 190 },
-      { field: 'Src IAPM URL', width: 260 },
-      { field: 'Tgt Web Address', width: 190 },
-      { field: 'Tgt Business Owner', width: 160 },
-      { field: 'Tgt Product Owner', width: 160 },
-      { field: 'Tgt Product Owner Email', width: 190 },
-      { field: 'Tgt IAPM URL', width: 260 },
+      { field: 'Interface / Technology', width: 180, ...selectEditor(INTERFACE_VALUES) },
+      { field: 'Frequency', width: 140, ...selectEditor(FREQUENCY_VALUES) },
+      { field: 'Data Description', width: 280 },
     ],
   },
   {
     headerName: 'Data Architecture',
     marryChildren: true,
     children: [
-      { field: 'Source DB Platform', width: 160 },
-      { field: 'Target DB Platform', width: 160 },
-      { field: 'Data Entity', width: 160 },
-      { field: 'Data Format', width: 130 },
-      { field: 'Data Classification', width: 160, ...selectEditor(DATA_CLASS_VALUES) },
-      { field: 'Data Volume', width: 130 },
-      { field: 'Master/Transaction', width: 160, ...selectEditor(MASTER_TXN_VALUES) },
-      { field: 'Data Lineage Notes', width: 220 },
+      { field: 'Source DB Platform', width: 160, ...selectEditor(DB_PLATFORM_VALUES) },
+      { field: 'Target DB Platform', width: 160, ...selectEditor(DB_PLATFORM_VALUES) },
     ],
   },
   {
-    headerName: 'Technology Architecture',
+    headerName: 'Technology Architecture (optional — auto-filled if blank)',
     marryChildren: true,
     children: [
+      { field: 'Source Tech Platform', width: 180, ...selectEditor(TECH_PLATFORM_VALUES) },
+      { field: 'Target Tech Platform', width: 180, ...selectEditor(TECH_PLATFORM_VALUES) },
       { field: 'Integration Pattern', width: 160, ...selectEditor(INTEGRATION_PATTERN_VALUES) },
-      { field: 'Middleware / Platform', width: 180 },
-      { field: 'Protocol', width: 130, ...selectEditor(PROTOCOL_VALUES) },
-      { field: 'Auth Method', width: 130, ...selectEditor(AUTH_METHOD_VALUES) },
-      { field: 'Environment Scope', width: 140, ...selectEditor(ENV_VALUES) },
-      { field: 'SLA / Latency', width: 130 },
-    ],
-  },
-  {
-    headerName: 'Interface Architecture',
-    marryChildren: true,
-    children: [
-      { field: 'Interface ID', width: 130 },
-      { field: 'Interface Type', width: 130, ...selectEditor(INTERFACE_TYPE_VALUES) },
-      { field: 'Error Handling', width: 160 },
-      { field: 'Monitoring', width: 130 },
-    ],
-  },
-  {
-    headerName: 'Endpoint Details',
-    marryChildren: true,
-    children: [
-      { field: 'Source Schema/Object', width: 180 },
-      { field: 'Target Schema/Object', width: 180 },
-      { field: 'Source Tech Platform', width: 160 },
-      { field: 'Target Tech Platform', width: 160 },
     ],
   },
 ];

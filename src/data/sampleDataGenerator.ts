@@ -98,10 +98,10 @@ const TOWER_CONTEXT: Record<string, TowerContext> = {
 /* ── Generator ─────────────────────────────────────────────────── */
 
 const FREQUENCIES = ['Real-Time', 'Near Real-Time', 'Hourly', 'Daily', 'Batch', 'On-Demand'];
-const DIRECTIONS = ['->', '<-', '<->'];
-const PATTERNS = ['Pub-Sub', 'Point-to-Point', 'ETL', 'API-Led', 'Event-Driven', 'File-Based'];
-const PROTOCOLS = ['REST', 'RFC', 'OData', 'IDoc', 'SFTP', 'Kafka', 'SOAP'];
-const AUTH_METHODS = ['OAuth', 'NTLM', 'Cert', 'SSO', 'API Key'];
+const INTERFACES = ['IDoc', 'RFC', 'REST API', 'OData', 'SFTP', 'CPI', 'PI/PO', 'Kafka', 'SOAP'];
+const DB_PLATFORMS = ['SAP HANA', 'Oracle', 'SQL Server', 'PostgreSQL', 'Snowflake'];
+const TECH_PLATFORMS = ['SAP HANA (On-Premise)', 'SAP BTP (Cloud)', 'Azure (Cloud)', 'On-Premise'];
+const PATTERNS = ['Point-to-Point', 'Hub-Spoke', 'Publish-Subscribe', 'Batch File', 'API Gateway'];
 const PRIORITIES = ['Critical', 'High', 'Medium', 'Low'];
 const NFR_CATEGORIES = ['Performance', 'Availability', 'Security', 'Scalability', 'Data Retention', 'Disaster Recovery', 'Compliance'];
 const SEC_CONCERNS = ['Authentication', 'Authorization', 'Data Encryption', 'Network Security', 'Audit Logging', 'Key Management', 'Compliance', 'Data Masking', 'Vulnerability Mgmt', 'Incident Response'];
@@ -118,7 +118,6 @@ function generateFlows(ctx: TowerContext, capName: string, count: number = 8): R
     const srcIdx = i % systems.length;
     const tgtIdx = (i + 1) % systems.length;
     const entity = ctx.dataEntities[i % ctx.dataEntities.length];
-    const mw = ctx.middleware[i % ctx.middleware.length];
 
     flows.push({
       'Flow Chain': chain,
@@ -127,24 +126,14 @@ function generateFlows(ctx: TowerContext, capName: string, count: number = 8): R
       'Source Lane': lanes[srcIdx % lanes.length],
       'Target System': systems[tgtIdx],
       'Target Lane': lanes[tgtIdx % lanes.length],
-      'Interface / Technology': i % 2 === 0 ? mw : 'Direct',
-      'Direction': DIRECTIONS[i % DIRECTIONS.length],
+      'Interface / Technology': INTERFACES[i % INTERFACES.length],
       'Frequency': FREQUENCIES[i % FREQUENCIES.length],
       'Data Description': `${entity} data`,
-      'Flow Purpose': `Transfers ${entity.toLowerCase()} from ${systems[srcIdx]} to ${systems[tgtIdx]} for ${capName.toLowerCase()} processing`,
-      'Notes / Corrections': '',
-      'Process/System Owner': ctx.domain,
-      'Data Owner': '',
-      'Applicable Scope': i % 2 === 0 ? 'Intel Foundry' : 'Intel Products',
-      'Data Entity': entity,
-      'Data Format': i % 2 === 0 ? 'XML' : 'JSON',
-      'Data Classification': 'Intel Confidential',
-      'Master/Transaction': i % 3 === 0 ? 'Master' : 'Transaction',
+      'Source DB Platform': DB_PLATFORMS[srcIdx % DB_PLATFORMS.length],
+      'Target DB Platform': DB_PLATFORMS[tgtIdx % DB_PLATFORMS.length],
+      'Source Tech Platform': TECH_PLATFORMS[srcIdx % TECH_PLATFORMS.length],
+      'Target Tech Platform': TECH_PLATFORMS[tgtIdx % TECH_PLATFORMS.length],
       'Integration Pattern': PATTERNS[i % PATTERNS.length],
-      'Middleware / Platform': mw,
-      'Protocol': PROTOCOLS[i % PROTOCOLS.length],
-      'Auth Method': AUTH_METHODS[i % AUTH_METHODS.length],
-      'Environment Scope': 'DEV,QAS,PRD',
     });
   }
   return flows;
