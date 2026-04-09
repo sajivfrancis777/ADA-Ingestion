@@ -133,6 +133,12 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
     notifyParent();
   }, [notifyParent]);
 
+  const autoSizeColumns = useCallback(() => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+    api.autoSizeAllColumns();
+  }, []);
+
   const deleteSelectedRows = useCallback(() => {
     const api = gridRef.current?.api;
     if (!api) return;
@@ -143,8 +149,8 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
   }, [notifyParent]);
 
   const onGridReady = useCallback((_e: GridReadyEvent) => {
-    // Auto-size columns to fit content on first render
-    _e.api.sizeColumnsToFit();
+    // Auto-size all columns to fit their content width
+    setTimeout(() => _e.api.autoSizeAllColumns(), 0);
   }, []);
 
   // Count real (non-empty) rows for display
@@ -175,6 +181,7 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
       <div className="row-toolbar">
         <button className="btn btn-add" onClick={addRow}>+ Add Row</button>
         <button className="btn btn-delete" onClick={deleteSelectedRows}>Delete Selected</button>
+        <button className="btn btn-auto" onClick={autoSizeColumns} title="Auto-size all columns to fit content">↔ Auto-size Columns</button>
         <span className="clipboard-hint">
           Ctrl+C Copy &nbsp;|&nbsp; Ctrl+V Paste &nbsp;|&nbsp; Ctrl+X Cut &nbsp;|&nbsp; Ctrl+A Select All &nbsp;|&nbsp; Del Clear
         </span>
@@ -195,6 +202,7 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
           rowSelection="multiple"
           onCellValueChanged={(_e: CellValueChangedEvent) => notifyParent()}
           onGridReady={onGridReady}
+          singleClickEdit={true}
           undoRedoCellEditing={true}
           undoRedoCellEditingLimit={20}
           enableCellTextSelection={true}

@@ -671,6 +671,15 @@ body {
   background: #fde8ea;
 }
 
+.btn-auto {
+  color: var(--intel-blue);
+  border-color: var(--intel-blue);
+}
+
+.btn-auto:hover {
+  background: #e3f2fd;
+}
+
 /* ─── Dirty banner ─── */
 
 .dirty-banner {
