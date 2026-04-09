@@ -4,6 +4,9 @@
  *
  * KNOWN_SYSTEMS: 65 systems from existing flow files (pinned at top)
  * ALL_SYSTEMS:   4953 total (known + 4888 active IAPM apps)
+ * DB_OPTIONS:    14 approved database platforms
+ * PLATFORM_OPTIONS: 12 approved tech platforms
+ * SYSTEM_DEFAULTS: 43 system -> DB/Platform auto-fill mappings
  */
 
 /** Systems already used in existing architecture flow files. */
@@ -5031,3 +5034,213 @@ export const ALL_SYSTEMS: string[] = [
   "ZWT ICG Purchasing",
   "Zygo"
 ];
+
+/** Approved database platform options (locked dropdown). */
+export const DB_OPTIONS: string[] = [
+  "SAP HANA",
+  "SAP HANA Cloud",
+  "Oracle DB",
+  "SQL Server",
+  "PostgreSQL",
+  "MySQL",
+  "DB2",
+  "Snowflake",
+  "Delta Lake",
+  "Azure Data Lake",
+  "Azure SQL",
+  "Teradata",
+  "MongoDB",
+  "Other"
+];
+
+/** Approved technology platform options (locked dropdown). */
+export const PLATFORM_OPTIONS: string[] = [
+  "SAP HEC (On-Prem)",
+  "SAP BTP (Cloud)",
+  "SAP Cloud (SaaS)",
+  "SAP On-Prem (Linux)",
+  "Azure (Cloud)",
+  "AWS (Cloud)",
+  "Google Cloud (SaaS)",
+  "On-Prem (Linux)",
+  "On-Prem (Windows)",
+  "MuleSoft Anypoint (Cloud)",
+  "Kubernetes",
+  "Other"
+];
+
+/** System -> default DB/Platform mapping for auto-fill on system selection. */
+export const SYSTEM_DEFAULTS: Record<string, { db: string; platform: string }> = {
+  "SAP S/4HANA": {
+    "db": "SAP HANA",
+    "platform": "SAP HEC (On-Prem)"
+  },
+  "S/4 HANA": {
+    "db": "SAP HANA",
+    "platform": "SAP HEC (On-Prem)"
+  },
+  "IF S/4 HANA": {
+    "db": "SAP HANA",
+    "platform": "SAP HEC (On-Prem)"
+  },
+  "Corp / IP S/4 HANA": {
+    "db": "SAP HANA",
+    "platform": "SAP HEC (On-Prem)"
+  },
+  "Corp / IP S/4": {
+    "db": "SAP HANA",
+    "platform": "SAP HEC (On-Prem)"
+  },
+  "CFIN S/4 HANA": {
+    "db": "SAP HANA",
+    "platform": "SAP HEC (On-Prem)"
+  },
+  "Finance HANA": {
+    "db": "SAP HANA",
+    "platform": "SAP HEC (On-Prem)"
+  },
+  "SideCar": {
+    "db": "SAP HANA",
+    "platform": "SAP HEC (On-Prem)"
+  },
+  "SAP ECC": {
+    "db": "Oracle DB",
+    "platform": "SAP On-Prem (Linux)"
+  },
+  "SAP ICX": {
+    "db": "Oracle DB",
+    "platform": "SAP On-Prem (Linux)"
+  },
+  "SAP S/4 MDG": {
+    "db": "SAP HANA",
+    "platform": "SAP HEC (On-Prem)"
+  },
+  "SAP PAPM": {
+    "db": "SAP HANA",
+    "platform": "SAP BTP (Cloud)"
+  },
+  "SAP IBP": {
+    "db": "SAP HANA",
+    "platform": "SAP BTP (Cloud)"
+  },
+  "SAP SAC": {
+    "db": "SAP HANA Cloud",
+    "platform": "SAP BTP (Cloud)"
+  },
+  "SAP Ariba": {
+    "db": "SAP HANA Cloud",
+    "platform": "SAP Cloud (SaaS)"
+  },
+  "SAP BOBJ": {
+    "db": "SAP HANA",
+    "platform": "SAP On-Prem (Linux)"
+  },
+  "BOBJ": {
+    "db": "SAP HANA",
+    "platform": "SAP On-Prem (Linux)"
+  },
+  "ECA-SnowFlake": {
+    "db": "Snowflake",
+    "platform": "Azure (Cloud)"
+  },
+  "ECA-DataBricks": {
+    "db": "Delta Lake",
+    "platform": "Azure (Cloud)"
+  },
+  "ECA-ADLS": {
+    "db": "Azure Data Lake",
+    "platform": "Azure (Cloud)"
+  },
+  "ECA": {
+    "db": "Snowflake",
+    "platform": "Azure (Cloud)"
+  },
+  "Power BI (DARC)": {
+    "db": "Snowflake",
+    "platform": "Azure (Cloud)"
+  },
+  "Power BI": {
+    "db": "Snowflake",
+    "platform": "Azure (Cloud)"
+  },
+  "EDW": {
+    "db": "Teradata",
+    "platform": "On-Prem (Linux)"
+  },
+  "MES 300": {
+    "db": "PostgreSQL",
+    "platform": "On-Prem (Linux)"
+  },
+  "XEUS": {
+    "db": "PostgreSQL",
+    "platform": "On-Prem (Linux)"
+  },
+  "PEGA": {
+    "db": "PostgreSQL",
+    "platform": "On-Prem (Linux)"
+  },
+  "PDF-SMH": {
+    "db": "SQL Server",
+    "platform": "On-Prem (Windows)"
+  },
+  "ICOST": {
+    "db": "Oracle DB",
+    "platform": "On-Prem (Linux)"
+  },
+  "COMPASS": {
+    "db": "Oracle DB",
+    "platform": "On-Prem (Linux)"
+  },
+  "CIBR": {
+    "db": "Oracle DB",
+    "platform": "On-Prem (Linux)"
+  },
+  "FCA": {
+    "db": "Oracle DB",
+    "platform": "On-Prem (Linux)"
+  },
+  "DCS": {
+    "db": "Oracle DB",
+    "platform": "On-Prem (Windows)"
+  },
+  "EATS": {
+    "db": "Oracle DB",
+    "platform": "On-Prem (Linux)"
+  },
+  "SPEED": {
+    "db": "Oracle DB",
+    "platform": "On-Prem (Linux)"
+  },
+  "WorkStream": {
+    "db": "SQL Server",
+    "platform": "On-Prem (Windows)"
+  },
+  "MARS": {
+    "db": "SQL Server",
+    "platform": "On-Prem (Windows)"
+  },
+  "WSPW": {
+    "db": "SQL Server",
+    "platform": "On-Prem (Windows)"
+  },
+  "GraphiteConnect": {
+    "db": "SQL Server",
+    "platform": "Azure (Cloud)"
+  },
+  "MuleSoft": {
+    "db": "",
+    "platform": "MuleSoft Anypoint (Cloud)"
+  },
+  "APIGEE": {
+    "db": "",
+    "platform": "Google Cloud (SaaS)"
+  },
+  "IF Blue Yonder": {
+    "db": "",
+    "platform": "Azure (Cloud)"
+  },
+  "IP Blue Yonder": {
+    "db": "",
+    "platform": "Azure (Cloud)"
+  }
+};

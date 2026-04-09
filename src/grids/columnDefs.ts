@@ -4,7 +4,7 @@
  */
 import type { ColDef, ColGroupDef } from 'ag-grid-community';
 import AutocompleteCellEditor from './AutocompleteCellEditor';
-import { ALL_SYSTEMS } from '../data/systemRegistry';
+import { ALL_SYSTEMS, DB_OPTIONS, PLATFORM_OPTIONS, SYSTEM_DEFAULTS } from '../data/systemRegistry';
 
 // ─── Reusable cell editors ───────────────────────────────────────
 const FREQUENCY_VALUES = ['Real-Time', 'Near Real-Time', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'On-Demand', 'Batch'];
@@ -13,9 +13,28 @@ const STATUS_VALUES = ['Open', 'In Progress', 'Completed', 'Blocked', 'Deferred'
 
 // Simplified Flows dropdowns (14-column input — enrichment script fills the rest)
 const INTERFACE_VALUES = ['IDoc', 'RFC', 'BAPI', 'REST API', 'OData', 'SOAP', 'SFTP', 'File', 'CPI', 'PI/PO', 'MuleSoft', 'Kafka', 'DB Link', 'Manual', 'Other'];
-const DB_PLATFORM_VALUES = ['SAP HANA', 'Oracle', 'SQL Server', 'PostgreSQL', 'MongoDB', 'Snowflake', 'Teradata', 'DB2', 'MySQL', 'Azure SQL', 'Other'];
-const TECH_PLATFORM_VALUES = ['SAP HANA (On-Premise)', 'SAP BTP (Cloud)', 'Azure (Cloud)', 'AWS (Cloud)', 'On-Premise', 'Kubernetes', 'Other'];
+const DB_PLATFORM_VALUES = DB_OPTIONS;
+const TECH_PLATFORM_VALUES = PLATFORM_OPTIONS;
 const INTEGRATION_PATTERN_VALUES = ['Point-to-Point', 'Hub-Spoke', 'Publish-Subscribe', 'Batch File', 'API Gateway', 'Database Link'];
+
+/**
+ * Auto-fill helper: when Source/Target System is selected and the DB Platform
+ * and Tech Platform cells are still empty, pre-fill them from SYSTEM_DEFAULTS.
+ */
+function systemAutoFillSetter(dbField: string, platField: string) {
+  return (params: { data: Record<string, unknown>; newValue: unknown; colDef: { field?: string } }) => {
+    const field = params.colDef.field;
+    if (!field) return false;
+    params.data[field] = params.newValue;
+    const sys = String(params.newValue || '');
+    const defaults = (SYSTEM_DEFAULTS as Record<string, { db: string; platform: string }>)[sys];
+    if (defaults) {
+      if (!params.data[dbField]) params.data[dbField] = defaults.db;
+      if (!params.data[platField]) params.data[platField] = defaults.platform;
+    }
+    return true;
+  };
+}
 
 
 function selectEditor(values: string[]): Partial<ColDef> {
@@ -65,9 +84,9 @@ const flowsColumns: (ColDef | ColGroupDef)[] = [
     headerName: 'Application Architecture',
     marryChildren: true,
     children: [
-      { field: 'Source System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, cellEditorPopup: true },
+      { field: 'Source System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, cellEditorPopup: true, valueSetter: systemAutoFillSetter('Source DB Platform', 'Source Tech Platform') },
       { field: 'Source Lane', width: 160 },
-      { field: 'Target System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, cellEditorPopup: true },
+      { field: 'Target System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, cellEditorPopup: true, valueSetter: systemAutoFillSetter('Target DB Platform', 'Target Tech Platform') },
       { field: 'Target Lane', width: 160 },
       { field: 'Interface / Technology', width: 180, ...selectEditor(INTERFACE_VALUES) },
       { field: 'Frequency', width: 140, ...selectEditor(FREQUENCY_VALUES) },
