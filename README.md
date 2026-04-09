@@ -8,44 +8,73 @@ AG Grid-powered web editor for tower capability architecture data. Part of the I
 ┌───────────────────────────────────────────────────────────────┐
 │  Input Portal (this repo)                                     │
 │  React + Vite + AG Grid Community                             │
-│  GitHub Pages (private)                                       │
+│  GitHub Pages                                                 │
 │                                                               │
-│  Architect → Load XLSX → Edit → Download XLSX (Phase 1)       │
-│  Push to GitHub → direct browser API via PAT (Phase 1)        │
+│  Architect → 14-column simplified grid → Download XLSX        │
+│  Push to GitHub → Contents API via PAT                        │
 └───────────────────────┬───────────────────────────────────────┘
                         │  (GitHub Contents API)
                         ▼
 ┌───────────────────────────────────────────────────────────────┐
 │  Architecture Portal (sajivfrancis777/IAO-Architecture)       │
-│  Generated docs, dashboards, SAD, AI chatbot                  │
-│  GitHub Pages (enterprise access)                             │
 │                                                               │
-│  data-refresh.yml → auto-pulls Smartsheet + JIRA daily        │
-│  deploy-pages.yml → rebuilds site with toolbar, sidebar,      │
-│                     chatbot injection                         │
-│  chat-api.yml → GitHub Actions chatbot backend (Phase 1)      │
+│  enrich_flows.py → expands 14 cols to 47 (IAPM + inference)   │
+│  generate-architecture.yml → SADs, dashboards, summaries      │
+│  deploy-pages.yml → toolbar, sidebar, chatbot injection       │
+│  data-refresh.yml → daily Smartsheet + JIRA pull              │
+│                                                               │
+│  Triggers: push to towers/**/input/** OR daily 07:00 UTC      │
 └───────────────────────────────────────────────────────────────┘
 ```
 
-## Current Features
+## Simplified Input (14 Columns)
 
-### Editor (6-Tab Grid)
+Architects fill only what requires human knowledge. The enrichment pipeline auto-fills the remaining 33 columns.
+
+### Flows Tab — Architect Input
+| # | Column | Required | TOGAF |
+|---|--------|----------|-------|
+| 1 | Flow Chain | Yes | All |
+| 2 | Hop # | Yes | All |
+| 3 | Source System | Yes (autocomplete, 4,953 IAPM apps) | A |
+| 4 | Source Lane | Yes | B/A |
+| 5 | Target System | Yes (autocomplete, 4,953 IAPM apps) | A |
+| 6 | Target Lane | Yes | B/A |
+| 7 | Interface / Technology | Yes (dropdown) | A/T |
+| 8 | Frequency | Yes (dropdown) | A/T |
+| 9 | Data Description | Yes | D |
+| 10 | Source DB Platform | Yes (dropdown) | D/T |
+| 11 | Target DB Platform | Yes (dropdown) | D/T |
+| 12 | Source Tech Platform | Optional — auto-filled from IAPM | T |
+| 13 | Target Tech Platform | Optional — auto-filled from IAPM | T |
+| 14 | Integration Pattern | Optional — inferred from Interface | T |
+
+### Auto-Enriched by Pipeline
+IAPM URL, Product Owner, Business Owner, Application Status, Middleware, Protocol, Auth Method, Data Classification, Direction, Environment Scope, and 23 more columns.
+
+### Other Tabs
 | Tab | Columns | Description |
 |-----|---------|-------------|
-| Flows | 47 (5 groups) | Integration flow data — base, data arch, tech arch, interface, endpoint |
 | Business Drivers | 5 | Strategic drivers and priorities |
 | Success Criteria | 5 | Metrics, targets, baselines |
 | NFRs | 5 | Non-functional requirements |
 | Security Controls | 5 | Security concerns and approaches |
 | Recommendations | 7 | Architecture recommendations |
 
-### Save to GitHub (Phase 1 — Working)
-- Direct browser → GitHub Contents API (no server needed)
-- Each user provides a fine-grained PAT with `Contents: Read and write` on `IAO-Architecture`
-- Token stored in browser `localStorage` only — never saved to repo
-- Path: `data/input-portal/{tower}/{cap}/{release}_{state}.json`
+## Features
 
-> **Note:** SAP Dev Status is auto-generated from SAP OData API, and Business Architecture (BPMN) is fetched from Signavio/BIC API — neither is architect input.
+- **Autocomplete system dropdowns** — 65 known systems pinned first, 4,888 active IAPM apps searchable below
+- **Single-click editing** — click any cell to start editing immediately
+- **Dropdown selectors** — Interface, Frequency, DB Platform, Tech Platform, Integration Pattern
+- **Auto-size columns** — columns fit content width on load; manual resize via toolbar button
+- **Right-click context menu** — clear all values in a column
+- **Column header menu** — clear column via the ≡ hamburger menu
+- **Load XLSX** — import an existing workbook (extra columns silently ignored)
+- **Download XLSX** — export current grid state without needing to save first
+- **Push to GitHub** — direct browser-to-repo save via PAT (triggers regeneration)
+- **Save locally** — persist drafts in browser localStorage
+- **Clipboard** — Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+A, Delete (custom implementation for AG Grid Community)
+- **File tree sidebar** — browse existing flow files in the Architecture repo
 
 ## Quick Start
 
@@ -57,19 +86,27 @@ npm run build     # Production build → dist/
 
 ## Usage
 
-1. Select **Tower** and **Capability** from the dropdown
-2. Click **Load XLSX** to import an existing workbook
-3. Edit data across the 6 tabs using AG Grid (dropdowns, inline editing)
-4. Click **Download XLSX** to save the workbook locally
-5. Click **Push to GitHub** to save data to the Architecture Portal repo (requires PAT)
+1. Select **Tower** and **Capability** from the dropdowns
+2. Fill in flow data using the 14-column simplified grid
+3. Use **autocomplete** on Source/Target System to pick from IAPM applications
+4. Click **Download XLSX** to export locally, or **Push to GitHub** to trigger doc generation
+5. The Architecture Portal pipeline auto-enriches to 47 columns and regenerates all documents
+
+## Sync with Architecture Portal
+
+| Trigger | What Happens |
+|---------|-------------|
+| Push to GitHub (manual) | XLSX saved to `towers/{tower}/{cap}/input/data/` → triggers `generate-architecture.yml` |
+| Daily schedule (07:00 UTC) | Full regeneration of all SADs, dashboards, summaries |
+| Data refresh (06:00 UTC) | Smartsheet + JIRA data pulled, committed to repo |
 
 ## Tech Stack
 
-- **React 18** + **TypeScript**
-- **Vite** — Fast build tool
-- **AG Grid Community** — Free data grid with grouping, filtering, editing
-- **SheetJS** — Browser-side XLSX read/write (no server needed)
-- **GitHub Contents API** — Direct browser-to-repo save via PAT
+- **React 18** + **TypeScript** + **Vite**
+- **AG Grid Community** — data grid with grouping, filtering, inline editing
+- **SheetJS** — browser-side XLSX read/write
+- **GitHub Contents API** — direct browser-to-repo save via PAT
+- **IAPM System Registry** — 4,953 active applications for autocomplete (generated from IAPM CSV)
 
 ## Phased Roadmap
 
@@ -77,6 +114,9 @@ npm run build     # Production build → dist/
 |-------|---------|--------|
 | 1 | Load / Edit / Download XLSX locally | ✅ Done |
 | 1 | Push to GitHub via browser PAT | ✅ Done |
-| 2 | Azure Functions / Cloudflare Workers backend (server-held token, no per-user PAT) | Planned |
-| 3 | Cross-repo trigger → Architecture Portal regeneration on save | Planned |
+| 1 | Simplified 14-column input + IAPM enrichment | ✅ Done |
+| 1 | Autocomplete system dropdowns (4,953 apps) | ✅ Done |
+| 1 | Right-click clear column + auto-size columns | ✅ Done |
+| 1 | Cross-repo sync (push triggers Architecture Portal regeneration) | ✅ Done |
+| 2 | Azure Functions backend (server-held token, no per-user PAT) | Planned |
 | 3 | Embedded chatbot in the Input Portal | Planned |
