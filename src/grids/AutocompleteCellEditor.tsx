@@ -1,0 +1,197 @@
+/**
+ * AutocompleteCellEditor — AG Grid custom cell editor with search-as-you-type.
+ *
+ * Designed for large lists (5K+ items). Shows a filtered dropdown as the user
+ * types, with keyboard navigation (Arrow Up/Down, Enter, Escape).
+ *
+ * Usage in columnDefs:
+ *   { field: 'Source System', cellEditor: AutocompleteCellEditor,
+ *     cellEditorParams: { values: ALL_SYSTEMS } }
+ */
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
+import type { ICellEditorParams } from 'ag-grid-community';
+
+interface AutocompleteParams extends ICellEditorParams {
+  values: string[];
+  maxResults?: number;
+}
+
+const MAX_VISIBLE = 12;
+
+const AutocompleteCellEditor = forwardRef(
+  (props: AutocompleteParams, ref) => {
+    const { values = [], maxResults = 200 } = props;
+    const [text, setText] = useState(String(props.value ?? ''));
+    const [filtered, setFiltered] = useState<string[]>([]);
+    const [selectedIdx, setSelectedIdx] = useState(-1);
+    const [isOpen, setIsOpen] = useState(true);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const listRef = useRef<HTMLDivElement>(null);
+
+    // Focus input on mount
+    useEffect(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, []);
+
+    // Filter values on text change
+    useEffect(() => {
+      if (!text.trim()) {
+        setFiltered(values.slice(0, maxResults));
+      } else {
+        const lower = text.toLowerCase();
+        const matches = values.filter(v => v.toLowerCase().includes(lower));
+        setFiltered(matches.slice(0, maxResults));
+      }
+      setSelectedIdx(-1);
+    }, [text, values, maxResults]);
+
+    // Scroll selected item into view
+    useEffect(() => {
+      if (selectedIdx >= 0 && listRef.current) {
+        const items = listRef.current.children;
+        if (items[selectedIdx]) {
+          (items[selectedIdx] as HTMLElement).scrollIntoView({ block: 'nearest' });
+        }
+      }
+    }, [selectedIdx]);
+
+    // AG Grid interface
+    useImperativeHandle(ref, () => ({
+      getValue: () => text,
+      isCancelBeforeStart: () => false,
+      isCancelAfterEnd: () => false,
+    }));
+
+    const handleSelect = useCallback(
+      (value: string) => {
+        setText(value);
+        setIsOpen(false);
+        // Tell AG Grid we're done editing
+        setTimeout(() => props.stopEditing(), 0);
+      },
+      [props]
+    );
+
+    const handleKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          e.stopPropagation();
+          setSelectedIdx(prev => Math.min(prev + 1, filtered.length - 1));
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          e.stopPropagation();
+          setSelectedIdx(prev => Math.max(prev - 1, 0));
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+          if (selectedIdx >= 0 && selectedIdx < filtered.length) {
+            handleSelect(filtered[selectedIdx]);
+          } else {
+            // Accept typed text as-is
+            setIsOpen(false);
+            setTimeout(() => props.stopEditing(), 0);
+          }
+        } else if (e.key === 'Escape') {
+          e.stopPropagation();
+          setIsOpen(false);
+          props.stopEditing(true);
+        } else if (e.key === 'Tab') {
+          if (selectedIdx >= 0 && selectedIdx < filtered.length) {
+            handleSelect(filtered[selectedIdx]);
+          }
+        }
+      },
+      [filtered, selectedIdx, handleSelect, props]
+    );
+
+    return (
+      <div style={{ position: 'relative', width: '100%' }}>
+        <input
+          ref={inputRef}
+          type="text"
+          value={text}
+          onChange={e => {
+            setText(e.target.value);
+            setIsOpen(true);
+          }}
+          onKeyDown={handleKeyDown}
+          style={{
+            width: '100%',
+            height: '100%',
+            border: '2px solid #0071C5',
+            borderRadius: 3,
+            padding: '2px 6px',
+            fontSize: 13,
+            boxSizing: 'border-box',
+            outline: 'none',
+          }}
+          placeholder="Type to search systems…"
+        />
+        {isOpen && filtered.length > 0 && (
+          <div
+            ref={listRef}
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              maxHeight: MAX_VISIBLE * 28,
+              overflowY: 'auto',
+              backgroundColor: '#fff',
+              border: '1px solid #ccc',
+              borderRadius: 4,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              zIndex: 9999,
+              fontSize: 13,
+            }}
+          >
+            {filtered.map((item, idx) => (
+              <div
+                key={item}
+                onClick={() => handleSelect(item)}
+                onMouseEnter={() => setSelectedIdx(idx)}
+                style={{
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  backgroundColor:
+                    idx === selectedIdx ? '#0071C5' : 'transparent',
+                  color: idx === selectedIdx ? '#fff' : '#333',
+                  borderBottom: '1px solid #f0f0f0',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {item}
+              </div>
+            ))}
+            {filtered.length >= maxResults && (
+              <div
+                style={{
+                  padding: '4px 8px',
+                  color: '#999',
+                  fontStyle: 'italic',
+                  fontSize: 11,
+                }}
+              >
+                Type more to narrow results…
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+
+AutocompleteCellEditor.displayName = 'AutocompleteCellEditor';
+export default AutocompleteCellEditor;

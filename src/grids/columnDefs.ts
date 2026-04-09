@@ -1,8 +1,10 @@
 /**
- * AG Grid column definitions for all 8 XLSX tabs.
- * Mirrors the schema from gen_xlsx_templates.py exactly.
+ * AG Grid column definitions for all tabs.
+ * Flows tab uses simplified 14-column layout — enrichment fills the rest.
  */
 import type { ColDef, ColGroupDef } from 'ag-grid-community';
+import AutocompleteCellEditor from './AutocompleteCellEditor';
+import { ALL_SYSTEMS } from '../data/systemRegistry';
 
 // ─── Reusable cell editors ───────────────────────────────────────
 const FREQUENCY_VALUES = ['Real-Time', 'Near Real-Time', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'On-Demand', 'Batch'];
@@ -63,9 +65,9 @@ const flowsColumns: (ColDef | ColGroupDef)[] = [
     headerName: 'Application Architecture',
     marryChildren: true,
     children: [
-      { field: 'Source System', width: 180 },
+      { field: 'Source System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, cellEditorPopup: true },
       { field: 'Source Lane', width: 160 },
-      { field: 'Target System', width: 180 },
+      { field: 'Target System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, cellEditorPopup: true },
       { field: 'Target Lane', width: 160 },
       { field: 'Interface / Technology', width: 180, ...selectEditor(INTERFACE_VALUES) },
       { field: 'Frequency', width: 140, ...selectEditor(FREQUENCY_VALUES) },
