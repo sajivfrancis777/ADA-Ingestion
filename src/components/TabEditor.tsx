@@ -4,14 +4,14 @@
  * Excel-like UX: compact rows, row numbers, clipboard paste, visible grid lines,
  * checkbox multi-select, Ctrl+C/V/X/A/Delete support.
  */
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { themeQuartz, colorSchemeLightCold } from 'ag-grid-community';
 import { TAB_DEFINITIONS, defaultColDef } from '../grids/columnDefs';
 import { useGridClipboard } from '../hooks/useGridClipboard';
 import type { GridClipboardEvent } from '../hooks/useGridClipboard';
 import type { WorkbookData } from '../utils/xlsxUtils';
-import type { ColDef, ColGroupDef, CellValueChangedEvent, GridReadyEvent } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, CellValueChangedEvent, GridReadyEvent, GetMainMenuItemsParams } from 'ag-grid-community';
 
 /** Custom Excel-like theme: compact rows, visible borders */
 const excelTheme = themeQuartz.withPart(colorSchemeLightCold).withParams({
@@ -139,6 +139,57 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
     api.autoSizeAllColumns();
   }, []);
 
+  const clearColumn = useCallback((field: string) => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+    let count = 0;
+    api.forEachNode(node => {
+      if (node.data && node.data[field] !== undefined && node.data[field] !== '') {
+        node.data[field] = '';
+        count++;
+      }
+    });
+    if (count > 0) {
+      api.refreshCells({ force: true });
+      notifyParent();
+    }
+  }, [notifyParent]);
+
+  const getMainMenuItems = useCallback((params: GetMainMenuItemsParams) => {
+    const field = params.column?.getColDef()?.field;
+    const defaults = params.defaultItems || [];
+    if (!field) return defaults;
+    return [
+      ...defaults,
+      'separator',
+      {
+        name: `Clear all "${field}" values`,
+        action: () => clearColumn(field),
+        icon: '<span style="font-size:14px">🗑️</span>',
+      },
+    ];
+  }, [clearColumn]);
+
+  // Custom right-click context menu (AG Grid Community doesn't have built-in)
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; field: string } | null>(null);
+
+  const handleCellContextMenu = useCallback((e: React.MouseEvent) => {
+    const cell = (e.target as HTMLElement).closest('.ag-cell');
+    if (!cell) return;
+    const colId = cell.getAttribute('col-id');
+    if (!colId) return;
+    e.preventDefault();
+    setCtxMenu({ x: e.clientX, y: e.clientY, field: colId });
+  }, []);
+
+  // Close context menu on click anywhere
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const close = () => setCtxMenu(null);
+    window.addEventListener('click', close);
+    return () => window.removeEventListener('click', close);
+  }, [ctxMenu]);
+
   const deleteSelectedRows = useCallback(() => {
     const api = gridRef.current?.api;
     if (!api) return;
@@ -191,7 +242,7 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
       </div>
 
       {/* AG Grid — Excel-like */}
-      <div className="grid-container">
+      <div className="grid-container" onContextMenu={handleCellContextMenu}>
         <AgGridReact
           ref={gridRef}
           theme={excelTheme}
@@ -207,7 +258,20 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
           undoRedoCellEditingLimit={20}
           enableCellTextSelection={true}
           suppressRowClickSelection={true}
+          getMainMenuItems={getMainMenuItems}
         />
+
+        {/* Custom right-click context menu */}
+        {ctxMenu && (
+          <div
+            className="ctx-menu"
+            style={{ position: 'fixed', left: ctxMenu.x, top: ctxMenu.y, zIndex: 9999 }}
+          >
+            <button onClick={() => { clearColumn(ctxMenu.field); setCtxMenu(null); }}>
+              {'\ud83d\uddd1\ufe0f'} Clear all &quot;{ctxMenu.field}&quot; values
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

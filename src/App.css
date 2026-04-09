@@ -680,6 +680,34 @@ body {
   background: #e3f2fd;
 }
 
+/* ─── Right-click context menu ─── */
+
+.ctx-menu {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 200px;
+}
+
+.ctx-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+}
+
+.ctx-menu button:hover {
+  background: #e3f2fd;
+  color: var(--intel-blue);
+}
+
 /* ─── Dirty banner ─── */
 
 .dirty-banner {
