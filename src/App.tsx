@@ -80,7 +80,17 @@ export default function App() {
    * Skips if localStorage has a saved draft or if the user has unsaved edits.
    */
   useEffect(() => {
-    if (loadFromLocal(tower, cap, release, state)) return;
+    // If there's a saved local draft for this context, use it immediately
+    const localData = loadFromLocal(tower, cap, release, state);
+    if (localData) {
+      setData(localData);
+      setDirty(false);
+      setLoadedFile(undefined);
+      setSourceRepoPath(undefined);
+      setLastSaved(getLastSaved(tower, cap, release, state));
+      setSaveStatus('idle');
+      return;
+    }
 
     const id = ++autoFetchId.current;
     const prefix = release === 'All' ? '' : `${release}_`;
@@ -89,7 +99,15 @@ export default function App() {
     (async () => {
       try {
         const repoPath = await resolveFilePath(tower, cap, filename);
-        if (!repoPath || id !== autoFetchId.current) return;
+        if (id !== autoFetchId.current) return;
+        if (!repoPath) {
+          // File not in repo — load template, clear stale banner
+          setData(getTemplateData(tower, cap));
+          setDirty(false);
+          setLoadedFile(`${filename} (template — not yet in repo)`);
+          setSourceRepoPath(undefined);
+          return;
+        }
         setLoadingFile(filename);
         const buffer = await fetchFileContent(repoPath);
         if (id !== autoFetchId.current || dirtyRef.current) return;
@@ -99,7 +117,12 @@ export default function App() {
         setLoadedFile(filename);
         setSourceRepoPath(repoPath);
       } catch {
-        // keep template data — user can still work
+        if (id !== autoFetchId.current) return;
+        // Fetch failed — load template, clear stale banner
+        setData(getTemplateData(tower, cap));
+        setDirty(false);
+        setLoadedFile(undefined);
+        setSourceRepoPath(undefined);
       } finally {
         if (id === autoFetchId.current) setLoadingFile(undefined);
       }
