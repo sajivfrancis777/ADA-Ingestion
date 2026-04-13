@@ -1,8 +1,10 @@
 /**
  * AutocompleteCellEditor — AG Grid custom cell editor with search-as-you-type.
  *
- * Designed for large lists (5K+ items). Shows a filtered dropdown as the user
- * types, with keyboard navigation (Arrow Up/Down, Enter, Escape).
+ * Optimized for large lists (5K+ items):
+ *   - Debounced filtering (150ms) so typing is never blocked
+ *   - Virtualized dropdown: only renders visible items, not all 200
+ *   - Keyboard navigation (Arrow Up/Down, Enter, Escape)
  *
  * Usage in columnDefs:
  *   { field: 'Source System', cellEditor: AutocompleteCellEditor,
@@ -24,6 +26,8 @@ interface AutocompleteParams extends ICellEditorParams {
 }
 
 const MAX_VISIBLE = 12;
+const ITEM_HEIGHT = 28;
+const DEBOUNCE_MS = 150;
 
 const AutocompleteCellEditor = forwardRef(
   (props: AutocompleteParams, ref) => {
@@ -32,8 +36,10 @@ const AutocompleteCellEditor = forwardRef(
     const [filtered, setFiltered] = useState<string[]>([]);
     const [selectedIdx, setSelectedIdx] = useState(-1);
     const [isOpen, setIsOpen] = useState(true);
+    const [scrollTop, setScrollTop] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
+    const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
     // Focus input on mount
     useEffect(() => {
@@ -41,24 +47,33 @@ const AutocompleteCellEditor = forwardRef(
       inputRef.current?.select();
     }, []);
 
-    // Filter values on text change
+    // Debounced filter: waits 150ms after last keystroke before computing
     useEffect(() => {
-      if (!text.trim()) {
-        setFiltered(values.slice(0, maxResults));
-      } else {
-        const lower = text.toLowerCase();
-        const matches = values.filter(v => v.toLowerCase().includes(lower));
-        setFiltered(matches.slice(0, maxResults));
-      }
-      setSelectedIdx(-1);
+      clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        if (!text.trim()) {
+          setFiltered(values.slice(0, maxResults));
+        } else {
+          const lower = text.toLowerCase();
+          const matches = values.filter(v => v.toLowerCase().includes(lower));
+          setFiltered(matches.slice(0, maxResults));
+        }
+        setSelectedIdx(-1);
+      }, DEBOUNCE_MS);
+      return () => clearTimeout(debounceRef.current);
     }, [text, values, maxResults]);
 
-    // Scroll selected item into view
+    // Scroll selected item into view (virtualized)
     useEffect(() => {
       if (selectedIdx >= 0 && listRef.current) {
-        const items = listRef.current.children;
-        if (items[selectedIdx]) {
-          (items[selectedIdx] as HTMLElement).scrollIntoView({ block: 'nearest' });
+        const containerH = MAX_VISIBLE * ITEM_HEIGHT;
+        const itemTop = selectedIdx * ITEM_HEIGHT;
+        const itemBot = itemTop + ITEM_HEIGHT;
+        const st = listRef.current.scrollTop;
+        if (itemBot > st + containerH) {
+          listRef.current.scrollTop = itemBot - containerH;
+        } else if (itemTop < st) {
+          listRef.current.scrollTop = itemTop;
         }
       }
     }, [selectedIdx]);
@@ -113,6 +128,19 @@ const AutocompleteCellEditor = forwardRef(
       [filtered, selectedIdx, handleSelect, props]
     );
 
+    // Virtualization: compute which items are visible based on scroll position
+    const totalHeight = filtered.length * ITEM_HEIGHT;
+    const containerHeight = MAX_VISIBLE * ITEM_HEIGHT;
+    const startIdx = Math.floor(scrollTop / ITEM_HEIGHT);
+    const endIdx = Math.min(startIdx + MAX_VISIBLE + 2, filtered.length); // +2 buffer
+    const offsetY = startIdx * ITEM_HEIGHT;
+
+    const handleScroll = useCallback(() => {
+      if (listRef.current) {
+        setScrollTop(listRef.current.scrollTop);
+      }
+    }, []);
+
     return (
       <div style={{ position: 'relative', width: '100%' }}>
         <input
@@ -139,12 +167,13 @@ const AutocompleteCellEditor = forwardRef(
         {isOpen && filtered.length > 0 && (
           <div
             ref={listRef}
+            onScroll={handleScroll}
             style={{
               position: 'absolute',
               top: '100%',
               left: 0,
               right: 0,
-              maxHeight: MAX_VISIBLE * 28,
+              maxHeight: containerHeight,
               overflowY: 'auto',
               backgroundColor: '#fff',
               border: '1px solid #ccc',
@@ -154,26 +183,37 @@ const AutocompleteCellEditor = forwardRef(
               fontSize: 13,
             }}
           >
-            {filtered.map((item, idx) => (
-              <div
-                key={item}
-                onClick={() => handleSelect(item)}
-                onMouseEnter={() => setSelectedIdx(idx)}
-                style={{
-                  padding: '4px 8px',
-                  cursor: 'pointer',
-                  backgroundColor:
-                    idx === selectedIdx ? '#0071C5' : 'transparent',
-                  color: idx === selectedIdx ? '#fff' : '#333',
-                  borderBottom: '1px solid #f0f0f0',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {item}
+            {/* Virtualized inner container — only visible items rendered */}
+            <div style={{ height: totalHeight, position: 'relative' }}>
+              <div style={{ position: 'absolute', top: offsetY, left: 0, right: 0 }}>
+                {filtered.slice(startIdx, endIdx).map((item, i) => {
+                  const realIdx = startIdx + i;
+                  return (
+                    <div
+                      key={item}
+                      onClick={() => handleSelect(item)}
+                      onMouseEnter={() => setSelectedIdx(realIdx)}
+                      style={{
+                        height: ITEM_HEIGHT,
+                        padding: '4px 8px',
+                        cursor: 'pointer',
+                        backgroundColor:
+                          realIdx === selectedIdx ? '#0071C5' : 'transparent',
+                        color: realIdx === selectedIdx ? '#fff' : '#333',
+                        borderBottom: '1px solid #f0f0f0',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        lineHeight: `${ITEM_HEIGHT - 8}px`,
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {item}
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            </div>
             {filtered.length >= maxResults && (
               <div
                 style={{

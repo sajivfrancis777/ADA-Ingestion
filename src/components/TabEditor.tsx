@@ -204,6 +204,14 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
     setTimeout(() => _e.api.autoSizeAllColumns(), 0);
   }, []);
 
+  // Auto-size columns when switching tabs (grid instance stays alive)
+  useEffect(() => {
+    const api = gridRef.current?.api;
+    if (api) {
+      setTimeout(() => api.autoSizeAllColumns(), 0);
+    }
+  }, [activeTab]);
+
   // Count real (non-empty) rows for display
   const realRowCount = rawData.length;
 
@@ -241,12 +249,12 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
         </span>
       </div>
 
-      {/* AG Grid — Excel-like */}
+      {/* AG Grid — Excel-like.  Single instance kept alive across tabs;
+          columnDefs + rowData swap via React props (no destroy/recreate). */}
       <div className="grid-container" onContextMenu={handleCellContextMenu}>
         <AgGridReact
           ref={gridRef}
           theme={excelTheme}
-          key={tab.name}
           columnDefs={fullColumns}
           defaultColDef={defaultColDef}
           rowData={rowData}
