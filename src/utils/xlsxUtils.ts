@@ -44,14 +44,15 @@ export function loadWorkbook(data: ArrayBuffer): WorkbookData {
         const firstVal = String(row[fields[0]] ?? '');
         return !firstVal.startsWith('e.g.');
       });
-      // Coerce numeric-looking strings to actual numbers (fixes "Invalid Number" in AG Grid)
+      // Keep only the defined columns and coerce numeric strings to numbers
       const coerced = filtered.map(row => {
         const out: Record<string, unknown> = {};
-        for (const [k, v] of Object.entries(row)) {
+        for (const f of fields) {
+          const v = row[f];
           if (typeof v === 'string' && v !== '' && !isNaN(Number(v))) {
-            out[k] = Number(v);
+            out[f] = Number(v);
           } else {
-            out[k] = v;
+            out[f] = v ?? '';
           }
         }
         return out;
@@ -76,8 +77,15 @@ function buildXlsxWorkbook(data: WorkbookData): XLSX.WorkBook {
     const fields = getFieldNames(tab.columns);
     const rows = data[tab.name] ?? [];
 
+    // Strip rows to only the defined columns (discard enrichment columns)
+    const trimmed = rows.map(row => {
+      const out: Record<string, unknown> = {};
+      for (const f of fields) out[f] = row[f] ?? '';
+      return out;
+    });
+
     // Create worksheet from JSON with explicit header order
-    const ws = XLSX.utils.json_to_sheet(rows, { header: fields });
+    const ws = XLSX.utils.json_to_sheet(trimmed, { header: fields });
 
     // Set column widths to match our template
     ws['!cols'] = fields.map(f => ({ wch: Math.max(f.length, 12) }));
