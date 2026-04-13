@@ -40,9 +40,16 @@ export interface FileInfo {
   state: string;
 }
 
-/* ── Path index (cached in memory) ────────────────────────────── */
+/* ── Caches (in-memory, page lifetime) ────────────────────────── */
 
 let pathIndex: Map<string, string> | null = null;
+
+/**
+ * In-memory blob cache: SHA → ArrayBuffer.
+ * Since SHA is content-addressed, the same SHA always yields the same bytes.
+ * Prevents redundant API calls when switching back to a previously loaded file.
+ */
+const blobCache = new Map<string, ArrayBuffer>();
 
 /**
  * Fetch the full recursive tree from GitHub and build a path→SHA index.
@@ -138,6 +145,7 @@ export async function resolveCapabilityBasePath(
  */
 export function invalidateTreeCache(): void {
   pathIndex = null;
+  blobCache.clear();
   sessionStorage.removeItem('iao-github-tree');
 }
 
@@ -171,6 +179,10 @@ export async function fetchFileContent(repoPath: string): Promise<ArrayBuffer> {
   const sha = index.get(repoPath);
   if (!sha) throw new Error(`File not found in repo: ${repoPath}`);
 
+  // Return cached blob if we already fetched this SHA
+  const cached = blobCache.get(sha);
+  if (cached) return cached;
+
   const res = await fetch(`${API_BASE}/git/blobs/${sha}`, {
     headers: apiHeaders(),
   });
@@ -191,7 +203,9 @@ export async function fetchFileContent(repoPath: string): Promise<ArrayBuffer> {
   for (let i = 0; i < raw.length; i++) {
     bytes[i] = raw.charCodeAt(i);
   }
-  return bytes.buffer;
+  const buffer = bytes.buffer;
+  blobCache.set(sha, buffer);
+  return buffer;
 }
 
 /**
