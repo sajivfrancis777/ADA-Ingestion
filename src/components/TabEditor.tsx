@@ -53,51 +53,62 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   const containerRef = useRef<HTMLDivElement>(null);
 
   const tab = TAB_DEFINITIONS[activeTab];
-  const rawData = data[tab.name] ?? [];
 
-  // ── Grid owns its data ────────────────────────────────────────
-  // AG Grid is self-mutating: cell edits modify node.data in-place.
-  // We NEVER flow edited data back through the rowData prop.
-  // Instead, rowData is set only for external events (tab switch,
-  // file load, tower change).  We detect external changes by
-  // tracking the data prop identity with a ref.
-  const prevDataRef = useRef(data);
-  const prevTabRef = useRef(activeTab);
+  // ── AG Grid owns the data — React NEVER pushes rowData after mount ──
+  //
+  // Problem: passing rowData as a reactive prop causes AG Grid to do a
+  // full row replacement on every React re-render where the reference
+  // changes.  This discards in-flight edits.
+  //
+  // Solution: we give AG Grid its initial data via rowData prop (once),
+  // then set rowData to undefined so React stops controlling it.
+  // All subsequent data changes go through the Grid API.
+  //
+  // initialDataRef holds the rowData for the very first render only.
+  // After onGridReady fires, we set it to undefined.
+
   const gridApiReady = useRef(false);
+  const prevDataIdentity = useRef(data);
+  const prevActiveTab = useRef(activeTab);
 
-  // Compute current rowData for the grid
-  const currentRowData = useMemo(() => {
-    return rawData.length > 0
-      ? rawData
+  /** Build row array for a given tab, with empty rows if needed. */
+  const buildRows = useCallback((tabName: string): Record<string, unknown>[] => {
+    const rows = data[tabName] ?? [];
+    return rows.length > 0
+      ? rows
       : Array.from({ length: DEFAULT_EMPTY_ROWS }, () => ({} as Record<string, unknown>));
-  }, [rawData]);
+  }, [data]);
 
-  // When external data changes (data prop identity changes, or tab switches),
-  // push new data to the grid via API.  On initial mount, rowData prop handles it.
+  // Initial data for the first render's rowData prop
+  const [initialRowData] = useState(() => buildRows(tab.name));
+
+  // After grid is ready, push data through API for external changes only
   useEffect(() => {
-    const dataChanged = data !== prevDataRef.current;
-    const tabChanged = activeTab !== prevTabRef.current;
-    prevDataRef.current = data;
-    prevTabRef.current = activeTab;
+    if (!gridApiReady.current) return;
+    const dataChanged = data !== prevDataIdentity.current;
+    const tabChanged = activeTab !== prevActiveTab.current;
+    prevDataIdentity.current = data;
+    prevActiveTab.current = activeTab;
 
-    if ((dataChanged || tabChanged) && gridApiReady.current) {
+    if (dataChanged || tabChanged) {
       const api = gridRef.current?.api;
       if (api) {
-        api.setGridOption('rowData', currentRowData);
+        api.setGridOption('rowData', buildRows(tab.name));
+        setTimeout(() => api.autoSizeAllColumns(), 0);
       }
     }
-  }, [data, activeTab, currentRowData]);
+  }, [data, activeTab, buildRows, tab.name]);
 
   /** Extract current rows from the grid (reads AG Grid's internal state). */
   const extractRows = useCallback((): Record<string, unknown>[] => {
     const api = gridRef.current?.api;
-    if (!api) return rawData;
+    if (!api) return data[tab.name] ?? [];
     const rows: Record<string, unknown>[] = [];
     api.forEachNode(node => {
       if (node.data) rows.push({ ...node.data });
     });
     return rows;
-  }, [rawData]);
+  }, [data, tab.name]);
 
   /** Flush current tab's grid data to parent, then return merged workbook data. */
   const flushToParent = useCallback((): WorkbookData => {
@@ -150,11 +161,11 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
     ...(tab.columns as (ColDef | ColGroupDef)[]),
   ], [leadColumns, tab.columns]);
 
-  /** Notify parent of structural changes (add/delete/paste rows). */
+  /** Notify parent of structural changes (add/delete/paste rows).
+   *  Only marks dirty — does NOT push data back through React state. */
   const notifyParent = useCallback(() => {
-    const rows = extractRows();
-    onChange(tab.name, rows);
-  }, [extractRows, tab.name, onChange]);
+    if (onDirty) onDirty();
+  }, [onDirty]);
 
   const showToast = useCallback((msg: string) => {
     clearTimeout(toastTimer.current);
@@ -255,20 +266,11 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
 
   const onGridReady = useCallback((_e: GridReadyEvent) => {
     gridApiReady.current = true;
-    // Auto-size all columns to fit their content width
     setTimeout(() => _e.api.autoSizeAllColumns(), 0);
   }, []);
 
-  // Auto-size columns when switching tabs (grid instance stays alive)
-  useEffect(() => {
-    const api = gridRef.current?.api;
-    if (api) {
-      setTimeout(() => api.autoSizeAllColumns(), 0);
-    }
-  }, [activeTab]);
-
   // Count real (non-empty) rows for display
-  const realRowCount = rawData.length;
+  const realRowCount = (data[tab.name] ?? []).length;
 
   return (
     <div className="tab-editor" ref={containerRef} tabIndex={0}>
@@ -319,16 +321,18 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
           theme={excelTheme}
           columnDefs={fullColumns}
           defaultColDef={defaultColDef}
-          rowData={currentRowData}
+          rowData={initialRowData}
           rowSelection="multiple"
           onCellValueChanged={(_e: CellValueChangedEvent) => { if (onDirty) onDirty(); }}
           onGridReady={onGridReady}
           singleClickEdit={true}
+          stopEditingWhenCellsLoseFocus={true}
           undoRedoCellEditing={true}
           undoRedoCellEditingLimit={20}
           enableCellTextSelection={true}
           suppressRowClickSelection={true}
           getMainMenuItems={getMainMenuItems}
+          loadThemeGoogleFonts={false}
         />
 
         {/* Custom right-click context menu */}
