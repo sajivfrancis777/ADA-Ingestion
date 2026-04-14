@@ -158,6 +158,7 @@ const AutocompleteCellEditor = forwardRef(
       <div
         ref={listRef}
         onScroll={handleScroll}
+        onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
         style={{
           position: 'fixed',
           top: dropdownPos.top,
@@ -181,8 +182,11 @@ const AutocompleteCellEditor = forwardRef(
               return (
                 <div
                   key={item}
-                  onMouseDown={e => e.preventDefault()}
-                  onClick={() => handleSelect(item)}
+                  onMouseDown={e => {
+                    e.preventDefault();   // keep focus on input
+                    e.stopPropagation();  // block AG Grid click-away detection
+                    handleSelect(item);   // commit value BEFORE AG Grid cancels edit
+                  }}
                   onMouseEnter={() => setSelectedIdx(realIdx)}
                   style={{
                     height: ITEM_HEIGHT,
