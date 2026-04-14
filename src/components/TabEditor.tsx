@@ -91,7 +91,6 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
 
   /** Push a tab's data from cache to the live grid. */
   const pushTabToGrid = useCallback((tabName: string) => {
-    console.log('[PushTab]', tabName, new Error().stack?.split('\n')[2]?.trim());
     const api = gridRef.current?.api;
     if (!api) return;
     api.setGridOption('rowData', makeRows(tabName, tabCache.current));
@@ -106,9 +105,7 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   // AG Grid has already committed the value to node.data before this fires.
   // Calling setGridOption('rowData') here would interfere with AG Grid's
   // internal event pipeline and cause the edit to appear to revert.
-  const handleCellValueChanged = useCallback((e: CellValueChangedEvent) => {
-    // Debug: trace every cell edit (remove once confirmed working)
-    console.log('[CellEdit]', e.colDef.field, JSON.stringify(e.oldValue), '→', JSON.stringify(e.newValue));
+  const handleCellValueChanged = useCallback((_e: CellValueChangedEvent) => {
     // Cache the current grid state so tab-switch / save / download see edits
     const api = gridRef.current?.api;
     if (api) {
@@ -127,7 +124,6 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
       return { ...tabCache.current };
     },
     loadData: (newData: WorkbookData): void => {
-      console.log('[LoadData] called', new Error().stack?.split('\n').slice(1, 4).map(s => s.trim()).join(' < '));
       // Replace entire cache and reload the visible tab
       tabCache.current = { ...newData };
       if (gridApiReady.current) {
@@ -279,7 +275,7 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   }, [notifyParent]);
 
   const onGridReady = useCallback((_e: GridReadyEvent) => {
-    console.log('[GridReady]', tab.name);
+
     // Push initial data via cache — NOT via React state
     _e.api.setGridOption('rowData', makeRows(tab.name, tabCache.current));
     gridApiReady.current = true;

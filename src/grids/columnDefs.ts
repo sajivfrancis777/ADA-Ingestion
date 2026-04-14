@@ -3,8 +3,9 @@
  * Flows tab uses simplified 14-column layout — enrichment fills the rest.
  */
 import type { ColDef, ColGroupDef } from 'ag-grid-community';
-import AutocompleteCellEditor from './AutocompleteCellEditor';
-import { ALL_SYSTEMS, DB_OPTIONS, PLATFORM_OPTIONS, SYSTEM_DEFAULTS } from '../data/systemRegistry';
+// TODO: Re-enable when AutocompleteCellEditor AG Grid v32 lifecycle issue is resolved
+// import AutocompleteCellEditor from './AutocompleteCellEditor';
+import { /* ALL_SYSTEMS, */ DB_OPTIONS, PLATFORM_OPTIONS, SYSTEM_DEFAULTS } from '../data/systemRegistry';
 
 // ─── Reusable cell editors ───────────────────────────────────────
 const FREQUENCY_VALUES = ['Real-Time', 'Near Real-Time', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'On-Demand', 'Batch'];
@@ -85,9 +86,12 @@ const flowsColumns: (ColDef | ColGroupDef)[] = [
     headerName: 'Application Architecture',
     marryChildren: true,
     children: [
-      { field: 'Source System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, valueSetter: systemAutoFillSetter('Source DB Platform', 'Source Tech Platform') },
+      // TODO: Re-enable AutocompleteCellEditor once AG Grid v32 custom editor lifecycle is fixed
+      // Original: { field: 'Source System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, valueSetter: systemAutoFillSetter('Source DB Platform', 'Source Tech Platform') },
+      { field: 'Source System', width: 180, valueSetter: systemAutoFillSetter('Source DB Platform', 'Source Tech Platform') },
       { field: 'Source Lane', width: 160 },
-      { field: 'Target System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, valueSetter: systemAutoFillSetter('Target DB Platform', 'Target Tech Platform') },
+      // Original: { field: 'Target System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, valueSetter: systemAutoFillSetter('Target DB Platform', 'Target Tech Platform') },
+      { field: 'Target System', width: 180, valueSetter: systemAutoFillSetter('Target DB Platform', 'Target Tech Platform') },
       { field: 'Target Lane', width: 160 },
       { field: 'Interface / Technology', width: 180, ...selectEditor(INTERFACE_VALUES) },
       { field: 'Frequency', width: 140, ...selectEditor(FREQUENCY_VALUES) },
