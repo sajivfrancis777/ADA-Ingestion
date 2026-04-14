@@ -47,10 +47,26 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
   const tab = TAB_DEFINITIONS[activeTab];
   const rawData = data[tab.name] ?? [];
 
-  // If tab is empty, pre-fill with empty rows so users can highlight row 1 and paste
-  const rowData = useMemo(() => {
-    if (rawData.length > 0) return rawData;
-    return Array.from({ length: DEFAULT_EMPTY_ROWS }, () => ({} as Record<string, unknown>));
+  // ── Break the edit feedback loop ──────────────────────────────
+  // AG Grid is self-mutating: edits modify node.data in-place.
+  // If we feed edited rows back through the rowData prop, AG Grid
+  // does a full row replacement (no getRowId) and can discard
+  // in-flight edits.  Fix: track the last array WE sent to the
+  // parent so we can skip the reactive update when it echoes back.
+  const lastSentRef = useRef<Record<string, unknown>[]>();
+  const [gridRowData, setGridRowData] = useState<Record<string, unknown>[]>(() =>
+    rawData.length > 0 ? rawData : Array.from({ length: DEFAULT_EMPTY_ROWS }, () => ({} as Record<string, unknown>))
+  );
+
+  // Only push new data to the grid for EXTERNAL changes (tab switch,
+  // file load, tower change) — NOT for our own edit notifications.
+  useEffect(() => {
+    if (rawData === lastSentRef.current) return; // echo from our own edit — skip
+    setGridRowData(
+      rawData.length > 0
+        ? rawData
+        : Array.from({ length: DEFAULT_EMPTY_ROWS }, () => ({} as Record<string, unknown>))
+    );
   }, [rawData]);
 
   /** Row number column (pinned left, non-editable) + checkbox selection */
@@ -99,6 +115,7 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
     api.forEachNode(node => {
       if (node.data) rows.push({ ...node.data });
     });
+    lastSentRef.current = rows;   // tag so the echo is skipped in useEffect
     onChange(tab.name, rows);
   }, [tab.name, onChange]);
 
@@ -257,7 +274,7 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
           theme={excelTheme}
           columnDefs={fullColumns}
           defaultColDef={defaultColDef}
-          rowData={rowData}
+          rowData={gridRowData}
           rowSelection="multiple"
           onCellValueChanged={(_e: CellValueChangedEvent) => notifyParent()}
           onGridReady={onGridReady}
