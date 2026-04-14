@@ -97,8 +97,28 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
     setTimeout(() => api.autoSizeAllColumns(), 0);
   }, []);
 
-  // Stable cell-edit callback — only marks dirty, zero React state involvement
+  // Track active tab name via ref (accessible in stable callbacks)
+  const activeTabNameRef = useRef(tab.name);
+  activeTabNameRef.current = tab.name;
+
+  // Cell edit callback — mimics upload: extract → cache → force-push.
+  // Upload works because it calls api.setGridOption('rowData', rows).
+  // We do the exact same thing here, per cell edit, to guarantee persistence.
+  const cellEditGuard = useRef(false);
   const handleCellValueChanged = useCallback((_e: CellValueChangedEvent) => {
+    if (cellEditGuard.current) return; // prevent re-entrance from setGridOption
+    const api = gridRef.current?.api;
+    if (api) {
+      // 1. Extract all rows (including this edit) — same as flush()
+      const rows: Record<string, unknown>[] = [];
+      api.forEachNode(node => { if (node.data) rows.push({ ...node.data }); });
+      // 2. Cache — same as flush()
+      tabCache.current[activeTabNameRef.current] = rows;
+      // 3. Force-push back to grid — same code path as upload/loadData
+      cellEditGuard.current = true;
+      api.setGridOption('rowData', rows.map(r => ({ ...r })));
+      cellEditGuard.current = false;
+    }
     if (onDirtyRef.current) onDirtyRef.current();
   }, []);
 
