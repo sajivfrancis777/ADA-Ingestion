@@ -51,8 +51,8 @@ export default function App() {
   const [cap, setCap] = useState(firstCap);
   const [release, setRelease] = useState<Release>('All');
   const [state, setState] = useState<FlowState>('Current');
-  // Load from localStorage if available, otherwise template
-  const [data, setData] = useState<WorkbookData>(() =>
+  // Initial data for TabEditor — only used on first mount
+  const [initialData] = useState<WorkbookData>(() =>
     loadFromLocal(TOWERS[0].id, firstCap, 'All', 'Current') ?? getTemplateData(TOWERS[0].id, firstCap)
   );
   const [dirty, setDirty] = useState(false);
@@ -89,10 +89,9 @@ export default function App() {
    * Skips if localStorage has a saved draft or if the user has unsaved edits.
    */
   useEffect(() => {
-    // If there's a saved local draft for this context, use it immediately
     const localData = loadFromLocal(tower, cap, release, state);
     if (localData) {
-      setData(localData);
+      editorRef.current?.loadData(localData);
       setDirty(false);
       setLoadedFile(undefined);
       setSourceRepoPath(undefined);
@@ -110,8 +109,7 @@ export default function App() {
         const repoPath = await resolveFilePath(tower, cap, filename);
         if (id !== autoFetchId.current) return;
         if (!repoPath) {
-          // File not in repo — load template, clear stale banner
-          setData(getTemplateData(tower, cap));
+          editorRef.current?.loadData(getTemplateData(tower, cap));
           setDirty(false);
           setLoadedFile(`${filename} (template — not yet in repo)`);
           setSourceRepoPath(undefined);
@@ -121,14 +119,13 @@ export default function App() {
         const buffer = await fetchFileContent(repoPath);
         if (id !== autoFetchId.current || dirtyRef.current) return;
         const wb = loadWorkbook(buffer);
-        setData(wb);
+        editorRef.current?.loadData(wb);
         setDirty(false);
         setLoadedFile(filename);
         setSourceRepoPath(repoPath);
       } catch {
         if (id !== autoFetchId.current) return;
-        // Fetch failed — load template, clear stale banner
-        setData(getTemplateData(tower, cap));
+        editorRef.current?.loadData(getTemplateData(tower, cap));
         setDirty(false);
         setLoadedFile(undefined);
         setSourceRepoPath(undefined);
@@ -146,7 +143,7 @@ export default function App() {
     const newCaps = CAPABILITIES[newTower] ?? [];
     const newCap = newCaps.length > 0 ? newCaps[0].id : '';
     if (newCaps.length > 0) setCap(newCap);
-    setData(loadFromLocal(newTower, newCap, release, state) ?? getTemplateData(newTower, newCap));
+    editorRef.current?.loadData(loadFromLocal(newTower, newCap, release, state) ?? getTemplateData(newTower, newCap));
     setDirty(false);
     setSaveStatus('idle');
     setLastSaved(getLastSaved(newTower, newCap, release, state));
@@ -159,7 +156,7 @@ export default function App() {
       return;
     }
     setCap(newCap);
-    setData(loadFromLocal(tower, newCap, release, state) ?? getTemplateData(tower, newCap));
+    editorRef.current?.loadData(loadFromLocal(tower, newCap, release, state) ?? getTemplateData(tower, newCap));
     setDirty(false);
     setSaveStatus('idle');
     setLastSaved(getLastSaved(tower, newCap, release, state));
@@ -169,48 +166,35 @@ export default function App() {
 
   const handleLoadFile = useCallback((buffer: ArrayBuffer) => {
     const wb = loadWorkbook(buffer);
-    setData(wb);
+    editorRef.current?.loadData(wb);
     setDirty(false);
   }, []);
 
   const handleDownload = useCallback(() => {
-    // Flush current grid edits before download
-    const currentData = editorRef.current?.flush() ?? data;
+    const currentData = editorRef.current?.flush() ?? createBlankWorkbook();
     const prefix = release === 'All' ? '' : `${release}_`;
     const filename = `${prefix}${state}Flows.xlsx`;
     downloadWorkbook(currentData, filename);
     setDirty(false);
-  }, [release, state, data]);
-
-  const handleTabChange = useCallback((tabName: string, rows: Record<string, unknown>[]) => {
-    setData(prev => ({ ...prev, [tabName]: rows }));
-    setDirty(true);
-    setSaveStatus('idle');
-  }, []);
+  }, [release, state]);
 
   const handleSave = useCallback(() => {
-    // Flush current grid edits before saving
-    const currentData = editorRef.current?.flush() ?? data;
+    const currentData = editorRef.current?.flush() ?? createBlankWorkbook();
     setSaveStatus('saving');
     const ok = saveToLocal(tower, cap, release, state, currentData);
     if (ok) {
-      setData(currentData); // sync React state with grid truth
       setSaveStatus('saved');
       setDirty(false);
       setLastSaved(new Date().toISOString());
-      // Reset to idle after 3 seconds
       setTimeout(() => setSaveStatus('idle'), 3000);
     } else {
       setSaveStatus('idle');
       alert('Save failed — browser storage may be full.');
     }
-  }, [tower, cap, release, state, data]);
+  }, [tower, cap, release, state]);
 
   const handlePushToGitHub = useCallback(async () => {
-    // Flush current grid edits before pushing
-    const currentData = editorRef.current?.flush() ?? data;
-    setData(currentData);
-    // Auto-save locally first
+    const currentData = editorRef.current?.flush() ?? createBlankWorkbook();
     saveToLocal(tower, cap, release, state, currentData);
     setGithubStatus('pushing');
     setGithubMessage('');
@@ -224,7 +208,7 @@ export default function App() {
       setGithubStatus('error');
       setGithubMessage(result.message);
     }
-  }, [tower, cap, release, state, data, sourceRepoPath]);
+  }, [tower, cap, release, state, sourceRepoPath]);
 
   const handleTokenModalClose = useCallback(() => {
     setTokenModalOpen(false);
@@ -253,7 +237,7 @@ export default function App() {
       // 1. Check localStorage first
       const local = loadFromLocal(fileTower, capId, info.release, info.state);
       if (local) {
-        setData(local);
+        editorRef.current?.loadData(local);
         setDirty(false);
         setLoadedFile(`${filename} (from saved draft)`);
         setLastSaved(getLastSaved(fileTower, capId, info.release, info.state));
@@ -264,7 +248,7 @@ export default function App() {
       // 2. Try GitHub
       const repoPath = await resolveFilePath(fileTower, capId, filename);
       if (!repoPath) {
-        setData(getTemplateData(fileTower, capId));
+        editorRef.current?.loadData(getTemplateData(fileTower, capId));
         setDirty(false);
         setLoadedFile(`${filename} (template — not yet in repo)`);
         setSaveStatus('idle');
@@ -273,13 +257,12 @@ export default function App() {
       }
       const buffer = await fetchFileContent(repoPath);
       const wb = loadWorkbook(buffer);
-      setData(wb);
+      editorRef.current?.loadData(wb);
       setDirty(false);
       setLoadedFile(filename);
       setSourceRepoPath(repoPath);
     } catch (err) {
-      // On error, still fall back to template data so user has something
-      setData(getTemplateData(fileTower, capId));
+      editorRef.current?.loadData(getTemplateData(fileTower, capId));
       setDirty(false);
       setFetchError(err instanceof Error ? err.message : 'Failed to fetch file');
     } finally {
@@ -287,7 +270,7 @@ export default function App() {
     }
   }, [dirty, tower, cap]);
 
-  const hasData = Object.values(data).some(rows => rows.length > 0);
+  const hasData = true;  // Grid always has data (template or loaded)
 
   return (
     <div className="app">
@@ -371,7 +354,7 @@ export default function App() {
 
           {/* Embedded sheet editor */}
           <div className="sheet-frame">
-            <TabEditor ref={editorRef} data={data} onChange={handleTabChange} onDirty={handleDirty} />
+            <TabEditor ref={editorRef} initialData={initialData} onDirty={handleDirty} />
           </div>
         </div>
       </div>
