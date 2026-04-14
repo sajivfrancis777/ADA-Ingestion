@@ -42,6 +42,7 @@ const AutocompleteCellEditor = forwardRef(
     const inputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+    const stoppedRef = useRef(false);   // guard against double stopEditing calls
 
     // Focus input on mount
     useEffect(() => {
@@ -83,9 +84,15 @@ const AutocompleteCellEditor = forwardRef(
     // AG Grid interface — use ref so getValue() always returns the latest value
     // even if React hasn't re-rendered yet after setText()
     useImperativeHandle(ref, () => ({
-      getValue: () => valueRef.current,
+      getValue: () => {
+        console.log('[AutoComplete] getValue() →', JSON.stringify(valueRef.current));
+        return valueRef.current;
+      },
       isCancelBeforeStart: () => false,
-      isCancelAfterEnd: () => false,
+      isCancelAfterEnd: () => {
+        console.log('[AutoComplete] isCancelAfterEnd() → false');
+        return false;
+      },
     }));
 
     const handleSelect = useCallback(
@@ -93,8 +100,12 @@ const AutocompleteCellEditor = forwardRef(
         valueRef.current = value;          // sync update before stopEditing
         setText(value);
         setIsOpen(false);
-        // Tell AG Grid we're done editing
-        setTimeout(() => props.stopEditing(), 0);
+        // Tell AG Grid we're done editing — guard against double calls
+        if (!stoppedRef.current) {
+          stoppedRef.current = true;
+          console.log('[AutoComplete] stopEditing via handleSelect, value:', JSON.stringify(value));
+          props.stopEditing();
+        }
       },
       [props]
     );
@@ -117,11 +128,16 @@ const AutocompleteCellEditor = forwardRef(
           } else {
             // Accept typed text as-is
             setIsOpen(false);
-            setTimeout(() => props.stopEditing(), 0);
+            if (!stoppedRef.current) {
+              stoppedRef.current = true;
+              console.log('[AutoComplete] stopEditing via Enter, value:', JSON.stringify(valueRef.current));
+              props.stopEditing();
+            }
           }
         } else if (e.key === 'Escape') {
           e.stopPropagation();
           setIsOpen(false);
+          stoppedRef.current = true;
           props.stopEditing(true);
         } else if (e.key === 'Tab') {
           if (selectedIdx >= 0 && selectedIdx < filtered.length) {
@@ -235,6 +251,16 @@ const AutocompleteCellEditor = forwardRef(
             valueRef.current = e.target.value;
             setText(e.target.value);
             setIsOpen(true);
+          }}
+          onBlur={() => {
+            // When focus leaves the input (click outside), explicitly commit
+            // the edit BEFORE AG Grid's stopEditingWhenCellsLoseFocus fires.
+            // This ensures getValue() is called while the component is alive.
+            if (!stoppedRef.current) {
+              stoppedRef.current = true;
+              console.log('[AutoComplete] stopEditing via onBlur, value:', JSON.stringify(valueRef.current));
+              props.stopEditing();
+            }
           }}
           onKeyDown={handleKeyDown}
           style={{

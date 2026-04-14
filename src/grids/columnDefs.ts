@@ -25,6 +25,7 @@ function systemAutoFillSetter(dbField: string, platField: string) {
   return (params: { data: Record<string, unknown>; newValue: unknown; colDef: { field?: string } }) => {
     const field = params.colDef.field;
     if (!field) return false;
+    console.log('[ValueSetter]', field, JSON.stringify(params.data[field]), '→', JSON.stringify(params.newValue));
     params.data[field] = params.newValue;
     const sys = String(params.newValue || '');
     const defaults = (SYSTEM_DEFAULTS as Record<string, { db: string; platform: string }>)[sys];
