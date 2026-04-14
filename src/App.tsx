@@ -76,6 +76,12 @@ export default function App() {
   // Keep dirtyRef in sync for the async effect
   useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
 
+  // Stable callback so TabEditor doesn't re-render when App state changes
+  const handleDirty = useCallback(() => {
+    setDirty(true);
+    setSaveStatus('idle');
+  }, []);
+
   /**
    * Auto-fetch the XLSX for the current tower/cap/release/state from GitHub
    * whenever navigation changes. Shows real repo data instead of template.
@@ -364,7 +370,7 @@ export default function App() {
 
           {/* Embedded sheet editor */}
           <div className="sheet-frame">
-            <TabEditor ref={editorRef} data={data} onChange={handleTabChange} onDirty={() => { setDirty(true); setSaveStatus('idle'); }} />
+            <TabEditor ref={editorRef} data={data} onChange={handleTabChange} onDirty={handleDirty} />
           </div>
         </div>
       </div>

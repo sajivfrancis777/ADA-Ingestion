@@ -4,7 +4,7 @@
  * Excel-like UX: compact rows, row numbers, clipboard paste, visible grid lines,
  * checkbox multi-select, Ctrl+C/V/X/A/Delete support.
  */
-import { useState, useCallback, useRef, useMemo, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect, useImperativeHandle, forwardRef, memo } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { themeQuartz, colorSchemeLightCold } from 'ag-grid-community';
 import { TAB_DEFINITIONS, defaultColDef } from '../grids/columnDefs';
@@ -53,6 +53,16 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   const containerRef = useRef<HTMLDivElement>(null);
 
   const tab = TAB_DEFINITIONS[activeTab];
+
+  // Stable ref for onDirty so the grid callback never changes identity
+  const onDirtyRef = useRef(onDirty);
+  onDirtyRef.current = onDirty;
+
+  // Stable callback for AG Grid — never changes identity, prevents
+  // AG Grid v32 from processing a config update on every React render
+  const handleCellValueChanged = useCallback((_e: CellValueChangedEvent) => {
+    if (onDirtyRef.current) onDirtyRef.current();
+  }, []);
 
   // ── AG Grid owns the data — NO rowData prop ─────────────────
   //
@@ -322,7 +332,7 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
           columnDefs={fullColumns}
           defaultColDef={defaultColDef}
           rowSelection="multiple"
-          onCellValueChanged={(_e: CellValueChangedEvent) => { if (onDirty) onDirty(); }}
+          onCellValueChanged={handleCellValueChanged}
           onGridReady={onGridReady}
           singleClickEdit={true}
           stopEditingWhenCellsLoseFocus={true}
@@ -350,4 +360,4 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   );
 });
 
-export default TabEditor;
+export default memo(TabEditor);
