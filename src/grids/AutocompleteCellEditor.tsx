@@ -18,6 +18,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { createPortal } from 'react-dom';
 import type { ICellEditorParams } from 'ag-grid-community';
 
 interface AutocompleteParams extends ICellEditorParams {
@@ -144,6 +145,82 @@ const AutocompleteCellEditor = forwardRef(
       }
     }, []);
 
+    // Compute portal dropdown position from the input element's bounding rect
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+    useEffect(() => {
+      if (!isOpen || !inputRef.current) return;
+      const rect = inputRef.current.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom, left: rect.left, width: rect.width });
+    }, [isOpen, text]); // recalc when dropdown opens or text changes (layout shift)
+
+    // Build the dropdown element (rendered via portal to document.body)
+    const dropdownEl = isOpen && filtered.length > 0 ? createPortal(
+      <div
+        ref={listRef}
+        onScroll={handleScroll}
+        style={{
+          position: 'fixed',
+          top: dropdownPos.top,
+          left: dropdownPos.left,
+          width: dropdownPos.width,
+          maxHeight: containerHeight,
+          overflowY: 'auto',
+          backgroundColor: '#fff',
+          border: '1px solid #ccc',
+          borderRadius: 4,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 99999,
+          fontSize: 13,
+        }}
+      >
+        {/* Virtualized inner container — only visible items rendered */}
+        <div style={{ height: totalHeight, position: 'relative' }}>
+          <div style={{ position: 'absolute', top: offsetY, left: 0, right: 0 }}>
+            {filtered.slice(startIdx, endIdx).map((item, i) => {
+              const realIdx = startIdx + i;
+              return (
+                <div
+                  key={item}
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => handleSelect(item)}
+                  onMouseEnter={() => setSelectedIdx(realIdx)}
+                  style={{
+                    height: ITEM_HEIGHT,
+                    padding: '4px 8px',
+                    cursor: 'pointer',
+                    backgroundColor:
+                      realIdx === selectedIdx ? '#0071C5' : 'transparent',
+                    color: realIdx === selectedIdx ? '#fff' : '#333',
+                    borderBottom: '1px solid #f0f0f0',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    lineHeight: `${ITEM_HEIGHT - 8}px`,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  {item}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {filtered.length >= maxResults && (
+          <div
+            style={{
+              padding: '4px 8px',
+              color: '#999',
+              fontStyle: 'italic',
+              fontSize: 11,
+            }}
+          >
+            Type more to narrow results…
+          </div>
+        )}
+      </div>,
+      document.body
+    ) : null;
+
     return (
       <div style={{ position: 'relative', width: '100%' }}>
         <input
@@ -151,7 +228,7 @@ const AutocompleteCellEditor = forwardRef(
           type="text"
           value={text}
           onChange={e => {
-            valueRef.current = e.target.value;  // keep ref in sync
+            valueRef.current = e.target.value;
             setText(e.target.value);
             setIsOpen(true);
           }}
@@ -168,71 +245,7 @@ const AutocompleteCellEditor = forwardRef(
           }}
           placeholder="Type to search systems…"
         />
-        {isOpen && filtered.length > 0 && (
-          <div
-            ref={listRef}
-            onScroll={handleScroll}
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              maxHeight: containerHeight,
-              overflowY: 'auto',
-              backgroundColor: '#fff',
-              border: '1px solid #ccc',
-              borderRadius: 4,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              zIndex: 9999,
-              fontSize: 13,
-            }}
-          >
-            {/* Virtualized inner container — only visible items rendered */}
-            <div style={{ height: totalHeight, position: 'relative' }}>
-              <div style={{ position: 'absolute', top: offsetY, left: 0, right: 0 }}>
-                {filtered.slice(startIdx, endIdx).map((item, i) => {
-                  const realIdx = startIdx + i;
-                  return (
-                    <div
-                      key={item}
-                      onMouseDown={e => e.preventDefault()}   // prevent input blur → AG Grid cancel
-                      onClick={() => handleSelect(item)}
-                      onMouseEnter={() => setSelectedIdx(realIdx)}
-                      style={{
-                        height: ITEM_HEIGHT,
-                        padding: '4px 8px',
-                        cursor: 'pointer',
-                        backgroundColor:
-                          realIdx === selectedIdx ? '#0071C5' : 'transparent',
-                        color: realIdx === selectedIdx ? '#fff' : '#333',
-                        borderBottom: '1px solid #f0f0f0',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        lineHeight: `${ITEM_HEIGHT - 8}px`,
-                        boxSizing: 'border-box',
-                      }}
-                    >
-                      {item}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            {filtered.length >= maxResults && (
-              <div
-                style={{
-                  padding: '4px 8px',
-                  color: '#999',
-                  fontStyle: 'italic',
-                  fontSize: 11,
-                }}
-              >
-                Type more to narrow results…
-              </div>
-            )}
-          </div>
-        )}
+        {dropdownEl}
       </div>
     );
   }

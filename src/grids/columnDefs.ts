@@ -84,9 +84,9 @@ const flowsColumns: (ColDef | ColGroupDef)[] = [
     headerName: 'Application Architecture',
     marryChildren: true,
     children: [
-      { field: 'Source System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, cellEditorPopup: true, valueSetter: systemAutoFillSetter('Source DB Platform', 'Source Tech Platform') },
+      { field: 'Source System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, valueSetter: systemAutoFillSetter('Source DB Platform', 'Source Tech Platform') },
       { field: 'Source Lane', width: 160 },
-      { field: 'Target System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, cellEditorPopup: true, valueSetter: systemAutoFillSetter('Target DB Platform', 'Target Tech Platform') },
+      { field: 'Target System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, valueSetter: systemAutoFillSetter('Target DB Platform', 'Target Tech Platform') },
       { field: 'Target Lane', width: 160 },
       { field: 'Interface / Technology', width: 180, ...selectEditor(INTERFACE_VALUES) },
       { field: 'Frequency', width: 140, ...selectEditor(FREQUENCY_VALUES) },
