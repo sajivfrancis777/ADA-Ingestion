@@ -4,7 +4,7 @@
  * Excel-like UX: compact rows, row numbers, clipboard paste, visible grid lines,
  * checkbox multi-select, Ctrl+C/V/X/A/Delete support.
  */
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { themeQuartz, colorSchemeLightCold } from 'ag-grid-community';
 import { TAB_DEFINITIONS, defaultColDef } from '../grids/columnDefs';
@@ -32,12 +32,20 @@ const excelTheme = themeQuartz.withPart(colorSchemeLightCold).withParams({
 /** Number of pre-populated empty rows per tab (lets users paste directly). */
 const DEFAULT_EMPTY_ROWS = 50;
 
+/** Imperative handle so App can extract current grid data before save/download. */
+export interface TabEditorHandle {
+  /** Return the current grid data for ALL tabs (merges grid state into data). */
+  flush: () => WorkbookData;
+}
+
 interface TabEditorProps {
   data: WorkbookData;
   onChange: (tabName: string, rows: Record<string, unknown>[]) => void;
+  onDirty?: () => void;
 }
 
-export default function TabEditor({ data, onChange }: TabEditorProps) {
+const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
+  function TabEditor({ data, onChange, onDirty }, ref) {
   const [activeTab, setActiveTab] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -47,27 +55,61 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
   const tab = TAB_DEFINITIONS[activeTab];
   const rawData = data[tab.name] ?? [];
 
-  // ── Break the edit feedback loop ──────────────────────────────
-  // AG Grid is self-mutating: edits modify node.data in-place.
-  // If we feed edited rows back through the rowData prop, AG Grid
-  // does a full row replacement (no getRowId) and can discard
-  // in-flight edits.  Fix: track the last array WE sent to the
-  // parent so we can skip the reactive update when it echoes back.
-  const lastSentRef = useRef<Record<string, unknown>[]>();
-  const [gridRowData, setGridRowData] = useState<Record<string, unknown>[]>(() =>
-    rawData.length > 0 ? rawData : Array.from({ length: DEFAULT_EMPTY_ROWS }, () => ({} as Record<string, unknown>))
-  );
+  // ── Grid owns its data ────────────────────────────────────────
+  // AG Grid is self-mutating: cell edits modify node.data in-place.
+  // We NEVER flow edited data back through the rowData prop.
+  // Instead, rowData is set only for external events (tab switch,
+  // file load, tower change).  We detect external changes by
+  // tracking the data prop identity with a ref.
+  const prevDataRef = useRef(data);
+  const prevTabRef = useRef(activeTab);
+  const gridApiReady = useRef(false);
 
-  // Only push new data to the grid for EXTERNAL changes (tab switch,
-  // file load, tower change) — NOT for our own edit notifications.
-  useEffect(() => {
-    if (rawData === lastSentRef.current) return; // echo from our own edit — skip
-    setGridRowData(
-      rawData.length > 0
-        ? rawData
-        : Array.from({ length: DEFAULT_EMPTY_ROWS }, () => ({} as Record<string, unknown>))
-    );
+  // Compute current rowData for the grid
+  const currentRowData = useMemo(() => {
+    return rawData.length > 0
+      ? rawData
+      : Array.from({ length: DEFAULT_EMPTY_ROWS }, () => ({} as Record<string, unknown>));
   }, [rawData]);
+
+  // When external data changes (data prop identity changes, or tab switches),
+  // push new data to the grid via API.  On initial mount, rowData prop handles it.
+  useEffect(() => {
+    const dataChanged = data !== prevDataRef.current;
+    const tabChanged = activeTab !== prevTabRef.current;
+    prevDataRef.current = data;
+    prevTabRef.current = activeTab;
+
+    if ((dataChanged || tabChanged) && gridApiReady.current) {
+      const api = gridRef.current?.api;
+      if (api) {
+        api.setGridOption('rowData', currentRowData);
+      }
+    }
+  }, [data, activeTab, currentRowData]);
+
+  /** Extract current rows from the grid (reads AG Grid's internal state). */
+  const extractRows = useCallback((): Record<string, unknown>[] => {
+    const api = gridRef.current?.api;
+    if (!api) return rawData;
+    const rows: Record<string, unknown>[] = [];
+    api.forEachNode(node => {
+      if (node.data) rows.push({ ...node.data });
+    });
+    return rows;
+  }, [rawData]);
+
+  /** Flush current tab's grid data to parent, then return merged workbook data. */
+  const flushToParent = useCallback((): WorkbookData => {
+    const rows = extractRows();
+    onChange(tab.name, rows);
+    return { ...data, [tab.name]: rows };
+  }, [extractRows, onChange, tab.name, data]);
+
+  // Expose flush() to App via ref
+  useImperativeHandle(ref, () => ({
+    flush: flushToParent,
+  }), [flushToParent]);
 
   /** Row number column (pinned left, non-editable) + checkbox selection */
   const leadColumns: ColDef[] = useMemo(() => [
@@ -108,16 +150,11 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
     ...(tab.columns as (ColDef | ColGroupDef)[]),
   ], [leadColumns, tab.columns]);
 
+  /** Notify parent of structural changes (add/delete/paste rows). */
   const notifyParent = useCallback(() => {
-    const api = gridRef.current?.api;
-    if (!api) return;
-    const rows: Record<string, unknown>[] = [];
-    api.forEachNode(node => {
-      if (node.data) rows.push({ ...node.data });
-    });
-    lastSentRef.current = rows;   // tag so the echo is skipped in useEffect
+    const rows = extractRows();
     onChange(tab.name, rows);
-  }, [tab.name, onChange]);
+  }, [extractRows, tab.name, onChange]);
 
   const showToast = useCallback((msg: string) => {
     clearTimeout(toastTimer.current);
@@ -217,6 +254,7 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
   }, [notifyParent]);
 
   const onGridReady = useCallback((_e: GridReadyEvent) => {
+    gridApiReady.current = true;
     // Auto-size all columns to fit their content width
     setTimeout(() => _e.api.autoSizeAllColumns(), 0);
   }, []);
@@ -243,7 +281,14 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
           <button
             key={t.name}
             className={`tab-btn ${i === activeTab ? 'active' : ''}`}
-            onClick={() => setActiveTab(i)}
+            onClick={() => {
+              if (i !== activeTab) {
+                // Flush current tab's data to parent before switching
+                const rows = extractRows();
+                onChange(tab.name, rows);
+                setActiveTab(i);
+              }
+            }}
           >
             {t.name}
             {(data[t.name]?.length ?? 0) > 0 && (
@@ -274,9 +319,9 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
           theme={excelTheme}
           columnDefs={fullColumns}
           defaultColDef={defaultColDef}
-          rowData={gridRowData}
+          rowData={currentRowData}
           rowSelection="multiple"
-          onCellValueChanged={(_e: CellValueChangedEvent) => notifyParent()}
+          onCellValueChanged={(_e: CellValueChangedEvent) => { if (onDirty) onDirty(); }}
           onGridReady={onGridReady}
           singleClickEdit={true}
           undoRedoCellEditing={true}
@@ -300,4 +345,6 @@ export default function TabEditor({ data, onChange }: TabEditorProps) {
       </div>
     </div>
   );
-}
+});
+
+export default TabEditor;

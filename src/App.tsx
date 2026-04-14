@@ -10,6 +10,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import TowerSelector from './components/TowerSelector';
 import Toolbar from './components/Toolbar';
 import TabEditor from './components/TabEditor';
+import type { TabEditorHandle } from './components/TabEditor';
 import FileTree from './components/FileTree';
 import GitHubTokenModal from './components/GitHubTokenModal';
 import { TOWERS, CAPABILITIES } from './data/towerRegistry';
@@ -70,6 +71,7 @@ export default function App() {
   const [sourceRepoPath, setSourceRepoPath] = useState<string | undefined>();
   const autoFetchId = useRef(0);
   const dirtyRef = useRef(false);
+  const editorRef = useRef<TabEditorHandle>(null);
 
   // Keep dirtyRef in sync for the async effect
   useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
@@ -165,9 +167,11 @@ export default function App() {
   }, []);
 
   const handleDownload = useCallback(() => {
+    // Flush current grid edits before download
+    const currentData = editorRef.current?.flush() ?? data;
     const prefix = release === 'All' ? '' : `${release}_`;
     const filename = `${prefix}${state}Flows.xlsx`;
-    downloadWorkbook(data, filename);
+    downloadWorkbook(currentData, filename);
     setDirty(false);
   }, [release, state, data]);
 
@@ -178,9 +182,12 @@ export default function App() {
   }, []);
 
   const handleSave = useCallback(() => {
+    // Flush current grid edits before saving
+    const currentData = editorRef.current?.flush() ?? data;
     setSaveStatus('saving');
-    const ok = saveToLocal(tower, cap, release, state, data);
+    const ok = saveToLocal(tower, cap, release, state, currentData);
     if (ok) {
+      setData(currentData); // sync React state with grid truth
       setSaveStatus('saved');
       setDirty(false);
       setLastSaved(new Date().toISOString());
@@ -193,11 +200,14 @@ export default function App() {
   }, [tower, cap, release, state, data]);
 
   const handlePushToGitHub = useCallback(async () => {
+    // Flush current grid edits before pushing
+    const currentData = editorRef.current?.flush() ?? data;
+    setData(currentData);
     // Auto-save locally first
-    saveToLocal(tower, cap, release, state, data);
+    saveToLocal(tower, cap, release, state, currentData);
     setGithubStatus('pushing');
     setGithubMessage('');
-    const result = await saveToGitHub(tower, cap, release, state, data, sourceRepoPath);
+    const result = await saveToGitHub(tower, cap, release, state, currentData, sourceRepoPath);
     if (result.ok) {
       setGithubStatus('pushed');
       setGithubMessage(result.message);
@@ -354,7 +364,7 @@ export default function App() {
 
           {/* Embedded sheet editor */}
           <div className="sheet-frame">
-            <TabEditor data={data} onChange={handleTabChange} />
+            <TabEditor ref={editorRef} data={data} onChange={handleTabChange} onDirty={() => { setDirty(true); setSaveStatus('idle'); }} />
           </div>
         </div>
       </div>
