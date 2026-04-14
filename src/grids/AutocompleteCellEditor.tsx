@@ -33,6 +33,7 @@ const AutocompleteCellEditor = forwardRef(
   (props: AutocompleteParams, ref) => {
     const { values = [], maxResults = 200 } = props;
     const [text, setText] = useState(String(props.value ?? ''));
+    const valueRef = useRef(String(props.value ?? ''));   // sync mirror for getValue()
     const [filtered, setFiltered] = useState<string[]>([]);
     const [selectedIdx, setSelectedIdx] = useState(-1);
     const [isOpen, setIsOpen] = useState(true);
@@ -78,15 +79,17 @@ const AutocompleteCellEditor = forwardRef(
       }
     }, [selectedIdx]);
 
-    // AG Grid interface
+    // AG Grid interface — use ref so getValue() always returns the latest value
+    // even if React hasn't re-rendered yet after setText()
     useImperativeHandle(ref, () => ({
-      getValue: () => text,
+      getValue: () => valueRef.current,
       isCancelBeforeStart: () => false,
       isCancelAfterEnd: () => false,
     }));
 
     const handleSelect = useCallback(
       (value: string) => {
+        valueRef.current = value;          // sync update before stopEditing
         setText(value);
         setIsOpen(false);
         // Tell AG Grid we're done editing
@@ -148,6 +151,7 @@ const AutocompleteCellEditor = forwardRef(
           type="text"
           value={text}
           onChange={e => {
+            valueRef.current = e.target.value;  // keep ref in sync
             setText(e.target.value);
             setIsOpen(true);
           }}
@@ -191,6 +195,7 @@ const AutocompleteCellEditor = forwardRef(
                   return (
                     <div
                       key={item}
+                      onMouseDown={e => e.preventDefault()}   // prevent input blur → AG Grid cancel
                       onClick={() => handleSelect(item)}
                       onMouseEnter={() => setSelectedIdx(realIdx)}
                       style={{
