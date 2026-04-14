@@ -54,18 +54,18 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
 
   const tab = TAB_DEFINITIONS[activeTab];
 
-  // ── AG Grid owns the data — React NEVER pushes rowData after mount ──
+  // ── AG Grid owns the data — NO rowData prop ─────────────────
   //
-  // Problem: passing rowData as a reactive prop causes AG Grid to do a
-  // full row replacement on every React re-render where the reference
-  // changes.  This discards in-flight edits.
+  // AG Grid v32 React wrapper syncs ALL props (including rowData)
+  // to grid options on EVERY React re-render via setGridOption().
+  // This triggers a full row replacement that discards in-flight
+  // edits — even if the rowData reference hasn't changed.
   //
-  // Solution: we give AG Grid its initial data via rowData prop (once),
-  // then set rowData to undefined so React stops controlling it.
-  // All subsequent data changes go through the Grid API.
-  //
-  // initialDataRef holds the rowData for the very first render only.
-  // After onGridReady fires, we set it to undefined.
+  // Solution: NEVER pass rowData as a JSX prop.  Instead:
+  //   - onGridReady: push initial data via api.setGridOption()
+  //   - useEffect: push data only for external changes (file load,
+  //     tab switch, tower change) — detected via data identity ref
+  //   - Cell edits stay internal to AG Grid, zero React involvement
 
   const gridApiReady = useRef(false);
   const prevDataIdentity = useRef(data);
@@ -78,9 +78,6 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
       ? rows
       : Array.from({ length: DEFAULT_EMPTY_ROWS }, () => ({} as Record<string, unknown>));
   }, [data]);
-
-  // Initial data for the first render's rowData prop
-  const [initialRowData] = useState(() => buildRows(tab.name));
 
   // After grid is ready, push data through API for external changes only
   useEffect(() => {
@@ -265,9 +262,12 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   }, [notifyParent]);
 
   const onGridReady = useCallback((_e: GridReadyEvent) => {
+    // Push initial data via API — NOT via rowData prop
+    _e.api.setGridOption('rowData', buildRows(tab.name));
     gridApiReady.current = true;
+    prevDataIdentity.current = data;
     setTimeout(() => _e.api.autoSizeAllColumns(), 0);
-  }, []);
+  }, [buildRows, tab.name, data]);
 
   // Count real (non-empty) rows for display
   const realRowCount = (data[tab.name] ?? []).length;
@@ -321,7 +321,6 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
           theme={excelTheme}
           columnDefs={fullColumns}
           defaultColDef={defaultColDef}
-          rowData={initialRowData}
           rowSelection="multiple"
           onCellValueChanged={(_e: CellValueChangedEvent) => { if (onDirty) onDirty(); }}
           onGridReady={onGridReady}
