@@ -78,6 +78,7 @@ export default function App() {
 
   // Stable callback so TabEditor doesn't re-render when App state changes
   const handleDirty = useCallback(() => {
+    dirtyRef.current = true;   // synchronous — guards async auto-fetch
     setDirty(true);
     setSaveStatus('idle');
   }, []);

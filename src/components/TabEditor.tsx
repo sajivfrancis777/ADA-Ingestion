@@ -54,15 +54,13 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
 
   const tab = TAB_DEFINITIONS[activeTab];
 
-  // Stable ref for onDirty so the grid callback never changes identity
+  // ── Stable refs for callbacks — never change identity ──────
   const onDirtyRef = useRef(onDirty);
   onDirtyRef.current = onDirty;
-
-  // Stable callback for AG Grid — never changes identity, prevents
-  // AG Grid v32 from processing a config update on every React render
-  const handleCellValueChanged = useCallback((_e: CellValueChangedEvent) => {
-    if (onDirtyRef.current) onDirtyRef.current();
-  }, []);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const activeTabNameRef = useRef(tab.name);
+  activeTabNameRef.current = tab.name;
 
   // ── AG Grid owns the data — NO rowData prop ─────────────────
   //
@@ -75,11 +73,14 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   //   - onGridReady: push initial data via api.setGridOption()
   //   - useEffect: push data only for external changes (file load,
   //     tab switch, tower change) — detected via data identity ref
-  //   - Cell edits stay internal to AG Grid, zero React involvement
+  //   - Cell edits sync to React state immediately via onChange,
+  //     with a guard ref to prevent the useEffect from pushing back
 
   const gridApiReady = useRef(false);
   const prevDataIdentity = useRef(data);
   const prevActiveTab = useRef(activeTab);
+  /** Set to true when the data change came from a cell edit — useEffect skips the push. */
+  const cellEditPending = useRef(false);
 
   /** Build row array for a given tab, with empty rows if needed. */
   const buildRows = useCallback((tabName: string): Record<string, unknown>[] => {
@@ -89,9 +90,32 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
       : Array.from({ length: DEFAULT_EMPTY_ROWS }, () => ({} as Record<string, unknown>));
   }, [data]);
 
+  // Stable callback for AG Grid — never changes identity.
+  // On every cell edit, sync grid state → React state so `data` is always current.
+  // The cellEditPending flag prevents the useEffect from pushing data back.
+  const handleCellValueChanged = useCallback((_e: CellValueChangedEvent) => {
+    const api = gridRef.current?.api;
+    if (api) {
+      cellEditPending.current = true;
+      const rows: Record<string, unknown>[] = [];
+      api.forEachNode(node => { if (node.data) rows.push({ ...node.data }); });
+      onChangeRef.current(activeTabNameRef.current, rows);
+    }
+    if (onDirtyRef.current) onDirtyRef.current();
+  }, []);
+
   // After grid is ready, push data through API for external changes only
   useEffect(() => {
     if (!gridApiReady.current) return;
+
+    // Skip if the data change originated from a cell edit — grid already has it
+    if (cellEditPending.current) {
+      cellEditPending.current = false;
+      prevDataIdentity.current = data;
+      prevActiveTab.current = activeTab;
+      return;
+    }
+
     const dataChanged = data !== prevDataIdentity.current;
     const tabChanged = activeTab !== prevActiveTab.current;
     prevDataIdentity.current = data;
