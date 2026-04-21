@@ -88,6 +88,9 @@ const AutocompleteCellEditor = forwardRef(
         console.log('[AutoComplete] getValue() →', JSON.stringify(valueRef.current));
         return valueRef.current;
       },
+      // Tell AG Grid this is a popup editor — prevents stopEditingWhenCellsLoseFocus
+      // from killing the editor when focus moves to the portal-rendered dropdown.
+      isPopup: () => true,
       isCancelBeforeStart: () => false,
       isCancelAfterEnd: () => {
         console.log('[AutoComplete] isCancelAfterEnd() → false');
