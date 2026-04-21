@@ -176,6 +176,7 @@ const AutocompleteCellEditor = forwardRef(
     const dropdownEl = isOpen && filtered.length > 0 ? createPortal(
       <div
         ref={listRef}
+        className="ag-custom-component-popup"
         onScroll={handleScroll}
         onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
         style={{
