@@ -6,6 +6,15 @@
  *   - Virtualized dropdown: only renders visible items, not all 200
  *   - Keyboard navigation (Arrow Up/Down, Enter, Escape)
  *
+ * Architecture note:
+ *   The dropdown is rendered as a DIRECT CHILD of the editor (no portal).
+ *   With isPopup()=true, AG Grid wraps the editor in an .ag-popup-editor
+ *   container outside the grid scroll area. This means:
+ *     1. All clicks on the dropdown are "inside" AG Grid's popup → no
+ *        premature popup-close / stopEditing cancellation.
+ *     2. getValue() is called normally through AG Grid's editor lifecycle.
+ *     3. No race condition between popup service and handleSelect.
+ *
  * Usage in columnDefs:
  *   { field: 'Source System', cellEditor: AutocompleteCellEditor,
  *     cellEditorParams: { values: ALL_SYSTEMS } }
@@ -18,7 +27,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { createPortal } from 'react-dom';
 import type { ICellEditorParams } from 'ag-grid-community';
 
 interface AutocompleteParams extends ICellEditorParams {
@@ -84,33 +92,22 @@ const AutocompleteCellEditor = forwardRef(
     // AG Grid interface — use ref so getValue() always returns the latest value
     // even if React hasn't re-rendered yet after setText()
     useImperativeHandle(ref, () => ({
-      getValue: () => {
-        console.log('[AutoComplete] getValue() →', JSON.stringify(valueRef.current));
-        return valueRef.current;
-      },
-      // Tell AG Grid this is a popup editor — prevents stopEditingWhenCellsLoseFocus
-      // from killing the editor when focus moves to the portal-rendered dropdown.
+      getValue: () => valueRef.current,
+      // Popup editor: AG Grid renders this in .ag-popup-editor outside the
+      // grid scroll area. The dropdown (a direct child, not portaled) is inside
+      // this popup, so clicks on it won't trigger popup-close.
       isPopup: () => true,
       isCancelBeforeStart: () => false,
-      isCancelAfterEnd: () => {
-        console.log('[AutoComplete] isCancelAfterEnd() → false');
-        return false;
-      },
+      isCancelAfterEnd: () => false,
     }));
 
     const handleSelect = useCallback(
       (value: string) => {
-        valueRef.current = value;          // sync update before stopEditing
+        valueRef.current = value;
         setText(value);
         setIsOpen(false);
-        // Commit value directly to the grid data, bypassing AG Grid's
-        // getValue() lifecycle which can lose the value when the popup
-        // service or stopEditingWhenCellsLoseFocus fires first.
-        props.node.setDataValue(props.column, value);
-        // Tell AG Grid we're done editing — guard against double calls
         if (!stoppedRef.current) {
           stoppedRef.current = true;
-          console.log('[AutoComplete] stopEditing via handleSelect, value:', JSON.stringify(value));
           props.stopEditing();
         }
       },
@@ -137,7 +134,6 @@ const AutocompleteCellEditor = forwardRef(
             setIsOpen(false);
             if (!stoppedRef.current) {
               stoppedRef.current = true;
-              console.log('[AutoComplete] stopEditing via Enter, value:', JSON.stringify(valueRef.current));
               props.stopEditing();
             }
           }
@@ -168,87 +164,6 @@ const AutocompleteCellEditor = forwardRef(
       }
     }, []);
 
-    // Compute portal dropdown position from the input element's bounding rect
-    const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
-    useEffect(() => {
-      if (!isOpen || !inputRef.current) return;
-      const rect = inputRef.current.getBoundingClientRect();
-      setDropdownPos({ top: rect.bottom, left: rect.left, width: rect.width });
-    }, [isOpen, text]); // recalc when dropdown opens or text changes (layout shift)
-
-    // Build the dropdown element (rendered via portal to document.body)
-    const dropdownEl = isOpen && filtered.length > 0 ? createPortal(
-      <div
-        ref={listRef}
-        className="ag-custom-component-popup"
-        onScroll={handleScroll}
-        onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
-        style={{
-          position: 'fixed',
-          top: dropdownPos.top,
-          left: dropdownPos.left,
-          width: dropdownPos.width,
-          maxHeight: containerHeight,
-          overflowY: 'auto',
-          backgroundColor: '#fff',
-          border: '1px solid #ccc',
-          borderRadius: 4,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          zIndex: 99999,
-          fontSize: 13,
-        }}
-      >
-        {/* Virtualized inner container — only visible items rendered */}
-        <div style={{ height: totalHeight, position: 'relative' }}>
-          <div style={{ position: 'absolute', top: offsetY, left: 0, right: 0 }}>
-            {filtered.slice(startIdx, endIdx).map((item, i) => {
-              const realIdx = startIdx + i;
-              return (
-                <div
-                  key={item}
-                  onMouseDown={e => {
-                    e.preventDefault();   // keep focus on input
-                    e.stopPropagation();  // block AG Grid click-away detection
-                    handleSelect(item);   // commit value BEFORE AG Grid cancels edit
-                  }}
-                  onMouseEnter={() => setSelectedIdx(realIdx)}
-                  style={{
-                    height: ITEM_HEIGHT,
-                    padding: '4px 8px',
-                    cursor: 'pointer',
-                    backgroundColor:
-                      realIdx === selectedIdx ? '#0071C5' : 'transparent',
-                    color: realIdx === selectedIdx ? '#fff' : '#333',
-                    borderBottom: '1px solid #f0f0f0',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    lineHeight: `${ITEM_HEIGHT - 8}px`,
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  {item}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        {filtered.length >= maxResults && (
-          <div
-            style={{
-              padding: '4px 8px',
-              color: '#999',
-              fontStyle: 'italic',
-              fontSize: 11,
-            }}
-          >
-            Type more to narrow results…
-          </div>
-        )}
-      </div>,
-      document.body
-    ) : null;
-
     return (
       <div style={{ position: 'relative', width: '100%' }}>
         <input
@@ -259,16 +174,6 @@ const AutocompleteCellEditor = forwardRef(
             valueRef.current = e.target.value;
             setText(e.target.value);
             setIsOpen(true);
-          }}
-          onBlur={() => {
-            // When focus leaves the input (click outside), commit the value
-            // directly to the grid data BEFORE AG Grid's lifecycle fires.
-            if (!stoppedRef.current) {
-              stoppedRef.current = true;
-              props.node.setDataValue(props.column, valueRef.current);
-              console.log('[AutoComplete] stopEditing via onBlur, value:', JSON.stringify(valueRef.current));
-              props.stopEditing();
-            }
           }}
           onKeyDown={handleKeyDown}
           style={{
@@ -283,7 +188,76 @@ const AutocompleteCellEditor = forwardRef(
           }}
           placeholder="Type to search systems…"
         />
-        {dropdownEl}
+        {/* Dropdown rendered as direct child (NOT portaled).
+            AG Grid's .ag-popup-editor wrapper contains both the input and
+            dropdown, so clicks here are "inside" the popup — no race. */}
+        {isOpen && filtered.length > 0 && (
+          <div
+            ref={listRef}
+            onScroll={handleScroll}
+            onMouseDown={e => e.preventDefault()}
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              width: '100%',
+              maxHeight: containerHeight,
+              overflowY: 'auto',
+              backgroundColor: '#fff',
+              border: '1px solid #ccc',
+              borderRadius: 4,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              zIndex: 99999,
+              fontSize: 13,
+            }}
+          >
+            <div style={{ height: totalHeight, position: 'relative' }}>
+              <div style={{ position: 'absolute', top: offsetY, left: 0, right: 0 }}>
+                {filtered.slice(startIdx, endIdx).map((item, i) => {
+                  const realIdx = startIdx + i;
+                  return (
+                    <div
+                      key={item}
+                      onMouseDown={e => {
+                        e.preventDefault();
+                        handleSelect(item);
+                      }}
+                      onMouseEnter={() => setSelectedIdx(realIdx)}
+                      style={{
+                        height: ITEM_HEIGHT,
+                        padding: '4px 8px',
+                        cursor: 'pointer',
+                        backgroundColor:
+                          realIdx === selectedIdx ? '#0071C5' : 'transparent',
+                        color: realIdx === selectedIdx ? '#fff' : '#333',
+                        borderBottom: '1px solid #f0f0f0',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        lineHeight: `${ITEM_HEIGHT - 8}px`,
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {item}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {filtered.length >= maxResults && (
+              <div
+                style={{
+                  padding: '4px 8px',
+                  color: '#999',
+                  fontStyle: 'italic',
+                  fontSize: 11,
+                }}
+              >
+                Type more to narrow results…
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
