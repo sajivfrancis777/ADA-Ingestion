@@ -103,6 +103,10 @@ const AutocompleteCellEditor = forwardRef(
         valueRef.current = value;          // sync update before stopEditing
         setText(value);
         setIsOpen(false);
+        // Commit value directly to the grid data, bypassing AG Grid's
+        // getValue() lifecycle which can lose the value when the popup
+        // service or stopEditingWhenCellsLoseFocus fires first.
+        props.node.setDataValue(props.column, value);
         // Tell AG Grid we're done editing — guard against double calls
         if (!stoppedRef.current) {
           stoppedRef.current = true;
@@ -257,11 +261,11 @@ const AutocompleteCellEditor = forwardRef(
             setIsOpen(true);
           }}
           onBlur={() => {
-            // When focus leaves the input (click outside), explicitly commit
-            // the edit BEFORE AG Grid's stopEditingWhenCellsLoseFocus fires.
-            // This ensures getValue() is called while the component is alive.
+            // When focus leaves the input (click outside), commit the value
+            // directly to the grid data BEFORE AG Grid's lifecycle fires.
             if (!stoppedRef.current) {
               stoppedRef.current = true;
+              props.node.setDataValue(props.column, valueRef.current);
               console.log('[AutoComplete] stopEditing via onBlur, value:', JSON.stringify(valueRef.current));
               props.stopEditing();
             }

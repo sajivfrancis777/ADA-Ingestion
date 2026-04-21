@@ -11,7 +11,7 @@ import { TAB_DEFINITIONS, defaultColDef } from '../grids/columnDefs';
 import { useGridClipboard } from '../hooks/useGridClipboard';
 import type { GridClipboardEvent } from '../hooks/useGridClipboard';
 import type { WorkbookData } from '../utils/xlsxUtils';
-import type { ColDef, ColGroupDef, CellValueChangedEvent, GridReadyEvent, GetMainMenuItemsParams } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, CellValueChangedEvent, GridReadyEvent } from 'ag-grid-community';
 
 /** Custom Excel-like theme: compact rows, visible borders */
 const excelTheme = themeQuartz.withPart(colorSchemeLightCold).withParams({
@@ -230,20 +230,8 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
     }
   }, [notifyParent]);
 
-  const getMainMenuItems = useCallback((params: GetMainMenuItemsParams) => {
-    const field = params.column?.getColDef()?.field;
-    const defaults = params.defaultItems || [];
-    if (!field) return defaults;
-    return [
-      ...defaults,
-      'separator',
-      {
-        name: `Clear all "${field}" values`,
-        action: () => clearColumn(field),
-        icon: '<span style="font-size:14px">🗑️</span>',
-      },
-    ];
-  }, [clearColumn]);
+  // Note: getMainMenuItems removed — it requires ag-grid-enterprise.
+  // Clear-column is still available via right-click context menu below.
 
   // Custom right-click context menu (AG Grid Community doesn't have built-in)
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; field: string } | null>(null);
@@ -352,7 +340,6 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
           undoRedoCellEditingLimit={20}
           enableCellTextSelection={true}
           suppressRowClickSelection={true}
-          getMainMenuItems={getMainMenuItems}
           loadThemeGoogleFonts={false}
         />
 
