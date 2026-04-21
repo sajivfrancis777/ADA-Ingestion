@@ -862,7 +862,3 @@ body {
   padding: 6px 16px;
 }
 
-/* Ensure AG Grid popup editor wrapper doesn't clip the autocomplete dropdown */
-.ag-popup-editor {
-  overflow: visible !important;
-}

@@ -135,8 +135,6 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   /** Row number column (pinned left, non-editable) + checkbox selection */
   const leadColumns: ColDef[] = useMemo(() => [
     {
-      headerCheckboxSelection: true,
-      checkboxSelection: true,
       headerName: '',
       width: 42,
       minWidth: 42,
@@ -331,7 +329,7 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
           theme={excelTheme}
           columnDefs={fullColumns}
           defaultColDef={defaultColDef}
-          rowSelection="multiple"
+          rowSelection={{ mode: 'multiRow', headerCheckbox: true, enableClickSelection: false }}
           onCellValueChanged={handleCellValueChanged}
           onGridReady={onGridReady}
           singleClickEdit={true}
@@ -339,7 +337,6 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
           undoRedoCellEditing={true}
           undoRedoCellEditingLimit={20}
           enableCellTextSelection={true}
-          suppressRowClickSelection={true}
           loadThemeGoogleFonts={false}
         />
 
