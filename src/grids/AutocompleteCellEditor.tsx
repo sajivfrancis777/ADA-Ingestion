@@ -1,22 +1,15 @@
 /**
  * AutocompleteCellEditor — AG Grid custom cell editor with search-as-you-type.
  *
- * Optimized for large lists (5K+ items):
- *   - Debounced filtering (150ms) so typing is never blocked
- *   - Virtualized dropdown: only renders visible items, not all 200
- *   - Keyboard navigation (Arrow Up/Down, Enter, Escape)
+ * KEY DESIGN: No React portal. The dropdown is a direct child of the editor
+ * div. AG Grid renders popup editors (isPopup=true) in its own absolutely-
+ * positioned wrapper, so the dropdown is already outside the cell's
+ * overflow:hidden — no portal needed.
  *
- * Architecture:
- *   This is a POPUP editor (isPopup=true).  AG Grid popup editors are exempt
- *   from stopEditingWhenCellsLoseFocus — AG Grid does NOT auto-cancel when
- *   focus leaves the cell.  The component manages its own lifecycle: it calls
- *   stopEditing() when the user selects an item, presses Enter, or presses
- *   Escape.  The dropdown is portaled to document.body so it escapes any
- *   overflow:hidden ancestors.
- *
- * Usage in columnDefs:
- *   { field: 'Source System', cellEditor: AutocompleteCellEditor,
- *     cellEditorParams: { values: ALL_SYSTEMS } }
+ * This eliminates ALL portal-related bugs:
+ *   - No focus race with stopEditingWhenCellsLoseFocus
+ *   - No event propagation conflicts with AG Grid's document listeners
+ *   - No popup service click-outside false positives
  */
 import {
   forwardRef,
@@ -26,7 +19,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { createPortal } from 'react-dom';
 import type { ICellEditorParams } from 'ag-grid-community';
 
 interface AutocompleteParams extends ICellEditorParams {
@@ -34,9 +26,10 @@ interface AutocompleteParams extends ICellEditorParams {
   maxResults?: number;
 }
 
-const MAX_VISIBLE = 12;
-const ITEM_HEIGHT = 28;
+const MAX_VISIBLE = 10;
+const ITEM_HEIGHT = 30;
 const DEBOUNCE_MS = 150;
+const DROPDOWN_WIDTH = 320;
 
 const AutocompleteCellEditor = forwardRef(
   (props: AutocompleteParams, ref) => {
@@ -46,16 +39,18 @@ const AutocompleteCellEditor = forwardRef(
     const [filtered, setFiltered] = useState<string[]>([]);
     const [selectedIdx, setSelectedIdx] = useState(-1);
     const [isOpen, setIsOpen] = useState(true);
-    const [scrollTop, setScrollTop] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
+    const rootRef = useRef<HTMLDivElement>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout>>();
     const stoppedRef = useRef(false);
 
     // Focus input on mount
     useEffect(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
+      setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }, 0);
     }, []);
 
     // Debounced filter
@@ -89,29 +84,30 @@ const AutocompleteCellEditor = forwardRef(
       }
     }, [selectedIdx]);
 
-    // AG Grid editor interface — POPUP editor.
-    // isPopup=true tells AG Grid to skip stopEditingWhenCellsLoseFocus
-    // for this editor.  AG Grid will NOT auto-cancel when focus leaves
-    // the cell — we call stopEditing() ourselves.
+    // AG Grid editor interface
     useImperativeHandle(ref, () => ({
       getValue: () => valueRef.current,
       isPopup: () => true,
+      getPopupPosition: () => 'under' as const,
       isCancelBeforeStart: () => false,
       isCancelAfterEnd: () => false,
     }));
 
-    const handleSelect = useCallback(
+    const commitAndClose = useCallback(
       (value: string) => {
+        if (stoppedRef.current) return;
+        stoppedRef.current = true;
         valueRef.current = value;
-        setText(value);
-        setIsOpen(false);
-        if (!stoppedRef.current) {
-          stoppedRef.current = true;
-          props.stopEditing(false);
-        }
+        props.stopEditing(false);
       },
-      [props]
+      [props],
     );
+
+    const cancelAndClose = useCallback(() => {
+      if (stoppedRef.current) return;
+      stoppedRef.current = true;
+      props.stopEditing(true);
+    }, [props]);
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
@@ -127,144 +123,50 @@ const AutocompleteCellEditor = forwardRef(
           e.preventDefault();
           e.stopPropagation();
           if (selectedIdx >= 0 && selectedIdx < filtered.length) {
-            handleSelect(filtered[selectedIdx]);
+            commitAndClose(filtered[selectedIdx]);
           } else {
-            // Accept typed text as-is
-            valueRef.current = text;
-            setIsOpen(false);
-            if (!stoppedRef.current) {
-              stoppedRef.current = true;
-              props.stopEditing(false);
-            }
+            commitAndClose(text);
           }
         } else if (e.key === 'Escape') {
+          e.preventDefault();
           e.stopPropagation();
-          setIsOpen(false);
-          stoppedRef.current = true;
-          props.stopEditing(true);
+          cancelAndClose();
         } else if (e.key === 'Tab') {
           if (selectedIdx >= 0 && selectedIdx < filtered.length) {
-            handleSelect(filtered[selectedIdx]);
+            commitAndClose(filtered[selectedIdx]);
+          } else {
+            commitAndClose(text);
           }
         }
       },
-      [filtered, selectedIdx, handleSelect, props, text]
+      [filtered, selectedIdx, commitAndClose, cancelAndClose, text],
     );
 
-    // Virtualization
-    const totalHeight = filtered.length * ITEM_HEIGHT;
-    const containerHeight = MAX_VISIBLE * ITEM_HEIGHT;
-    const startIdx = Math.floor(scrollTop / ITEM_HEIGHT);
-    const endIdx = Math.min(startIdx + MAX_VISIBLE + 2, filtered.length);
-    const offsetY = startIdx * ITEM_HEIGHT;
-
-    const handleScroll = useCallback(() => {
-      if (listRef.current) {
-        setScrollTop(listRef.current.scrollTop);
-      }
-    }, []);
-
-    // Position the dropdown relative to the input
-    const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+    // Click outside detection — commit typed value
     useEffect(() => {
-      if (!isOpen || !inputRef.current) return;
-      const rect = inputRef.current.getBoundingClientRect();
-      setDropdownPos({ top: rect.bottom + 1, left: rect.left, width: Math.max(rect.width, 300) });
-    }, [isOpen, text]);
-
-    // Portal dropdown to document.body — escapes cell overflow:hidden.
-    // Events on the portal must be stopped from propagating to AG Grid's
-    // document-level listeners (popup service click-outside detection).
-    const dropdownEl = isOpen && filtered.length > 0 ? createPortal(
-      <div
-        ref={listRef}
-        onScroll={handleScroll}
-        onMouseDown={e => e.stopPropagation()}
-        onClick={e => e.stopPropagation()}
-        style={{
-          position: 'fixed',
-          top: dropdownPos.top,
-          left: dropdownPos.left,
-          width: dropdownPos.width,
-          maxHeight: containerHeight,
-          overflowY: 'auto',
-          backgroundColor: '#fff',
-          border: '1px solid #ccc',
-          borderRadius: 4,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          zIndex: 99999,
-          fontSize: 13,
-        }}
-      >
-        <div style={{ height: totalHeight, position: 'relative' }}>
-          <div style={{ position: 'absolute', top: offsetY, left: 0, right: 0 }}>
-            {filtered.slice(startIdx, endIdx).map((item, i) => {
-              const realIdx = startIdx + i;
-              return (
-                <div
-                  key={item}
-                  onMouseDown={e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleSelect(item);
-                  }}
-                  onMouseEnter={() => setSelectedIdx(realIdx)}
-                  style={{
-                    height: ITEM_HEIGHT,
-                    padding: '4px 8px',
-                    cursor: 'pointer',
-                    backgroundColor:
-                      realIdx === selectedIdx ? '#0071C5' : 'transparent',
-                    color: realIdx === selectedIdx ? '#fff' : '#333',
-                    borderBottom: '1px solid #f0f0f0',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    lineHeight: `${ITEM_HEIGHT - 8}px`,
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  {item}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        {filtered.length >= maxResults && (
-          <div style={{ padding: '4px 8px', color: '#999', fontStyle: 'italic', fontSize: 11 }}>
-            Type more to narrow results…
-          </div>
-        )}
-      </div>,
-      document.body
-    ) : null;
-
-    // Close editor when clicking outside (since AG Grid won't auto-close
-    // popup editors on focus loss).
-    useEffect(() => {
-      const handleClickOutside = (e: MouseEvent) => {
+      const handler = (e: MouseEvent) => {
         if (stoppedRef.current) return;
-        const target = e.target as HTMLElement;
-        // Check if click is inside the input or the dropdown portal
-        if (inputRef.current?.contains(target)) return;
-        if (listRef.current?.contains(target)) return;
-        // Click outside — commit typed value and close
-        stoppedRef.current = true;
-        props.stopEditing(false);
+        if (rootRef.current?.contains(e.target as Node)) return;
+        commitAndClose(valueRef.current);
       };
-      // Use capture phase + setTimeout so we don't interfere with
-      // the current click event that opened the editor
       const timer = setTimeout(() => {
-        document.addEventListener('mousedown', handleClickOutside);
-      }, 0);
+        document.addEventListener('mousedown', handler, true);
+      }, 50);
       return () => {
         clearTimeout(timer);
-        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('mousedown', handler, true);
       };
-    }, [props]);
+    }, [commitAndClose]);
+
+    const containerHeight = Math.min(filtered.length, MAX_VISIBLE) * ITEM_HEIGHT;
 
     return (
-      <>
+      <div
+        ref={rootRef}
+        style={{ width: DROPDOWN_WIDTH, background: '#fff' }}
+        onMouseDown={e => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
+      >
         <input
           ref={inputRef}
           type="text"
@@ -277,20 +179,67 @@ const AutocompleteCellEditor = forwardRef(
           onKeyDown={handleKeyDown}
           style={{
             width: '100%',
-            height: '100%',
+            height: 32,
             border: '2px solid #0071C5',
-            borderRadius: 3,
-            padding: '2px 6px',
+            borderRadius: isOpen && filtered.length > 0 ? '3px 3px 0 0' : 3,
+            padding: '2px 8px',
             fontSize: 13,
             boxSizing: 'border-box',
             outline: 'none',
           }}
           placeholder="Type to search systems…"
         />
-        {dropdownEl}
-      </>
+
+        {isOpen && filtered.length > 0 && (
+          <div
+            ref={listRef}
+            style={{
+              maxHeight: containerHeight,
+              overflowY: 'auto',
+              border: '1px solid #ccc',
+              borderTop: 'none',
+              borderRadius: '0 0 4px 4px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              background: '#fff',
+              fontSize: 13,
+            }}
+          >
+            {filtered.map((item, i) => (
+              <div
+                key={item}
+                onMouseDown={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  commitAndClose(item);
+                }}
+                onMouseEnter={() => setSelectedIdx(i)}
+                style={{
+                  height: ITEM_HEIGHT,
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  backgroundColor: i === selectedIdx ? '#0071C5' : 'transparent',
+                  color: i === selectedIdx ? '#fff' : '#333',
+                  borderBottom: '1px solid #f0f0f0',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  lineHeight: `${ITEM_HEIGHT - 8}px`,
+                  boxSizing: 'border-box',
+                }}
+              >
+                {item}
+              </div>
+            ))}
+            {filtered.length >= maxResults && (
+              <div style={{ padding: '4px 8px', color: '#999', fontStyle: 'italic', fontSize: 11 }}>
+                Type more to narrow results…
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     );
-  }
+  },
 );
 
 AutocompleteCellEditor.displayName = 'AutocompleteCellEditor';
