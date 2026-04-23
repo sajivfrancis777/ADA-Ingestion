@@ -2,7 +2,7 @@
  * AG Grid column definitions for all tabs.
  * Flows tab uses simplified 14-column layout — enrichment fills the rest.
  */
-import type { ColDef, ColGroupDef } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, ValueSetterParams } from 'ag-grid-community';
 import AutocompleteCellEditor from './AutocompleteCellEditor';
 import { ALL_SYSTEMS, DB_OPTIONS, PLATFORM_OPTIONS, SYSTEM_DEFAULTS } from '../data/systemRegistry';
 
@@ -22,16 +22,20 @@ const INTEGRATION_PATTERN_VALUES = ['Point-to-Point', 'Hub-Spoke', 'Publish-Subs
  * and Tech Platform cells are still empty, pre-fill them from SYSTEM_DEFAULTS.
  */
 function systemAutoFillSetter(dbField: string, platField: string) {
-  return (params: { data: Record<string, unknown>; newValue: unknown; colDef: { field?: string } }) => {
+  return (params: ValueSetterParams) => {
     const field = params.colDef.field;
     if (!field) return false;
-    console.log('[ValueSetter]', field, JSON.stringify(params.data[field]), '→', JSON.stringify(params.newValue));
     params.data[field] = params.newValue;
     const sys = String(params.newValue || '');
     const defaults = (SYSTEM_DEFAULTS as Record<string, { db: string; platform: string }>)[sys];
     if (defaults) {
       if (!params.data[dbField]) params.data[dbField] = defaults.db;
       if (!params.data[platField]) params.data[platField] = defaults.platform;
+    }
+    // Refresh auto-filled neighbor cells so the UI shows new values immediately
+    if (defaults && params.api) {
+      const cols = [dbField, platField];
+      setTimeout(() => params.api.refreshCells({ columns: cols }), 0);
     }
     return true;
   };

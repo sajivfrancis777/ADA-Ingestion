@@ -103,7 +103,11 @@ const AutocompleteCellEditor = forwardRef(
         setIsOpen(false);
         if (!stoppedRef.current) {
           stoppedRef.current = true;
-          props.stopEditing();
+          // Delay stopEditing by one microtask so AG Grid reads valueRef
+          // BEFORE the portal unmount triggers a focus-loss cancel.
+          // Without this, stopEditingWhenCellsLoseFocus can race ahead
+          // and revert the edit because the portaled dropdown disappears.
+          requestAnimationFrame(() => props.stopEditing(false));
         }
       },
       [props]
@@ -130,14 +134,14 @@ const AutocompleteCellEditor = forwardRef(
             setIsOpen(false);
             if (!stoppedRef.current) {
               stoppedRef.current = true;
-              props.stopEditing();
+              requestAnimationFrame(() => props.stopEditing(false));
             }
           }
         } else if (e.key === 'Escape') {
           e.stopPropagation();
           setIsOpen(false);
           stoppedRef.current = true;
-          props.stopEditing(true);
+          requestAnimationFrame(() => props.stopEditing(true));
         } else if (e.key === 'Tab') {
           if (selectedIdx >= 0 && selectedIdx < filtered.length) {
             handleSelect(filtered[selectedIdx]);
