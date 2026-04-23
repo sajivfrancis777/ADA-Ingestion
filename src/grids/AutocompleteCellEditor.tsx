@@ -100,14 +100,18 @@ const AutocompleteCellEditor = forwardRef(
       (value: string) => {
         valueRef.current = value;
         setText(value);
-        setIsOpen(false);
+        // Do NOT call setIsOpen(false) here — removing the portal triggers
+        // a browser blur event on the input, which makes AG Grid's
+        // stopEditingWhenCellsLoseFocus cancel the edit before our
+        // stopEditing(false) can run.  Instead, let stopEditing() unmount
+        // the entire editor component (including the portal) naturally.
         if (!stoppedRef.current) {
           stoppedRef.current = true;
-          // Delay stopEditing by one microtask so AG Grid reads valueRef
-          // BEFORE the portal unmount triggers a focus-loss cancel.
-          // Without this, stopEditingWhenCellsLoseFocus can race ahead
-          // and revert the edit because the portaled dropdown disappears.
-          requestAnimationFrame(() => props.stopEditing(false));
+          // Use setTimeout(0) to ensure we're outside the mousedown handler
+          // stack frame. requestAnimationFrame alone isn't reliable because
+          // React may batch the portal-removal state update and flush it
+          // before rAF fires, still causing the blur race.
+          setTimeout(() => props.stopEditing(false), 0);
         }
       },
       [props]
@@ -131,17 +135,15 @@ const AutocompleteCellEditor = forwardRef(
           } else {
             // Accept typed text as-is
             valueRef.current = text;
-            setIsOpen(false);
             if (!stoppedRef.current) {
               stoppedRef.current = true;
-              requestAnimationFrame(() => props.stopEditing(false));
+              setTimeout(() => props.stopEditing(false), 0);
             }
           }
         } else if (e.key === 'Escape') {
           e.stopPropagation();
-          setIsOpen(false);
           stoppedRef.current = true;
-          requestAnimationFrame(() => props.stopEditing(true));
+          setTimeout(() => props.stopEditing(true), 0);
         } else if (e.key === 'Tab') {
           if (selectedIdx >= 0 && selectedIdx < filtered.length) {
             handleSelect(filtered[selectedIdx]);
@@ -252,6 +254,18 @@ const AutocompleteCellEditor = forwardRef(
             setIsOpen(true);
           }}
           onKeyDown={handleKeyDown}
+          onBlur={() => {
+            // When stoppedRef is true, we've already committed a value and
+            // scheduled stopEditing(false).  If AG Grid's
+            // stopEditingWhenCellsLoseFocus fires first (blur race), it calls
+            // stopEditing(true) which cancels.  To prevent that, trigger our
+            // own stopEditing(false) synchronously on blur if a selection was
+            // already made.
+            if (stoppedRef.current) return;  // already handled
+            // No selection — accept whatever is typed
+            stoppedRef.current = true;
+            props.stopEditing(false);
+          }}
           style={{
             width: '100%',
             height: '100%',
