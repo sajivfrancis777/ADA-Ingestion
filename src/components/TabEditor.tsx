@@ -12,6 +12,8 @@ import { useGridClipboard } from '../hooks/useGridClipboard';
 import type { GridClipboardEvent } from '../hooks/useGridClipboard';
 import type { WorkbookData } from '../utils/xlsxUtils';
 import type { ColDef, ColGroupDef, CellValueChangedEvent, GridReadyEvent } from 'ag-grid-community';
+import DiagramPreview from './DiagramPreview';
+import type { FlowRow } from '../utils/flowsToMermaid';
 
 /** Custom Excel-like theme: compact rows, visible borders */
 const excelTheme = themeQuartz.withPart(colorSchemeLightCold).withParams({
@@ -55,6 +57,11 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   const containerRef = useRef<HTMLDivElement>(null);
 
   const tab = TAB_DEFINITIONS[activeTab];
+  const isFlowsTab = tab.name === 'Flows';
+
+  // ── Diagram preview state ─────────────────────────────────
+  const [showPreview, setShowPreview] = useState(false);
+  const [flowRows, setFlowRows] = useState<FlowRow[]>([]);
 
   // ── Stable ref for onDirty ─────────────────────────────────
   const onDirtyRef = useRef(onDirty);
@@ -112,6 +119,10 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
       const rows: Record<string, unknown>[] = [];
       api.forEachNode(node => { if (node.data) rows.push({ ...node.data }); });
       tabCache.current[activeTabNameRef.current] = rows;
+      // Update diagram preview if on Flows tab
+      if (activeTabNameRef.current === 'Flows') {
+        setFlowRows(rows as FlowRow[]);
+      }
     }
     if (onDirtyRef.current) onDirtyRef.current();
   }, []);
@@ -266,6 +277,10 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
     _e.api.setGridOption('rowData', makeRows(tab.name, tabCache.current));
     gridApiReady.current = true;
     setTimeout(() => _e.api.autoSizeAllColumns(), 0);
+    // Seed diagram preview with initial Flows data
+    if (tab.name === 'Flows') {
+      setFlowRows((tabCache.current['Flows'] ?? []) as FlowRow[]);
+    }
   }, [tab.name]);
 
   // When activeTab changes, save current tab to cache + load new tab from cache
@@ -276,6 +291,10 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
       tabCache.current[TAB_DEFINITIONS[prevTabRef.current].name] = extractGridRows();
       // Load the new tab from cache
       pushTabToGrid(tab.name);
+      // Sync diagram preview when switching to Flows
+      if (tab.name === 'Flows') {
+        setFlowRows((tabCache.current['Flows'] ?? []) as FlowRow[]);
+      }
     }
     prevTabRef.current = activeTab;
   }, [activeTab, tab.name, extractGridRows, pushTabToGrid]);
@@ -313,6 +332,27 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
         <button className="btn btn-add" onClick={addRow}>+ Add Row</button>
         <button className="btn btn-delete" onClick={deleteSelectedRows}>Delete Selected</button>
         <button className="btn btn-auto" onClick={autoSizeColumns} title="Auto-size all columns to fit content">↔ Auto-size Columns</button>
+        {isFlowsTab && (
+          <button
+            className={`btn ${showPreview ? 'btn-active' : ''}`}
+            onClick={() => {
+              if (!showPreview) {
+                // Sync flow rows when opening preview
+                const api = gridRef.current?.api;
+                if (api) {
+                  const rows: Record<string, unknown>[] = [];
+                  api.forEachNode(node => { if (node.data) rows.push({ ...node.data }); });
+                  setFlowRows(rows as FlowRow[]);
+                }
+              }
+              setShowPreview(v => !v);
+            }}
+            title="Toggle live diagram preview"
+            style={showPreview ? { background: '#0071C5', color: '#fff', borderColor: '#0071C5' } : undefined}
+          >
+            {showPreview ? '✕ Close Preview' : '◉ Diagram Preview'}
+          </button>
+        )}
         <span className="clipboard-hint">
           Ctrl+C Copy &nbsp;|&nbsp; Ctrl+V Paste &nbsp;|&nbsp; Ctrl+X Cut &nbsp;|&nbsp; Ctrl+A Select All &nbsp;|&nbsp; Del Clear
         </span>
@@ -321,10 +361,12 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
         </span>
       </div>
 
-      {/* AG Grid — Excel-like.  Single instance kept alive across tabs;
-          columnDefs + rowData swap via React props (no destroy/recreate). */}
-      <div className="grid-container" onContextMenu={handleCellContextMenu}>
-        <AgGridReact
+      {/* Grid + optional diagram preview split */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', gap: showPreview && isFlowsTab ? 8 : 0 }}>
+        {/* AG Grid */}
+        <div className="grid-container" onContextMenu={handleCellContextMenu}
+          style={showPreview && isFlowsTab ? { flex: '1 1 55%', minWidth: 0 } : { flex: 1 }}>
+          <AgGridReact
           ref={gridRef}
           theme={excelTheme}
           columnDefs={fullColumns}
@@ -349,6 +391,14 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
             <button onClick={() => { clearColumn(ctxMenu.field); setCtxMenu(null); }}>
               {'\ud83d\uddd1\ufe0f'} Clear all &quot;{ctxMenu.field}&quot; values
             </button>
+          </div>
+        )}
+      </div>
+
+        {/* Diagram preview pane */}
+        {showPreview && isFlowsTab && (
+          <div style={{ flex: '1 1 45%', minWidth: 300, minHeight: 0 }}>
+            <DiagramPreview rows={flowRows} visible={showPreview && isFlowsTab} />
           </div>
         )}
       </div>
