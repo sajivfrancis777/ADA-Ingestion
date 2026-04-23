@@ -7,12 +7,12 @@
  *   - Keyboard navigation (Arrow Up/Down, Enter, Escape)
  *
  * Architecture:
- *   This is an INLINE editor (isPopup=false). The dropdown is portaled to
- *   document.body so it escapes the cell's overflow:hidden. mousedown with
- *   preventDefault() on dropdown items keeps focus on the input, preventing
- *   stopEditingWhenCellsLoseFocus from firing. When handleSelect runs,
- *   it sets valueRef and calls stopEditing() — AG Grid then calls getValue()
- *   through its normal lifecycle. No popup service involvement at all.
+ *   This is a POPUP editor (isPopup=true).  AG Grid popup editors are exempt
+ *   from stopEditingWhenCellsLoseFocus — AG Grid does NOT auto-cancel when
+ *   focus leaves the cell.  The component manages its own lifecycle: it calls
+ *   stopEditing() when the user selects an item, presses Enter, or presses
+ *   Escape.  The dropdown is portaled to document.body so it escapes any
+ *   overflow:hidden ancestors.
  *
  * Usage in columnDefs:
  *   { field: 'Source System', cellEditor: AutocompleteCellEditor,
@@ -89,9 +89,13 @@ const AutocompleteCellEditor = forwardRef(
       }
     }, [selectedIdx]);
 
-    // AG Grid editor interface — INLINE editor (no isPopup)
+    // AG Grid editor interface — POPUP editor.
+    // isPopup=true tells AG Grid to skip stopEditingWhenCellsLoseFocus
+    // for this editor.  AG Grid will NOT auto-cancel when focus leaves
+    // the cell — we call stopEditing() ourselves.
     useImperativeHandle(ref, () => ({
       getValue: () => valueRef.current,
+      isPopup: () => true,
       isCancelBeforeStart: () => false,
       isCancelAfterEnd: () => false,
     }));
@@ -100,18 +104,10 @@ const AutocompleteCellEditor = forwardRef(
       (value: string) => {
         valueRef.current = value;
         setText(value);
-        // Do NOT call setIsOpen(false) here — removing the portal triggers
-        // a browser blur event on the input, which makes AG Grid's
-        // stopEditingWhenCellsLoseFocus cancel the edit before our
-        // stopEditing(false) can run.  Instead, let stopEditing() unmount
-        // the entire editor component (including the portal) naturally.
+        setIsOpen(false);
         if (!stoppedRef.current) {
           stoppedRef.current = true;
-          // Use setTimeout(0) to ensure we're outside the mousedown handler
-          // stack frame. requestAnimationFrame alone isn't reliable because
-          // React may batch the portal-removal state update and flush it
-          // before rAF fires, still causing the blur race.
-          setTimeout(() => props.stopEditing(false), 0);
+          props.stopEditing(false);
         }
       },
       [props]
@@ -135,15 +131,17 @@ const AutocompleteCellEditor = forwardRef(
           } else {
             // Accept typed text as-is
             valueRef.current = text;
+            setIsOpen(false);
             if (!stoppedRef.current) {
               stoppedRef.current = true;
-              setTimeout(() => props.stopEditing(false), 0);
+              props.stopEditing(false);
             }
           }
         } else if (e.key === 'Escape') {
           e.stopPropagation();
+          setIsOpen(false);
           stoppedRef.current = true;
-          setTimeout(() => props.stopEditing(true), 0);
+          props.stopEditing(true);
         } else if (e.key === 'Tab') {
           if (selectedIdx >= 0 && selectedIdx < filtered.length) {
             handleSelect(filtered[selectedIdx]);
@@ -242,6 +240,30 @@ const AutocompleteCellEditor = forwardRef(
       document.body
     ) : null;
 
+    // Close editor when clicking outside (since AG Grid won't auto-close
+    // popup editors on focus loss).
+    useEffect(() => {
+      const handleClickOutside = (e: MouseEvent) => {
+        if (stoppedRef.current) return;
+        const target = e.target as HTMLElement;
+        // Check if click is inside the input or the dropdown portal
+        if (inputRef.current?.contains(target)) return;
+        if (listRef.current?.contains(target)) return;
+        // Click outside — commit typed value and close
+        stoppedRef.current = true;
+        props.stopEditing(false);
+      };
+      // Use capture phase + setTimeout so we don't interfere with
+      // the current click event that opened the editor
+      const timer = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 0);
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, [props]);
+
     return (
       <>
         <input
@@ -254,18 +276,6 @@ const AutocompleteCellEditor = forwardRef(
             setIsOpen(true);
           }}
           onKeyDown={handleKeyDown}
-          onBlur={() => {
-            // When stoppedRef is true, we've already committed a value and
-            // scheduled stopEditing(false).  If AG Grid's
-            // stopEditingWhenCellsLoseFocus fires first (blur race), it calls
-            // stopEditing(true) which cancels.  To prevent that, trigger our
-            // own stopEditing(false) synchronously on blur if a selection was
-            // already made.
-            if (stoppedRef.current) return;  // already handled
-            // No selection — accept whatever is typed
-            stoppedRef.current = true;
-            props.stopEditing(false);
-          }}
           style={{
             width: '100%',
             height: '100%',
