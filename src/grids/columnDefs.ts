@@ -46,6 +46,7 @@ function selectEditor(values: string[]): Partial<ColDef> {
   return {
     cellEditor: 'agSelectCellEditor',
     cellEditorParams: { values },
+    cellEditorPopup: true,  // Prevents stopEditingWhenCellsLoseFocus from cancelling selection
   };
 }
 
