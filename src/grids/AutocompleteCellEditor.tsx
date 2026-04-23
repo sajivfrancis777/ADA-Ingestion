@@ -173,12 +173,14 @@ const AutocompleteCellEditor = forwardRef(
     }, [isOpen, text]);
 
     // Portal dropdown to document.body — escapes cell overflow:hidden.
-    // mousedown + preventDefault on items prevents focus loss from input,
-    // so stopEditingWhenCellsLoseFocus does NOT fire.
+    // Events on the portal must be stopped from propagating to AG Grid's
+    // document-level listeners (popup service click-outside detection).
     const dropdownEl = isOpen && filtered.length > 0 ? createPortal(
       <div
         ref={listRef}
         onScroll={handleScroll}
+        onMouseDown={e => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
         style={{
           position: 'fixed',
           top: dropdownPos.top,
@@ -202,11 +204,8 @@ const AutocompleteCellEditor = forwardRef(
                 <div
                   key={item}
                   onMouseDown={e => {
-                    // preventDefault keeps focus on the input — critical!
-                    // Without this, the browser moves focus to the div,
-                    // input fires blur, and stopEditingWhenCellsLoseFocus
-                    // cancels the edit before handleSelect can run.
                     e.preventDefault();
+                    e.stopPropagation();
                     handleSelect(item);
                   }}
                   onMouseEnter={() => setSelectedIdx(realIdx)}
