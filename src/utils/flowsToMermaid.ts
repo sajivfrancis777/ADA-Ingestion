@@ -19,8 +19,16 @@ export interface FlowRow {
   'Interface / Technology'?: string;
   'Frequency'?: string;
   'Data Description'?: string;
+  'Source DB Platform'?: string;
+  'Target DB Platform'?: string;
+  'Source Tech Platform'?: string;
+  'Target Tech Platform'?: string;
+  'Integration Pattern'?: string;
   [key: string]: unknown;
 }
+
+/** Architecture layer for diagram generation */
+export type ArchLayer = 'application' | 'data' | 'technology';
 
 interface MermaidNode {
   id: string;
@@ -69,24 +77,67 @@ const LANE_COLORS: [string, string][] = [
   ['fill:#FFF3E0', 'stroke:#FF9800'],   // Orange
 ];
 
+/** Layer-specific field mappings */
+const LAYER_CONFIG: Record<ArchLayer, {
+  title: string;
+  srcField: keyof FlowRow;
+  tgtField: keyof FlowRow;
+  srcLaneField: keyof FlowRow;
+  tgtLaneField: keyof FlowRow;
+  edgeField: keyof FlowRow;
+  nodeStyle: string;
+}> = {
+  application: {
+    title: 'Application Architecture',
+    srcField: 'Source System',
+    tgtField: 'Target System',
+    srcLaneField: 'Source Lane',
+    tgtLaneField: 'Target Lane',
+    edgeField: 'Interface / Technology',
+    nodeStyle: 'fill:#E8F0FE,stroke:#0071C5,stroke-width:2px,color:#1A237E',
+  },
+  data: {
+    title: 'Data Architecture',
+    srcField: 'Source DB Platform',
+    tgtField: 'Target DB Platform',
+    srcLaneField: 'Source Lane',
+    tgtLaneField: 'Target Lane',
+    edgeField: 'Data Description',
+    nodeStyle: 'fill:#BBDEFB,stroke:#1565C0,stroke-width:2px,color:#0D47A1',
+  },
+  technology: {
+    title: 'Technology Architecture',
+    srcField: 'Source Tech Platform',
+    tgtField: 'Target Tech Platform',
+    srcLaneField: 'Source Lane',
+    tgtLaneField: 'Target Lane',
+    edgeField: 'Integration Pattern',
+    nodeStyle: 'fill:#C8E6C9,stroke:#2E7D32,stroke-width:2px,color:#1B5E20',
+  },
+};
+
 /**
  * Convert an array of Flows tab rows into a Mermaid flowchart string.
+ * @param rows — Flows tab grid data
+ * @param layer — which architecture layer to render
+ * @param prefix — Mermaid ID prefix
  * Returns empty string if no valid hops found.
  */
-export function flowsToMermaid(rows: FlowRow[], prefix = 'FW'): string {
+export function flowsToMermaid(rows: FlowRow[], layer: ArchLayer = 'application', prefix = 'FW'): string {
+  const cfg = LAYER_CONFIG[layer];
   const nodes = new Map<string, MermaidNode>();
   const edges: MermaidEdge[] = [];
-  const lanes = new Map<string, string[]>(); // lane → [nodeIds]
+  const lanes = new Map<string, string[]>();
 
-  // Collect nodes and edges
   for (const row of rows) {
-    const src = String(row['Source System'] ?? '').trim();
-    const tgt = String(row['Target System'] ?? '').trim();
+    const src = String(row[cfg.srcField] ?? '').trim();
+    const tgt = String(row[cfg.tgtField] ?? '').trim();
     if (!src || !tgt) continue;
 
-    const srcLane = String(row['Source Lane'] ?? 'Other').trim() || 'Other';
-    const tgtLane = String(row['Target Lane'] ?? 'Other').trim() || 'Other';
-    const tech = String(row['Interface / Technology'] ?? '').trim();
+    // For data/tech layers, use the Flow Chain as grouping lane if no lane specified
+    const srcLane = String(row[cfg.srcLaneField] ?? '').trim() || String(row['Flow Chain'] ?? 'Other').trim() || 'Other';
+    const tgtLane = String(row[cfg.tgtLaneField] ?? '').trim() || String(row['Flow Chain'] ?? 'Other').trim() || 'Other';
+    const edgeLabel = String(row[cfg.edgeField] ?? '').trim();
 
     const srcId = sanitizeId(prefix, src);
     const tgtId = sanitizeId(prefix, tgt);
@@ -107,7 +158,7 @@ export function flowsToMermaid(rows: FlowRow[], prefix = 'FW'): string {
     edges.push({
       sourceId: srcId,
       targetId: tgtId,
-      label: tech ? truncate(tech) : '',
+      label: edgeLabel ? truncate(edgeLabel) : '',
     });
   }
 
@@ -160,8 +211,8 @@ export function flowsToMermaid(rows: FlowRow[], prefix = 'FW'): string {
   }
   lines.push('');
 
-  // Node styling
-  lines.push('    classDef default fill:#E8F0FE,stroke:#0071C5,stroke-width:2px,color:#1A237E');
+  // Node styling (layer-specific colors)
+  lines.push(`    classDef default ${cfg.nodeStyle}`);
   lines.push('');
 
   // Lane subgraph styles
