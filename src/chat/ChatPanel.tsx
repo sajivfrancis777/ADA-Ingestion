@@ -17,6 +17,7 @@ import {
   type ChatMessage,
 } from './chatService';
 import { PROMPT_TEMPLATES, TEMPLATE_CATEGORIES } from './promptTemplates';
+import ChatIcon from './ChatIcon';
 
 type ChatView = 'chat' | 'history' | 'templates' | 'admin';
 
@@ -33,6 +34,7 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
   const [view, setView] = useState<ChatView>('chat');
   const [sessions, setSessions] = useState<ChatMessage[][]>(() => loadChatHistory());
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [maximized, setMaximized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -104,12 +106,12 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
   if (!open) return null;
 
   return (
-    <div className="chat-overlay">
-      <div className="chat-panel">
+    <div className={`chat-overlay ${maximized ? 'chat-overlay-max' : ''}`}>
+      <div className={`chat-panel ${maximized ? 'chat-panel-max' : ''}`}>
         {/* Header */}
         <div className="chat-header">
           <div className="chat-header-left">
-            <span className="chat-logo">📐</span>
+            <span className="chat-logo"><ChatIcon size={28} color="#fff" /></span>
             <div>
               <h3 className="chat-title">Architecture Assistant</h3>
               <span className="chat-subtitle">IAO · IDM 2.0</span>
@@ -117,6 +119,7 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
           </div>
           <div className="chat-header-actions">
             <button className="chat-icon-btn" onClick={handleNewChat} title="New conversation">＋</button>
+            <button className="chat-icon-btn" onClick={() => setMaximized(m => !m)} title={maximized ? 'Restore' : 'Maximize'}>{maximized ? '⊖' : '⊕'}</button>
             <button className="chat-icon-btn" onClick={onClose} title="Close">✕</button>
           </div>
         </div>
@@ -141,7 +144,7 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
             <div className="chat-messages">
               {messages.length === 0 && (
                 <div className="chat-welcome">
-                  <div className="chat-welcome-icon">📐</div>
+                  <div className="chat-welcome-icon"><ChatIcon size={56} color="#0071C5" /></div>
                   <h4>Welcome, {user.displayName}</h4>
                   <p>Ask about architecture, integration patterns, system dependencies, or use a template to get started.</p>
                   <div className="chat-quick-actions">
@@ -156,7 +159,7 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
               {messages.map(msg => (
                 <div key={msg.id} className={`chat-msg chat-msg-${msg.role}`}>
                   <div className="chat-msg-avatar">
-                    {msg.role === 'user' ? '👤' : '📐'}
+                    {msg.role === 'user' ? '👤' : <ChatIcon size={18} color="#0071C5" />}
                   </div>
                   <div className="chat-msg-body">
                     <div className="chat-msg-meta">
@@ -169,7 +172,7 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
               ))}
               {loading && (
                 <div className="chat-msg chat-msg-assistant">
-                  <div className="chat-msg-avatar">📐</div>
+                  <div className="chat-msg-avatar"><ChatIcon size={18} color="#0071C5" /></div>
                   <div className="chat-msg-body">
                     <div className="chat-typing">
                       <span></span><span></span><span></span>

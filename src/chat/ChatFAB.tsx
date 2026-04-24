@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import ChatPanel from './ChatPanel';
 import UserProfilePanel from './UserProfilePanel';
+import ChatIcon from './ChatIcon';
 import { useAuth } from '../auth/AuthContext';
 
 export default function ChatFAB() {
@@ -42,7 +43,7 @@ export default function ChatFAB() {
           onClick={() => setChatOpen(v => !v)}
           title="Architecture Assistant"
         >
-          {chatOpen ? '✕' : '📐'}
+          {chatOpen ? '✕' : <ChatIcon size={26} color="#fff" />}
         </button>
       </div>
 
