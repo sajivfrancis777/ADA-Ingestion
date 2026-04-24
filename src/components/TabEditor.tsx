@@ -113,18 +113,27 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   // Calling setGridOption('rowData') here would interfere with AG Grid's
   // internal event pipeline and cause the edit to appear to revert.
   const handleCellValueChanged = useCallback((_e: CellValueChangedEvent) => {
-    // Cache the current grid state so tab-switch / save / download see edits
+    syncCacheAndPreview();
+    if (onDirtyRef.current) onDirtyRef.current();
+  }, []);
+
+  // Also cache on row data updated (fired by InlineSelectRenderer's applyTransaction)
+  const handleRowDataUpdated = useCallback(() => {
+    syncCacheAndPreview();
+    if (onDirtyRef.current) onDirtyRef.current();
+  }, []);
+
+  /** Sync grid rows to tabCache + diagram preview. */
+  const syncCacheAndPreview = useCallback(() => {
     const api = gridRef.current?.api;
     if (api) {
       const rows: Record<string, unknown>[] = [];
       api.forEachNode(node => { if (node.data) rows.push({ ...node.data }); });
       tabCache.current[activeTabNameRef.current] = rows;
-      // Update diagram preview if on Flows tab
       if (activeTabNameRef.current === 'Flows') {
         setFlowRows(rows as FlowRow[]);
       }
     }
-    if (onDirtyRef.current) onDirtyRef.current();
   }, []);
 
   // ── Imperative handle ──────────────────────────────────────
@@ -373,6 +382,7 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
           defaultColDef={defaultColDef}
           rowSelection={{ mode: 'multiRow', headerCheckbox: true, enableClickSelection: false }}
           onCellValueChanged={handleCellValueChanged}
+          onRowDataUpdated={handleRowDataUpdated}
           onGridReady={onGridReady}
           singleClickEdit={true}
           stopEditingWhenCellsLoseFocus={false}
