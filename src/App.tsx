@@ -13,6 +13,9 @@ import TabEditor from './components/TabEditor';
 import type { TabEditorHandle } from './components/TabEditor';
 import FileTree from './components/FileTree';
 import GitHubTokenModal from './components/GitHubTokenModal';
+import { AuthProvider } from './auth/AuthContext';
+import ChatFAB from './chat/ChatFAB';
+import './chat/chat.css';
 import { TOWERS, CAPABILITIES } from './data/towerRegistry';
 import { generateSampleData } from './data/sampleDataGenerator';
 import { loadWorkbook, downloadWorkbook, createBlankWorkbook } from './utils/xlsxUtils';
@@ -273,6 +276,7 @@ export default function App() {
   const hasData = true;  // Grid always has data (template or loaded)
 
   return (
+    <AuthProvider>
     <div className="app">
       {/* Header */}
       <header className="app-header">
@@ -361,6 +365,10 @@ export default function App() {
 
       {/* GitHub token settings modal */}
       <GitHubTokenModal open={tokenModalOpen} onClose={handleTokenModalClose} />
+
+      {/* AI Chat FAB + Profile */}
+      <ChatFAB />
     </div>
+    </AuthProvider>
   );
 }
