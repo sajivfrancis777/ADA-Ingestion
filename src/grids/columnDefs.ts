@@ -4,6 +4,7 @@
  */
 import type { ColDef, ColGroupDef, ValueSetterParams } from 'ag-grid-community';
 import AutocompleteCellEditor from './AutocompleteCellEditor';
+import SelectCellEditor from './SelectCellEditor';
 import { ALL_SYSTEMS, DB_OPTIONS, PLATFORM_OPTIONS, SYSTEM_DEFAULTS } from '../data/systemRegistry';
 
 // ─── Reusable cell editors ───────────────────────────────────────
@@ -44,9 +45,8 @@ function systemAutoFillSetter(dbField: string, platField: string) {
 
 function selectEditor(values: string[]): Partial<ColDef> {
   return {
-    cellEditor: 'agSelectCellEditor',
+    cellEditor: SelectCellEditor,
     cellEditorParams: { values },
-    cellEditorPopup: true,  // Prevents stopEditingWhenCellsLoseFocus from cancelling selection
   };
 }
 

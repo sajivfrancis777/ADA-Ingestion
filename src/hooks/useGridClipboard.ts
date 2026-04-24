@@ -148,6 +148,26 @@ export function useGridClipboard({ api, containerRef, columns, onDataChanged, on
 
   const handleDelete = useCallback(() => {
     if (!api) return;
+
+    // 1) Try focused cell first (single-cell clear)
+    const focused = api.getFocusedCell();
+    if (focused) {
+      const node = api.getDisplayedRowAtIndex(focused.rowIndex);
+      const col = focused.column;
+      if (node?.data && col) {
+        const field = col.getColId();
+        if (field && node.data[field] !== undefined && node.data[field] !== '' && node.data[field] != null) {
+          node.data[field] = '';
+          api.applyTransaction({ update: [node.data] });
+          api.refreshCells({ rowNodes: [node], columns: [field], force: true });
+          onDataChanged();
+          onClipboardEvent?.({ action: 'delete', rows: 1, cols: 1 });
+          return;
+        }
+      }
+    }
+
+    // 2) Fall back to selected rows (multi-row clear)
     const selected = api.getSelectedRows();
     if (selected.length === 0) return;
     selected.forEach(row => { fields.forEach(f => { row[f] = ''; }); });
