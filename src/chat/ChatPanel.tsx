@@ -109,7 +109,7 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
         {/* Header */}
         <div className="chat-header">
           <div className="chat-header-left">
-            <span className="chat-logo">🏛️</span>
+            <span className="chat-logo">📐</span>
             <div>
               <h3 className="chat-title">Architecture Assistant</h3>
               <span className="chat-subtitle">IAO · IDM 2.0</span>
@@ -141,7 +141,7 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
             <div className="chat-messages">
               {messages.length === 0 && (
                 <div className="chat-welcome">
-                  <div className="chat-welcome-icon">🏛️</div>
+                  <div className="chat-welcome-icon">📐</div>
                   <h4>Welcome, {user.displayName}</h4>
                   <p>Ask about architecture, integration patterns, system dependencies, or use a template to get started.</p>
                   <div className="chat-quick-actions">
@@ -156,7 +156,7 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
               {messages.map(msg => (
                 <div key={msg.id} className={`chat-msg chat-msg-${msg.role}`}>
                   <div className="chat-msg-avatar">
-                    {msg.role === 'user' ? '👤' : '🏛️'}
+                    {msg.role === 'user' ? '👤' : '📐'}
                   </div>
                   <div className="chat-msg-body">
                     <div className="chat-msg-meta">
@@ -169,7 +169,7 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
               ))}
               {loading && (
                 <div className="chat-msg chat-msg-assistant">
-                  <div className="chat-msg-avatar">🏛️</div>
+                  <div className="chat-msg-avatar">📐</div>
                   <div className="chat-msg-body">
                     <div className="chat-typing">
                       <span></span><span></span><span></span>

@@ -42,7 +42,7 @@ export default function ChatFAB() {
           onClick={() => setChatOpen(v => !v)}
           title="Architecture Assistant"
         >
-          {chatOpen ? '✕' : '🏛️'}
+          {chatOpen ? '✕' : '📐'}
         </button>
       </div>
 
