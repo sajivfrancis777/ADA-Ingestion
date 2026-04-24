@@ -1,8 +1,9 @@
 /**
- * UserProfilePanel — User profile and preferences editor.
+ * UserProfilePanel — User profile, preferences, and personal API key.
  */
 import { useState } from 'react';
 import { useAuth, type UserRole } from '../auth/AuthContext';
+import { loadLLMConfig, saveLLMConfig } from '../chat/chatService';
 
 interface UserProfilePanelProps {
   open: boolean;
@@ -14,6 +15,8 @@ export default function UserProfilePanel({ open, onClose }: UserProfilePanelProp
   const [name, setName] = useState(user.displayName);
   const [email, setEmail] = useState(user.email);
   const [saved, setSaved] = useState(false);
+  const [llmConfig, setLlmConfig] = useState(() => loadLLMConfig());
+  const [keySaved, setKeySaved] = useState(false);
 
   if (!open) return null;
 
@@ -21,6 +24,12 @@ export default function UserProfilePanel({ open, onClose }: UserProfilePanelProp
     updateProfile({ displayName: name, email });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleKeySave = () => {
+    saveLLMConfig(llmConfig);
+    setKeySaved(true);
+    setTimeout(() => setKeySaved(false), 2000);
   };
 
   return (
@@ -34,7 +43,7 @@ export default function UserProfilePanel({ open, onClose }: UserProfilePanelProp
             <h3 className="profile-name">{user.displayName}</h3>
             <span className="profile-role-badge">{user.role}</span>
           </div>
-          <button className="chat-icon-btn" onClick={onClose} style={{ marginLeft: 'auto' }}>✕</button>
+          <button className="profile-close-btn" onClick={onClose} title="Close">✕</button>
         </div>
 
         <div className="profile-section">
@@ -44,9 +53,44 @@ export default function UserProfilePanel({ open, onClose }: UserProfilePanelProp
           <label className="chat-admin-label">Email</label>
           <input className="chat-admin-input" value={email} onChange={e => setEmail(e.target.value)}
             placeholder="name@intel.com" />
-          <p className="chat-admin-hint">
-            When Entra ID is enabled, profile data will sync from Azure AD automatically.
+          <button className="chat-admin-save" onClick={handleSave} style={{ marginTop: 12 }}>
+            {saved ? '✓ Saved' : '💾 Save Profile'}
+          </button>
+        </div>
+
+        {/* API Key — accessible to ALL users for testing */}
+        <div className="profile-section">
+          <h4>🔑 AI Assistant — API Key</h4>
+          <p className="chat-admin-hint" style={{ marginBottom: 8 }}>
+            Enter your own API key to enable the chat assistant. Each user manages their own key locally.
           </p>
+          <label className="chat-admin-label">Provider</label>
+          <select className="chat-admin-select" value={llmConfig.provider}
+            onChange={e => setLlmConfig(c => ({ ...c, provider: e.target.value as typeof c.provider }))}>
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="openai">OpenAI (GPT)</option>
+            <option value="azure-openai">Azure OpenAI</option>
+            <option value="custom">Custom Endpoint</option>
+          </select>
+          <label className="chat-admin-label">API Key</label>
+          <input className="chat-admin-input" type="password" value={llmConfig.apiKey}
+            onChange={e => setLlmConfig(c => ({ ...c, apiKey: e.target.value }))}
+            placeholder="sk-ant-... or sk-..." />
+          <label className="chat-admin-label">Model</label>
+          <input className="chat-admin-input" value={llmConfig.model}
+            onChange={e => setLlmConfig(c => ({ ...c, model: e.target.value }))}
+            placeholder="claude-sonnet-4-20250514" />
+          {(llmConfig.provider === 'custom' || llmConfig.provider === 'azure-openai') && (
+            <>
+              <label className="chat-admin-label">Endpoint URL</label>
+              <input className="chat-admin-input" type="url" value={llmConfig.endpoint ?? ''}
+                onChange={e => setLlmConfig(c => ({ ...c, endpoint: e.target.value }))}
+                placeholder="https://your-api.azurewebsites.net/api/chat" />
+            </>
+          )}
+          <button className="chat-admin-save" onClick={handleKeySave} style={{ marginTop: 12 }}>
+            {keySaved ? '✓ Key Saved' : '🔑 Save API Key'}
+          </button>
         </div>
 
         <div className="profile-section">
@@ -77,7 +121,7 @@ export default function UserProfilePanel({ open, onClose }: UserProfilePanelProp
 
         {isAdmin && (
           <div className="profile-section">
-            <h4>🔑 Developer Mode</h4>
+            <h4>🛠️ Developer Mode</h4>
             <label className="chat-admin-label">Simulate Role</label>
             <select className="chat-admin-select" value={user.role}
               onChange={e => setRole(e.target.value as UserRole)}>
@@ -88,10 +132,6 @@ export default function UserProfilePanel({ open, onClose }: UserProfilePanelProp
             <p className="chat-admin-hint">Role simulation for testing. Entra ID roles override this.</p>
           </div>
         )}
-
-        <button className="chat-admin-save" onClick={handleSave}>
-          {saved ? '✓ Saved' : '💾 Save Profile'}
-        </button>
       </div>
     </div>
   );

@@ -85,23 +85,30 @@ function makeId(): string {
 
 /**
  * Send a message to the configured LLM and get a response.
- * Falls back to a helpful offline message if no API key is configured.
+ * @param gridContext — optional stringified grid data for context-aware answers
  */
 export async function sendMessage(
   messages: ChatMessage[],
   config: LLMConfig,
+  gridContext?: string,
 ): Promise<ChatMessage> {
   if (!config.apiKey && !config.endpoint) {
     return {
       id: makeId(),
       role: 'assistant',
-      content: '⚙️ **No LLM API configured.** Go to Admin → API Keys to set up your AI provider.\n\nIn the meantime, you can browse prompt templates and architecture artifacts.',
+      content: '⚙️ **No LLM API configured.** Click your profile icon (bottom-right) → "🔑 AI Assistant — API Key" to enter your API key.\n\nYou can use Anthropic (Claude), OpenAI (GPT), or Azure OpenAI.',
       timestamp: Date.now(),
     };
   }
 
+  // Build system prompt with optional grid context
+  let systemPrompt = SYSTEM_PROMPT;
+  if (gridContext) {
+    systemPrompt += `\n\n## Current Architecture Data (from the editor grid)\n${gridContext}`;
+  }
+
   const apiMessages = [
-    { role: 'system' as const, content: SYSTEM_PROMPT },
+    { role: 'system' as const, content: systemPrompt },
     ...messages.map(m => ({ role: m.role, content: m.content })),
   ];
 
@@ -137,7 +144,7 @@ export async function sendMessage(
           model: config.model,
           max_tokens: config.maxTokens,
           temperature: config.temperature,
-          system: SYSTEM_PROMPT,
+          system: systemPrompt,
           messages: messages.map(m => ({ role: m.role, content: m.content })),
         }),
       });

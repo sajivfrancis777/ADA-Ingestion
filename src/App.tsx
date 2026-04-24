@@ -275,6 +275,24 @@ export default function App() {
 
   const hasData = true;  // Grid always has data (template or loaded)
 
+  // Build context string from current grid data for the chat assistant
+  const buildGridContext = useCallback((): string => {
+    if (!editorRef.current) return '';
+    const data = editorRef.current.flush();
+    const flows = data['Flows'] ?? [];
+    if (flows.length === 0) return '';
+    const towerName = TOWERS.find(t => t.id === tower)?.display ?? tower;
+    const capName = CAPABILITIES[tower]?.find(c => c.id === cap)?.name ?? cap;
+    let ctx = `Tower: ${towerName}\nCapability: ${capName}\nRelease: ${release}\nState: ${state}\n\n`;
+    ctx += `### Flows (${flows.length} rows)\n`;
+    const cols = ['Flow Chain', 'Hop #', 'Source System', 'Source Lane', 'Target System', 'Target Lane', 'Interface / Technology', 'Frequency', 'Source DB Platform', 'Target DB Platform', 'Source Tech Platform', 'Target Tech Platform'];
+    ctx += cols.join(' | ') + '\n';
+    for (const row of flows.slice(0, 50)) { // Cap at 50 rows for token budget
+      ctx += cols.map(c => String((row as Record<string, unknown>)[c] ?? '').trim()).join(' | ') + '\n';
+    }
+    return ctx;
+  }, [tower, cap, release, state]);
+
   return (
     <AuthProvider>
     <div className="app">
@@ -367,7 +385,7 @@ export default function App() {
       <GitHubTokenModal open={tokenModalOpen} onClose={handleTokenModalClose} />
 
       {/* AI Chat FAB + Profile */}
-      <ChatFAB />
+      <ChatFAB gridContext={buildGridContext()} />
     </div>
     </AuthProvider>
   );

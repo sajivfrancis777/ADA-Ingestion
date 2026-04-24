@@ -24,9 +24,11 @@ type ChatView = 'chat' | 'history' | 'templates' | 'admin';
 interface ChatPanelProps {
   open: boolean;
   onClose: () => void;
+  /** Current grid context — injected into system prompt so the assistant has real data */
+  gridContext?: string;
 }
 
-export default function ChatPanel({ open, onClose }: ChatPanelProps) {
+export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps) {
   const { user, isAdmin } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -64,6 +66,7 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
     const response = await sendMessage(
       newMessages.filter(m => m.role !== 'system'),
       config,
+      gridContext,
     );
     const final = [...newMessages, response];
     setMessages(final);

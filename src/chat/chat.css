@@ -660,6 +660,28 @@
   margin-bottom: 24px;
 }
 
+.profile-close-btn {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  background: #f7f8fa;
+  color: #666;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.profile-close-btn:hover {
+  background: #fee;
+  border-color: #c62828;
+  color: #c62828;
+}
+
 .profile-avatar {
   width: 48px;
   height: 48px;
