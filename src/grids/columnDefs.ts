@@ -67,13 +67,14 @@ function numericCol(): Partial<ColDef> {
   };
 }
 
-/** Column that contains long-form text — wraps and auto-sizes row height. */
+/** Column that contains long-form text — wraps and auto-sizes row height.
+ *  Uses default inline text editor (agLargeTextCellEditor is broken with
+ *  AG Grid 32.x modular imports — renders as blank popup). */
 function textCol(width = 350): Partial<ColDef> {
   return {
     width,
     wrapText: true,
     autoHeight: true,
-    cellEditor: 'agLargeTextCellEditor',
     cellEditorParams: { maxLength: 2000 },
     cellStyle: { whiteSpace: 'normal', lineHeight: '1.4', paddingTop: '6px', paddingBottom: '6px' },
   };
@@ -143,10 +144,10 @@ const businessDriversColumns: ColDef[] = [
 
 // ─── Tab 3: Success Criteria ─────────────────────────────────────
 const successCriteriaColumns: ColDef[] = [
-  { field: 'Metric', width: 220 },
-  { field: 'Target', width: 180 },
-  { field: 'Measure', width: 220 },
-  { field: 'Baseline', width: 180 },
+  { field: 'Metric', ...textCol(220) },
+  { field: 'Target', ...textCol(180) },
+  { field: 'Measure', ...textCol(220) },
+  { field: 'Baseline', ...textCol(180) },
   { field: 'Owner', width: 180 },
 ];
 
