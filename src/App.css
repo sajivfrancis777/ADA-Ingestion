@@ -14,6 +14,27 @@
   --bg-page: #f5f7fa;
 }
 
+/* ─── AG Grid cell text visibility ────────────────────────────── */
+/* Ensure wrapped text cells show full content with proper padding */
+.ag-cell {
+  line-height: 1.4 !important;
+}
+
+.ag-cell-wrap-text {
+  word-break: break-word !important;
+  white-space: normal !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+/* Large text popup editor — make it bigger and more usable */
+.ag-large-text-input {
+  min-height: 120px !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  padding: 8px !important;
+}
+
 * {
   margin: 0;
   padding: 0;

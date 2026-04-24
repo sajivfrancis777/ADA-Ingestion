@@ -67,6 +67,18 @@ function numericCol(): Partial<ColDef> {
   };
 }
 
+/** Column that contains long-form text — wraps and auto-sizes row height. */
+function textCol(width = 350): Partial<ColDef> {
+  return {
+    width,
+    wrapText: true,
+    autoHeight: true,
+    cellEditor: 'agLargeTextCellEditor',
+    cellEditorParams: { maxLength: 2000 },
+    cellStyle: { whiteSpace: 'normal', lineHeight: '1.4', paddingTop: '6px', paddingBottom: '6px' },
+  };
+}
+
 const defaultColDef: ColDef = {
   editable: true,
   resizable: true,
@@ -124,8 +136,8 @@ const flowsColumns: (ColDef | ColGroupDef)[] = [
 const businessDriversColumns: ColDef[] = [
   { field: 'Driver #', width: 90, ...numericCol() },
   { field: 'Driver Name', width: 220 },
-  { field: 'Description', width: 400, cellEditor: 'agLargeTextCellEditor' },
-  { field: 'Strategic Alignment', width: 260 },
+  { field: 'Description', ...textCol(400) },
+  { field: 'Strategic Alignment', ...textCol(280) },
   { field: 'Priority', width: 110, ...selectEditor(PRIORITY_VALUES) },
 ];
 
@@ -143,19 +155,19 @@ const successCriteriaColumns: ColDef[] = [
 // ─── Tab 5: NFRs ─────────────────────────────────────────────────
 const nfrsColumns: ColDef[] = [
   { field: 'Category', width: 160 },
-  { field: 'Requirement', width: 350, cellEditor: 'agLargeTextCellEditor' },
+  { field: 'Requirement', ...textCol(350) },
   { field: 'Target / SLA', width: 180 },
   { field: 'Priority', width: 110, ...selectEditor(PRIORITY_VALUES) },
-  { field: 'Notes', width: 260, cellEditor: 'agLargeTextCellEditor' },
+  { field: 'Notes', ...textCol(280) },
 ];
 
 // ─── Tab 6: Security Controls ────────────────────────────────────
 const securityColumns: ColDef[] = [
   { field: 'Concern', width: 180 },
-  { field: 'Approach', width: 300, cellEditor: 'agLargeTextCellEditor' },
+  { field: 'Approach', ...textCol(320) },
   { field: 'Standard / Policy', width: 220 },
   { field: 'Owner', width: 180 },
-  { field: 'Notes', width: 260, cellEditor: 'agLargeTextCellEditor' },
+  { field: 'Notes', ...textCol(280) },
 ];
 
 
@@ -164,7 +176,7 @@ const securityColumns: ColDef[] = [
 const recommendationsColumns: ColDef[] = [
   { field: '#', width: 60, ...numericCol() },
   { field: 'Category', width: 160 },
-  { field: 'Recommendation', width: 400, cellEditor: 'agLargeTextCellEditor' },
+  { field: 'Recommendation', ...textCol(400) },
   { field: 'Priority', width: 110, ...selectEditor(PRIORITY_VALUES) },
   { field: 'Owner', width: 180 },
   { field: 'Target Date', width: 130 },
