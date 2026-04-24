@@ -1,15 +1,11 @@
 /**
  * AutocompleteCellEditor — AG Grid custom cell editor with search-as-you-type.
  *
- * KEY DESIGN: No React portal. The dropdown is a direct child of the editor
- * div. AG Grid renders popup editors (isPopup=true) in its own absolutely-
- * positioned wrapper, so the dropdown is already outside the cell's
- * overflow:hidden — no portal needed.
+ * Uses props.onValueChange() to notify AG Grid of value changes — the
+ * critical fix that was missing in all previous iterations.
  *
- * This eliminates ALL portal-related bugs:
- *   - No focus race with stopEditingWhenCellsLoseFocus
- *   - No event propagation conflicts with AG Grid's document listeners
- *   - No popup service click-outside false positives
+ * No React portal. The dropdown is a direct child rendered inside AG Grid's
+ * popup wrapper (isPopup=true).
  */
 import {
   forwardRef,
@@ -24,6 +20,7 @@ import type { ICellEditorParams } from 'ag-grid-community';
 interface AutocompleteParams extends ICellEditorParams {
   values: string[];
   maxResults?: number;
+  onValueChange: (value: string) => void;
 }
 
 const MAX_VISIBLE = 10;
@@ -35,7 +32,7 @@ const AutocompleteCellEditor = forwardRef(
   (props: AutocompleteParams, ref) => {
     const { values = [], maxResults = 200 } = props;
     const [text, setText] = useState(String(props.value ?? ''));
-    const valueRef = useRef(String(props.value ?? ''));
+    const [selectedValue, setSelectedValue] = useState(String(props.value ?? ''));
     const [filtered, setFiltered] = useState<string[]>([]);
     const [selectedIdx, setSelectedIdx] = useState(-1);
     const [isOpen, setIsOpen] = useState(true);
@@ -43,7 +40,6 @@ const AutocompleteCellEditor = forwardRef(
     const listRef = useRef<HTMLDivElement>(null);
     const rootRef = useRef<HTMLDivElement>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-    const stoppedRef = useRef(false);
 
     // Focus input on mount
     useEffect(() => {
@@ -86,28 +82,24 @@ const AutocompleteCellEditor = forwardRef(
 
     // AG Grid editor interface
     useImperativeHandle(ref, () => ({
-      getValue: () => valueRef.current,
+      getValue: () => selectedValue,
       isPopup: () => true,
       getPopupPosition: () => 'under' as const,
       isCancelBeforeStart: () => false,
       isCancelAfterEnd: () => false,
     }));
 
-    const commitAndClose = useCallback(
+    /** Select a value — calls onValueChange to notify AG Grid */
+    const commitValue = useCallback(
       (value: string) => {
-        if (stoppedRef.current) return;
-        stoppedRef.current = true;
-        valueRef.current = value;
+        setSelectedValue(value);
+        setText(value);
+        setIsOpen(false);
+        props.onValueChange(value);  // <-- CRITICAL: notifies AG Grid
         props.stopEditing(false);
       },
       [props],
     );
-
-    const cancelAndClose = useCallback(() => {
-      if (stoppedRef.current) return;
-      stoppedRef.current = true;
-      props.stopEditing(true);
-    }, [props]);
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
@@ -123,40 +115,24 @@ const AutocompleteCellEditor = forwardRef(
           e.preventDefault();
           e.stopPropagation();
           if (selectedIdx >= 0 && selectedIdx < filtered.length) {
-            commitAndClose(filtered[selectedIdx]);
+            commitValue(filtered[selectedIdx]);
           } else {
-            commitAndClose(text);
+            commitValue(text);
           }
         } else if (e.key === 'Escape') {
           e.preventDefault();
           e.stopPropagation();
-          cancelAndClose();
+          props.stopEditing(true);
         } else if (e.key === 'Tab') {
           if (selectedIdx >= 0 && selectedIdx < filtered.length) {
-            commitAndClose(filtered[selectedIdx]);
+            commitValue(filtered[selectedIdx]);
           } else {
-            commitAndClose(text);
+            commitValue(text);
           }
         }
       },
-      [filtered, selectedIdx, commitAndClose, cancelAndClose, text],
+      [filtered, selectedIdx, commitValue, text, props],
     );
-
-    // Click outside detection — commit typed value
-    useEffect(() => {
-      const handler = (e: MouseEvent) => {
-        if (stoppedRef.current) return;
-        if (rootRef.current?.contains(e.target as Node)) return;
-        commitAndClose(valueRef.current);
-      };
-      const timer = setTimeout(() => {
-        document.addEventListener('mousedown', handler, true);
-      }, 50);
-      return () => {
-        clearTimeout(timer);
-        document.removeEventListener('mousedown', handler, true);
-      };
-    }, [commitAndClose]);
 
     const containerHeight = Math.min(filtered.length, MAX_VISIBLE) * ITEM_HEIGHT;
 
@@ -172,7 +148,6 @@ const AutocompleteCellEditor = forwardRef(
           type="text"
           value={text}
           onChange={e => {
-            valueRef.current = e.target.value;
             setText(e.target.value);
             setIsOpen(true);
           }}
@@ -210,7 +185,7 @@ const AutocompleteCellEditor = forwardRef(
                 onMouseDown={e => {
                   e.preventDefault();
                   e.stopPropagation();
-                  commitAndClose(item);
+                  commitValue(item);
                 }}
                 onMouseEnter={() => setSelectedIdx(i)}
                 style={{

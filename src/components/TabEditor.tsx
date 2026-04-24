@@ -108,21 +108,6 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   const activeTabNameRef = useRef(tab.name);
   activeTabNameRef.current = tab.name;
 
-  // Cell edit callback — cache the edit, but do NOT push data back to the grid.
-  // AG Grid has already committed the value to node.data before this fires.
-  // Calling setGridOption('rowData') here would interfere with AG Grid's
-  // internal event pipeline and cause the edit to appear to revert.
-  const handleCellValueChanged = useCallback((_e: CellValueChangedEvent) => {
-    syncCacheAndPreview();
-    if (onDirtyRef.current) onDirtyRef.current();
-  }, []);
-
-  // Also cache on row data updated (fired by InlineSelectRenderer's applyTransaction)
-  const handleRowDataUpdated = useCallback(() => {
-    syncCacheAndPreview();
-    if (onDirtyRef.current) onDirtyRef.current();
-  }, []);
-
   /** Sync grid rows to tabCache + diagram preview. */
   const syncCacheAndPreview = useCallback(() => {
     const api = gridRef.current?.api;
@@ -135,6 +120,13 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
       }
     }
   }, []);
+
+  // Cell edit callback — AG Grid has already committed the value to node.data
+  // via onValueChange + getValue() before this fires.
+  const handleCellValueChanged = useCallback((_e: CellValueChangedEvent) => {
+    syncCacheAndPreview();
+    if (onDirtyRef.current) onDirtyRef.current();
+  }, [syncCacheAndPreview]);
 
   // ── Imperative handle ──────────────────────────────────────
   useImperativeHandle(ref, () => ({
@@ -382,10 +374,9 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
           defaultColDef={defaultColDef}
           rowSelection={{ mode: 'multiRow', headerCheckbox: true, enableClickSelection: false }}
           onCellValueChanged={handleCellValueChanged}
-          onRowDataUpdated={handleRowDataUpdated}
           onGridReady={onGridReady}
           singleClickEdit={true}
-          stopEditingWhenCellsLoseFocus={false}
+          stopEditingWhenCellsLoseFocus={true}
           undoRedoCellEditing={true}
           undoRedoCellEditingLimit={20}
           enableCellTextSelection={true}

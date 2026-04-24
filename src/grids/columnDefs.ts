@@ -4,7 +4,7 @@
  */
 import type { ColDef, ColGroupDef, ValueSetterParams } from 'ag-grid-community';
 import AutocompleteCellEditor from './AutocompleteCellEditor';
-import InlineSelectRenderer from './InlineSelectRenderer';
+import DropdownEditor from './DropdownEditor';
 import { ALL_SYSTEMS, DB_OPTIONS, PLATFORM_OPTIONS, SYSTEM_DEFAULTS } from '../data/systemRegistry';
 
 // ─── Reusable cell editors ───────────────────────────────────────
@@ -43,12 +43,11 @@ function systemAutoFillSetter(dbField: string, platField: string) {
 }
 
 
-/** Inline <select> in cell — bypasses AG Grid's editor lifecycle entirely. */
+/** Dropdown editor using props.onValueChange() — the AG Grid-correct pattern. */
 function selectEditor(values: string[]): Partial<ColDef> {
   return {
-    editable: false,  // Disable AG Grid's editor — we use a cellRenderer instead
-    cellRenderer: InlineSelectRenderer,
-    cellRendererParams: { values },
+    cellEditor: DropdownEditor,
+    cellEditorParams: { values },
   };
 }
 
