@@ -883,3 +883,248 @@ body {
   padding: 6px 16px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — all functional features available on phone
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Tablet: ≤1024px — stack controls, shrink sidebar ───────────── */
+@media (max-width: 1024px) {
+  .app-controls {
+    padding: 8px 16px;
+    gap: 12px;
+  }
+
+  .tower-selector {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .selector-group select {
+    min-width: 140px;
+    font-size: 13px;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .toolbar-right {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .ft-sidebar {
+    width: 220px;
+  }
+}
+
+/* ── Phone: ≤768px — full mobile layout ─────────────────────────── */
+@media (max-width: 768px) {
+  /* Use dynamic viewport height to account for mobile browser chrome */
+  .app {
+    height: 100dvh;
+    height: 100vh; /* fallback for older browsers */
+  }
+
+  /* Hide file tree sidebar on mobile — header has all context needed */
+  .ft-sidebar,
+  .ft-collapsed {
+    display: none;
+  }
+
+  /* Header: compact */
+  .app-header {
+    padding: 8px 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .app-header h1 {
+    font-size: 15px;
+  }
+
+  .header-subtitle {
+    font-size: 11px;
+    flex-basis: 100%;
+  }
+
+  .header-logo {
+    height: 22px;
+    width: 22px;
+  }
+
+  /* Controls: stack tower selectors into a 2×2 grid */
+  .app-controls {
+    padding: 8px 10px;
+    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tower-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .selector-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+  }
+
+  .selector-group label {
+    font-size: 10px;
+    letter-spacing: 0.3px;
+  }
+
+  .selector-group select {
+    min-width: 0;
+    width: 100%;
+    font-size: 16px; /* ≥16px prevents iOS auto-zoom */
+    padding: 8px 10px;
+    border-radius: 6px;
+  }
+
+  /* Toolbar: scrollable row */
+  .toolbar {
+    flex-direction: column;
+    gap: 6px;
+    align-items: stretch;
+  }
+
+  .toolbar-left {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+    flex-shrink: 0;
+  }
+
+  .toolbar-left .btn {
+    white-space: nowrap;
+    font-size: 12px;
+    padding: 6px 10px;
+    flex-shrink: 0;
+  }
+
+  .toolbar-right {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 11px;
+    justify-content: flex-end;
+  }
+
+  .file-info {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+
+  .file-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .save-timestamp {
+    font-size: 10px;
+  }
+
+  /* Tab ribbon: horizontal scroll with momentum */
+  .tab-ribbon {
+    padding: 0 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .tab-ribbon::-webkit-scrollbar {
+    display: none; /* Chrome/Safari — hidden but still scrollable */
+  }
+
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  /* Row toolbar: compact */
+  .row-toolbar {
+    padding: 6px 10px;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .row-toolbar .btn {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  .clipboard-hint {
+    display: none; /* Ctrl+C hints not useful on mobile */
+  }
+
+  /* Status banners: compact */
+  .loading-banner,
+  .error-banner,
+  .loaded-banner,
+  .dirty-banner {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  /* Modal: full-width */
+  .modal-content {
+    width: 95vw;
+    padding: 16px;
+    border-radius: 10px;
+  }
+
+  /* Sheet frame: no margin on mobile */
+  .sheet-frame {
+    margin: 4px 4px 4px 4px;
+    border-radius: 4px;
+  }
+
+  .sheet-frame .tab-ribbon {
+    padding: 0 8px;
+  }
+
+  .sheet-frame .row-toolbar {
+    padding: 4px 8px;
+  }
+}
+
+/* ── Small phone: ≤480px — extra compact ────────────────────────── */
+@media (max-width: 480px) {
+  .app-header h1 {
+    font-size: 13px;
+  }
+
+  .header-subtitle {
+    display: none; /* hide subtitle to save space */
+  }
+
+  /* Single column selectors on very small screens */
+  .tower-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar-left .btn {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+
+  .tab-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .tab-count {
+    font-size: 9px;
+    padding: 0px 5px;
+  }
+}
+
