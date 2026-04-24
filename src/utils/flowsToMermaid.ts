@@ -1,14 +1,20 @@
 /**
- * flowsToMermaid.ts — Convert AG Grid Flows tab rows into Mermaid flowchart syntax.
+ * flowsToMermaid.ts — Generate Mermaid diagrams matching the published SAD documents.
  *
- * TypeScript port of the core logic from mermaid_builder.py.
- * Produces the same swim-lane layout used in the published SAD documents:
- *   - Subgraphs per Source/Target Lane (TB layout, LR inside each lane)
- *   - Edges labeled with Interface / Technology
- *   - Professional styling with Intel blue accent
+ * Exact port of mermaid_builder.py ArchiMate-inspired rendering:
+ *   Application: 📦 blue boxes, swim lanes, Interface/Technology edge labels
+ *   Data:        🗄️ green cylinders for databases, app boxes above, data flow edges
+ *   Technology:  🖥️ platform-category colored nodes (cloud/SaaS/on-prem/middleware)
+ *
+ * ArchiMate 3.2 color conventions:
+ *   Business  = Yellow (#FFFFB3)
+ *   Application = Azure Blue (#CCE5FF)
+ *   Technology = Green (#C8E6C9)
+ *   Middleware = Orange (#FFE0B2)
+ *   Data = Teal (#B2EBF2)
+ *   EOL = Red (#FFCDD2)
  */
 
-/** Minimal flow row shape from the Flows tab */
 export interface FlowRow {
   'Flow Chain'?: string;
   'Hop #'?: number | string;
@@ -27,33 +33,18 @@ export interface FlowRow {
   [key: string]: unknown;
 }
 
-/** Architecture layer for diagram generation */
 export type ArchLayer = 'application' | 'data' | 'technology';
 
-interface MermaidNode {
-  id: string;
-  label: string;
-  lane: string;
-}
+// ── Helpers ──────────────────────────────────────────────────
 
-interface MermaidEdge {
-  sourceId: string;
-  targetId: string;
-  label: string;
-}
-
-/** Sanitize a string for use as a Mermaid node/subgraph ID */
 function sanitizeId(prefix: string, name: string): string {
-  const clean = name.replace(/[^a-zA-Z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-  return `${prefix}_${clean}`;
+  return `${prefix}_${name.replace(/[^a-zA-Z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')}`;
 }
 
-/** Truncate long labels */
 function truncate(s: string, max = 28): string {
   return s.length <= max ? s : s.slice(0, max - 1) + '…';
 }
 
-/** Lane sort key — keeps common architectural lanes in logical order */
 const LANE_ORDER: Record<string, number> = {
   'Business': 0, 'Business Process': 0,
   'Application': 1, 'SAP': 1, 'S/4HANA': 1,
@@ -66,159 +57,364 @@ function laneSortKey(lane: string): number {
   return LANE_ORDER[lane] ?? 50;
 }
 
-/** Pastel lane colors (rotate) */
+// ── ArchiMate 3.2 class definitions (matches mermaid_builder.py) ──
+
+const ARCHIMATE_CLASSDEFS = `
+    classDef app           fill:#CCE5FF,stroke:#0078D4,stroke-width:2px,color:#003A6C
+    classDef middleware     fill:#FFE0B2,stroke:#E65100,stroke-width:2px,color:#BF360C
+    classDef dataEntity    fill:#BBDEFB,stroke:#1565C0,stroke-width:1px,color:#0D47A1,stroke-dasharray:5 3
+    classDef eol           fill:#FFCDD2,stroke:#C62828,stroke-width:2px,color:#B71C1C
+    classDef dbCyl         fill:#C8E6C9,stroke:#2E7D32,stroke-width:2px,color:#1B5E20
+    classDef dbCloud       fill:#BBDEFB,stroke:#0078D4,stroke-width:2px,color:#003A6C
+    classDef dbData        fill:#B2EBF2,stroke:#00838F,stroke-width:2px,color:#004D40
+    classDef saas          fill:#E1BEE7,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef cloud         fill:#BBDEFB,stroke:#1565C0,stroke-width:2px,color:#0D47A1
+    classDef onprem        fill:#C8E6C9,stroke:#2E7D32,stroke-width:2px,color:#1B5E20
+    classDef platMw        fill:#FFE0B2,stroke:#E65100,stroke-width:2px,color:#BF360C`;
+
+// ── Lane subgraph colors ──
+
 const LANE_COLORS: [string, string][] = [
-  ['fill:#E8F0FE', 'stroke:#4285F4'],   // Blue
-  ['fill:#E6F4EA', 'stroke:#34A853'],   // Green
-  ['fill:#FEF7E0', 'stroke:#FBBC04'],   // Yellow
-  ['fill:#FCE4EC', 'stroke:#EA4335'],   // Red
-  ['fill:#F3E5F5', 'stroke:#9C27B0'],   // Purple
+  ['fill:#E3F2FD', 'stroke:#0078D4'],   // Azure blue
+  ['fill:#E8F5E9', 'stroke:#2E7D32'],   // Green
+  ['fill:#FFFDE7', 'stroke:#F9A825'],   // Yellow
+  ['fill:#FCE4EC', 'stroke:#C62828'],   // Red
+  ['fill:#F3E5F5', 'stroke:#7B1FA2'],   // Purple
   ['fill:#E0F7FA', 'stroke:#00ACC1'],   // Cyan
   ['fill:#FFF3E0', 'stroke:#FF9800'],   // Orange
 ];
 
-/** Layer-specific field mappings */
-const LAYER_CONFIG: Record<ArchLayer, {
-  title: string;
-  srcField: keyof FlowRow;
-  tgtField: keyof FlowRow;
-  srcLaneField: keyof FlowRow;
-  tgtLaneField: keyof FlowRow;
-  edgeField: keyof FlowRow;
-  nodeStyle: string;
-}> = {
-  application: {
-    title: 'Application Architecture',
-    srcField: 'Source System',
-    tgtField: 'Target System',
-    srcLaneField: 'Source Lane',
-    tgtLaneField: 'Target Lane',
-    edgeField: 'Interface / Technology',
-    nodeStyle: 'fill:#E8F0FE,stroke:#0071C5,stroke-width:2px,color:#1A237E',
-  },
-  data: {
-    title: 'Data Architecture',
-    srcField: 'Source DB Platform',
-    tgtField: 'Target DB Platform',
-    srcLaneField: 'Source Lane',
-    tgtLaneField: 'Target Lane',
-    edgeField: 'Data Description',
-    nodeStyle: 'fill:#BBDEFB,stroke:#1565C0,stroke-width:2px,color:#0D47A1',
-  },
-  technology: {
-    title: 'Technology Architecture',
-    srcField: 'Source Tech Platform',
-    tgtField: 'Target Tech Platform',
-    srcLaneField: 'Source Lane',
-    tgtLaneField: 'Target Lane',
-    edgeField: 'Integration Pattern',
-    nodeStyle: 'fill:#C8E6C9,stroke:#2E7D32,stroke-width:2px,color:#1B5E20',
-  },
-};
+// ── Platform classification (matches _classify_platform in Python) ──
 
-/**
- * Convert an array of Flows tab rows into a Mermaid flowchart string.
- * @param rows — Flows tab grid data
- * @param layer — which architecture layer to render
- * @param prefix — Mermaid ID prefix
- * Returns empty string if no valid hops found.
- */
-export function flowsToMermaid(rows: FlowRow[], layer: ArchLayer = 'application', prefix = 'FW'): string {
-  const cfg = LAYER_CONFIG[layer];
-  const nodes = new Map<string, MermaidNode>();
-  const edges: MermaidEdge[] = [];
+const PLATFORM_CATEGORIES: [string, string[]][] = [
+  ['cloud',      ['azure', 'aws', 'gcp', 'google cloud', 'btp']],
+  ['saas',       ['saas', 'salesforce', 'servicenow', 'workday', 'ariba', 'concur', 'successfactors', 'anypoint']],
+  ['data',       ['snowflake', 'databricks', 'data lake', 'delta lake', 'redshift', 'bigquery', 'teradata', 'hana db', 'sidecar']],
+  ['middleware', ['mulesoft', 'apigee', 'sap po', 'sap pi', 'biztalk', 'kafka', 'tibco', 'webmethods', 'integration']],
+  ['onprem',     ['on-prem', 'on_prem', 'hec']],
+];
+
+function classifyPlatform(label: string): string {
+  const low = label.toLowerCase();
+  for (const [cat, keywords] of PLATFORM_CATEGORIES) {
+    if (keywords.some(k => low.includes(k))) return cat;
+  }
+  return 'onprem';
+}
+
+function classifyDb(label: string): string {
+  const low = label.toLowerCase();
+  if (['azure', 'aws', 'gcp', 'cosmosdb', 'dynamodb', 'rds'].some(k => low.includes(k))) return 'cloud';
+  if (['snowflake', 'databricks', 'delta', 'bigquery', 'redshift'].some(k => low.includes(k))) return 'data';
+  return 'onprem';
+}
+
+// ── Mermaid init header (matches Python) ──
+
+const MERMAID_INIT = '%%{init: {"theme": "base", "securityLevel": "loose", ' +
+  '"themeVariables": {"fontSize": "18px", "fontFamily": "Segoe UI, Arial, sans-serif"}, ' +
+  '"flowchart": {"useMaxWidth": true, "htmlLabels": true, "nodeSpacing": 50, "rankSpacing": 60}} }%%';
+
+// ═══════════════════════════════════════════════════════════════
+// APPLICATION ARCHITECTURE
+// ═══════════════════════════════════════════════════════════════
+
+function buildApplicationDiagram(rows: FlowRow[], prefix: string): string {
+  interface AppNode { id: string; name: string; lane: string; }
+  const apps = new Map<string, AppNode>();
+  const edges: { src: string; tgt: string; label: string }[] = [];
   const lanes = new Map<string, string[]>();
 
   for (const row of rows) {
-    const src = String(row[cfg.srcField] ?? '').trim();
-    const tgt = String(row[cfg.tgtField] ?? '').trim();
+    const src = String(row['Source System'] ?? '').trim();
+    const tgt = String(row['Target System'] ?? '').trim();
     if (!src || !tgt) continue;
 
-    // For data/tech layers, use the Flow Chain as grouping lane if no lane specified
-    const srcLane = String(row[cfg.srcLaneField] ?? '').trim() || String(row['Flow Chain'] ?? 'Other').trim() || 'Other';
-    const tgtLane = String(row[cfg.tgtLaneField] ?? '').trim() || String(row['Flow Chain'] ?? 'Other').trim() || 'Other';
-    const edgeLabel = String(row[cfg.edgeField] ?? '').trim();
+    const srcLane = String(row['Source Lane'] ?? 'Other').trim() || 'Other';
+    const tgtLane = String(row['Target Lane'] ?? 'Other').trim() || 'Other';
+    const tech = String(row['Interface / Technology'] ?? '').trim();
 
     const srcId = sanitizeId(prefix, src);
     const tgtId = sanitizeId(prefix, tgt);
 
-    if (!nodes.has(srcId)) {
-      nodes.set(srcId, { id: srcId, label: src, lane: srcLane });
-      const arr = lanes.get(srcLane) ?? [];
-      arr.push(srcId);
-      lanes.set(srcLane, arr);
+    if (!apps.has(srcId)) {
+      apps.set(srcId, { id: srcId, name: src, lane: srcLane });
+      lanes.set(srcLane, [...(lanes.get(srcLane) ?? []), srcId]);
     }
-    if (!nodes.has(tgtId)) {
-      nodes.set(tgtId, { id: tgtId, label: tgt, lane: tgtLane });
-      const arr = lanes.get(tgtLane) ?? [];
-      arr.push(tgtId);
-      lanes.set(tgtLane, arr);
+    if (!apps.has(tgtId)) {
+      apps.set(tgtId, { id: tgtId, name: tgt, lane: tgtLane });
+      lanes.set(tgtLane, [...(lanes.get(tgtLane) ?? []), tgtId]);
     }
 
-    edges.push({
-      sourceId: srcId,
-      targetId: tgtId,
-      label: edgeLabel ? truncate(edgeLabel) : '',
-    });
+    edges.push({ src: srcId, tgt: tgtId, label: tech ? truncate(tech) : '' });
   }
 
-  if (nodes.size === 0) return '';
+  if (apps.size === 0) return '';
 
-  // Build Mermaid lines
-  const lines: string[] = [];
+  const lines: string[] = [MERMAID_INIT, 'flowchart TB', ARCHIMATE_CLASSDEFS, ''];
 
-  lines.push('%%{init: {"theme": "base", "securityLevel": "loose", ' +
-    '"themeVariables": {"fontSize": "16px", "fontFamily": "Segoe UI, Arial, sans-serif", ' +
-    '"primaryColor": "#e8f0fe", "primaryBorderColor": "#0071c5", ' +
-    '"lineColor": "#37474F", "secondaryColor": "#f5f8fc"}, ' +
-    '"flowchart": {"useMaxWidth": true, "htmlLabels": true, "curve": "basis", ' +
-    '"nodeSpacing": 40, "rankSpacing": 50}} }%%');
-  lines.push('flowchart TB');
-  lines.push('');
-
-  // Swim lanes (subgraphs)
+  // Swim lanes
   const sortedLanes = [...lanes.keys()].sort((a, b) => laneSortKey(a) - laneSortKey(b));
   const laneStyles: { id: string; fill: string; stroke: string }[] = [];
 
   for (let i = 0; i < sortedLanes.length; i++) {
     const lane = sortedLanes[i];
-    const sgId = sanitizeId(prefix + '_SG', lane);
+    const sgId = sanitizeId(prefix + '_LN', lane);
     const [fill, stroke] = LANE_COLORS[i % LANE_COLORS.length];
     laneStyles.push({ id: sgId, fill, stroke });
 
     lines.push(`    subgraph ${sgId}[" ${lane}"]`);
     lines.push(`        direction LR`);
-    const nodeIds = lanes.get(lane) ?? [];
-    for (const nid of [...new Set(nodeIds)].sort()) {
-      const node = nodes.get(nid)!;
-      lines.push(`        ${nid}["${node.label}"]`);
+    for (const nid of [...new Set(lanes.get(lane)!)].sort()) {
+      const app = apps.get(nid)!;
+      // 📦 box shape — matches Python: {nid}["📦 {name}"]:::app
+      lines.push(`        ${nid}["📦 ${app.name}"]:::app`);
     }
     lines.push('    end');
     lines.push('');
   }
 
-  // Edges (deduplicated)
-  const seenEdges = new Set<string>();
-  for (const edge of edges) {
-    const key = `${edge.sourceId}|${edge.targetId}|${edge.label}`;
-    if (seenEdges.has(key)) continue;
-    seenEdges.add(key);
-    if (edge.label) {
-      lines.push(`    ${edge.sourceId} -->|"${edge.label}"| ${edge.targetId}`);
-    } else {
-      lines.push(`    ${edge.sourceId} --> ${edge.targetId}`);
-    }
+  // Edges
+  const seen = new Set<string>();
+  for (const e of edges) {
+    const key = `${e.src}|${e.tgt}|${e.label}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    lines.push(e.label ? `    ${e.src} -->|"${e.label}"| ${e.tgt}` : `    ${e.src} --> ${e.tgt}`);
   }
   lines.push('');
 
-  // Node styling (layer-specific colors)
-  lines.push(`    classDef default ${cfg.nodeStyle}`);
+  // Legend (matches Python)
+  lines.push('    subgraph Legend["📐 LEGEND"]');
+  lines.push('        direction LR');
+  lines.push('        L_APP["📦 Application"]:::app');
+  lines.push('        L_MW["🔗 Middleware"]:::middleware');
+  lines.push('        L_EOL["⛔ End-of-Life"]:::eol');
+  lines.push('    end');
+  lines.push('    style Legend fill:#F5F5F5,stroke:#999,stroke-width:1px');
   lines.push('');
 
-  // Lane subgraph styles
+  // Lane styles
   for (const { id, fill, stroke } of laneStyles) {
     lines.push(`    style ${id} ${fill},${stroke},stroke-width:2px`);
   }
 
   return lines.join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA ARCHITECTURE — DB cylinders with app boxes above
+// ═══════════════════════════════════════════════════════════════
+
+function buildDataDiagram(rows: FlowRow[], prefix: string): string {
+  interface AppInfo { id: string; name: string; }
+  const apps = new Map<string, AppInfo>();
+  const dbs = new Map<string, string>();        // db_nid → db_label
+  const appToDb = new Map<string, string>();     // app_nid → db_nid
+  const dbEdges: { src: string; tgt: string; label: string }[] = [];
+
+  for (const row of rows) {
+    const srcSys = String(row['Source System'] ?? '').trim();
+    const tgtSys = String(row['Target System'] ?? '').trim();
+    if (!srcSys || !tgtSys) continue;
+
+    const srcDb = String(row['Source DB Platform'] ?? '').trim();
+    const tgtDb = String(row['Target DB Platform'] ?? '').trim();
+    const tech = String(row['Interface / Technology'] ?? '').trim();
+
+    const srcAppId = sanitizeId(prefix + 'A', srcSys);
+    const tgtAppId = sanitizeId(prefix + 'A', tgtSys);
+
+    if (!apps.has(srcAppId)) apps.set(srcAppId, { id: srcAppId, name: srcSys });
+    if (!apps.has(tgtAppId)) apps.set(tgtAppId, { id: tgtAppId, name: tgtSys });
+
+    // Register databases
+    if (srcDb) {
+      const srcDbId = sanitizeId(prefix + 'D', srcDb);
+      if (!dbs.has(srcDbId)) dbs.set(srcDbId, srcDb);
+      appToDb.set(srcAppId, srcDbId);
+    }
+    if (tgtDb) {
+      const tgtDbId = sanitizeId(prefix + 'D', tgtDb);
+      if (!dbs.has(tgtDbId)) dbs.set(tgtDbId, tgtDb);
+      appToDb.set(tgtAppId, tgtDbId);
+    }
+
+    // DB-to-DB edge
+    if (srcDb && tgtDb) {
+      const srcDbId = sanitizeId(prefix + 'D', srcDb);
+      const tgtDbId = sanitizeId(prefix + 'D', tgtDb);
+      if (srcDbId !== tgtDbId) {
+        dbEdges.push({ src: srcDbId, tgt: tgtDbId, label: tech ? truncate(tech) : '' });
+      }
+    }
+  }
+
+  if (dbs.size === 0) return '';
+
+  const lines: string[] = [MERMAID_INIT, 'flowchart TB', ARCHIMATE_CLASSDEFS, ''];
+
+  // Group apps by DB
+  const dbToApps = new Map<string, string[]>();
+  for (const [appId, dbId] of appToDb) {
+    dbToApps.set(dbId, [...(dbToApps.get(dbId) ?? []), appId]);
+  }
+
+  // Render each DB cluster: app(s) above → DB cylinder below
+  let i = 0;
+  for (const [dbId, dbLabel] of [...dbs].sort()) {
+    const clusterApps = [...new Set(dbToApps.get(dbId) ?? [])].sort();
+    const sgId = sanitizeId(prefix + 'CL', dbLabel);
+    const dbCat = classifyDb(dbLabel);
+    const dbCls = dbCat === 'cloud' ? 'dbCloud' : dbCat === 'data' ? 'dbData' : 'dbCyl';
+
+    lines.push(`    subgraph ${sgId}[" "]`);
+    lines.push(`        direction TB`);
+    // App boxes above
+    for (const appId of clusterApps) {
+      const app = apps.get(appId);
+      if (app) lines.push(`        ${appId}["📦 ${app.name}"]:::app`);
+    }
+    // DB CYLINDER — the key shape: [(  )] = cylinder in Mermaid
+    lines.push(`        ${dbId}[("🗄️ ${dbLabel}")]:::${dbCls}`);
+    // App → DB realization links (dashed)
+    for (const appId of clusterApps) {
+      lines.push(`        ${appId} -.-> ${dbId}`);
+    }
+    lines.push('    end');
+    const [fill, stroke] = LANE_COLORS[i % LANE_COLORS.length];
+    lines.push(`    style ${sgId} ${fill},${stroke},stroke-width:1px`);
+    lines.push('');
+    i++;
+  }
+
+  // DB-to-DB data flow edges
+  const seen = new Set<string>();
+  for (const e of dbEdges) {
+    const key = `${e.src}|${e.tgt}|${e.label}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    lines.push(e.label ? `    ${e.src} ==>|"${e.label}"| ${e.tgt}` : `    ${e.src} ==> ${e.tgt}`);
+  }
+  lines.push('');
+
+  // Legend
+  lines.push('    subgraph Legend["📐 LEGEND"]');
+  lines.push('        direction LR');
+  lines.push('        L_APP["📦 Application"]:::app');
+  lines.push('        L_DB[("🗄️ Database")]:::dbCyl');
+  lines.push('        L_CDB[("☁️ Cloud DB")]:::dbCloud');
+  lines.push('    end');
+  lines.push('    style Legend fill:#F5F5F5,stroke:#999,stroke-width:1px');
+
+  return lines.join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TECHNOLOGY ARCHITECTURE — platform-category colored nodes
+// ═══════════════════════════════════════════════════════════════
+
+function buildTechnologyDiagram(rows: FlowRow[], prefix: string): string {
+  interface PlatNode { id: string; name: string; category: string; lane: string; }
+  const platforms = new Map<string, PlatNode>();
+  const edges: { src: string; tgt: string; label: string }[] = [];
+  const lanes = new Map<string, string[]>();
+
+  for (const row of rows) {
+    const srcPlat = String(row['Source Tech Platform'] ?? '').trim();
+    const tgtPlat = String(row['Target Tech Platform'] ?? '').trim();
+    if (!srcPlat || !tgtPlat) continue;
+
+    const srcLane = String(row['Source Lane'] ?? '').trim() || String(row['Flow Chain'] ?? 'Other').trim() || 'Other';
+    const tgtLane = String(row['Target Lane'] ?? '').trim() || String(row['Flow Chain'] ?? 'Other').trim() || 'Other';
+    const pattern = String(row['Integration Pattern'] ?? '').trim();
+
+    const srcId = sanitizeId(prefix, srcPlat);
+    const tgtId = sanitizeId(prefix, tgtPlat);
+
+    if (!platforms.has(srcId)) {
+      const cat = classifyPlatform(srcPlat);
+      platforms.set(srcId, { id: srcId, name: srcPlat, category: cat, lane: srcLane });
+      lanes.set(srcLane, [...(lanes.get(srcLane) ?? []), srcId]);
+    }
+    if (!platforms.has(tgtId)) {
+      const cat = classifyPlatform(tgtPlat);
+      platforms.set(tgtId, { id: tgtId, name: tgtPlat, category: cat, lane: tgtLane });
+      lanes.set(tgtLane, [...(lanes.get(tgtLane) ?? []), tgtId]);
+    }
+
+    edges.push({ src: srcId, tgt: tgtId, label: pattern ? truncate(pattern) : '' });
+  }
+
+  if (platforms.size === 0) return '';
+
+  const lines: string[] = [MERMAID_INIT, 'flowchart TB', ARCHIMATE_CLASSDEFS, ''];
+
+  // Platform-category → classDef mapping
+  const catToClass: Record<string, string> = {
+    cloud: 'cloud', saas: 'saas', data: 'dbData', middleware: 'platMw', onprem: 'onprem',
+  };
+
+  // Swim lanes
+  const sortedLanes = [...lanes.keys()].sort((a, b) => laneSortKey(a) - laneSortKey(b));
+  const laneStyles: { id: string; fill: string; stroke: string }[] = [];
+
+  for (let i = 0; i < sortedLanes.length; i++) {
+    const lane = sortedLanes[i];
+    const sgId = sanitizeId(prefix + '_LN', lane);
+    const [fill, stroke] = LANE_COLORS[i % LANE_COLORS.length];
+    laneStyles.push({ id: sgId, fill, stroke });
+
+    lines.push(`    subgraph ${sgId}[" ${lane}"]`);
+    lines.push(`        direction LR`);
+    for (const nid of [...new Set(lanes.get(lane)!)].sort()) {
+      const plat = platforms.get(nid)!;
+      const cls = catToClass[plat.category] ?? 'onprem';
+      const emoji = plat.category === 'cloud' ? '☁️' : plat.category === 'saas' ? '🌐' :
+                    plat.category === 'middleware' ? '🔗' : '🖥️';
+      lines.push(`        ${nid}["${emoji} ${plat.name}"]:::${cls}`);
+    }
+    lines.push('    end');
+    lines.push('');
+  }
+
+  // Edges
+  const seen = new Set<string>();
+  for (const e of edges) {
+    const key = `${e.src}|${e.tgt}|${e.label}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    lines.push(e.label ? `    ${e.src} -->|"${e.label}"| ${e.tgt}` : `    ${e.src} --> ${e.tgt}`);
+  }
+  lines.push('');
+
+  // Legend
+  lines.push('    subgraph Legend["📐 LEGEND"]');
+  lines.push('        direction LR');
+  lines.push('        L_OP["🖥️ On-Prem"]:::onprem');
+  lines.push('        L_CL["☁️ Cloud"]:::cloud');
+  lines.push('        L_SA["🌐 SaaS"]:::saas');
+  lines.push('        L_MW["🔗 Middleware"]:::platMw');
+  lines.push('    end');
+  lines.push('    style Legend fill:#F5F5F5,stroke:#999,stroke-width:1px');
+  lines.push('');
+
+  // Lane styles
+  for (const { id, fill, stroke } of laneStyles) {
+    lines.push(`    style ${id} ${fill},${stroke},stroke-width:2px`);
+  }
+
+  return lines.join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Public API
+// ═══════════════════════════════════════════════════════════════
+
+export function flowsToMermaid(rows: FlowRow[], layer: ArchLayer = 'application', prefix = 'FW'): string {
+  switch (layer) {
+    case 'application': return buildApplicationDiagram(rows, prefix);
+    case 'data':        return buildDataDiagram(rows, prefix);
+    case 'technology':  return buildTechnologyDiagram(rows, prefix);
+  }
 }
