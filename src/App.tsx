@@ -301,6 +301,14 @@ export default function App() {
         <img src="favicon.ico" alt="IAO" className="header-logo" />
         <h1>IAO Architecture — Input Portal</h1>
         <span className="header-subtitle">IDM 2.0 Capability Data Editor</span>
+        <a
+          href="https://sajivfrancis777.github.io/IAO-Architecture/"
+          className="portal-switch"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          📄 Architecture Docs ↗
+        </a>
       </header>
 
       {/* Sidebar + Main content */}

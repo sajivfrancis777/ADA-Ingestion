@@ -372,6 +372,24 @@ body {
   opacity: 0.8;
 }
 
+.portal-switch {
+  margin-left: auto;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.portal-switch:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 /* ─── Controls bar (tower selector + toolbar) ─── */
 
 .app-controls {
@@ -952,6 +970,13 @@ body {
   .header-logo {
     height: 22px;
     width: 22px;
+  }
+
+  .portal-switch {
+    font-size: 11px;
+    padding: 4px 10px;
+    order: -1;
+    margin-left: 0;
   }
 
   /* Controls: stack tower selectors into a 2×2 grid */
