@@ -38,21 +38,24 @@ const DEFAULT_CONFIG: LLMConfig = {
   apiKey: '',
   model: 'claude-sonnet-4-20250514',
   endpoint: '',
-  maxTokens: 4096,
+  maxTokens: 2048,
   temperature: 0.3,
 };
 
 // System prompt grounding the assistant in IAO architecture context
 const SYSTEM_PROMPT = `You are the IAO Architecture Assistant for Intel's IDM 2.0 program.
-You help architects with:
-- SAP S/4HANA transformation architecture (8 towers: FPR, OTC-IF, OTC-IP, FTS-IF, FTS-IP, PTP, MDM, E2E)
-- Application, Data, and Technology architecture questions
-- TOGAF BDAT framework and ArchiMate modeling
-- Integration patterns (IDoc, RFC, REST, OData, MuleSoft, Kafka)
-- System landscape navigation (SAP, Snowflake, MuleSoft, BODS, AutoSys)
+You help architects across 8 towers: FPR, OTC-IF, OTC-IP, FTS-IF, FTS-IP, PTP, MDM, E2E.
 
-Keep answers concise, technical, and actionable. Reference specific systems and capabilities when relevant.
-When generating diagrams, use Mermaid syntax compatible with the published SAD format.`;
+## CRITICAL RULES
+1. **Ground all answers in provided context.** If no data is available, say so. Do NOT fabricate details.
+2. **Summary-first responses for token efficiency:**
+   - Show a HIGH-LEVEL SUMMARY first (3-5 bullet points max)
+   - For lists (RICEFW, interfaces, defects): show top 5-10 items and state the total count
+   - Always end with guidance on where to find more detail
+3. **Never dump entire data sets.** Summarize, highlight key items, and reference the grid data.
+4. Keep answers concise and actionable. Target under 400 words.
+5. When generating diagrams, use Mermaid syntax compatible with the published SAD format.
+6. Reference specific systems, capabilities, and integration patterns when relevant.`;
 
 export function loadLLMConfig(): LLMConfig {
   try {
@@ -107,9 +110,11 @@ export async function sendMessage(
     systemPrompt += `\n\n## Current Architecture Data (from the editor grid)\n${gridContext}`;
   }
 
+  // Send only last 6 messages to reduce token cost
+  const recentMessages = messages.slice(-6);
   const apiMessages = [
     { role: 'system' as const, content: systemPrompt },
-    ...messages.map(m => ({ role: m.role, content: m.content })),
+    ...recentMessages.map(m => ({ role: m.role, content: m.content })),
   ];
 
   try {
@@ -199,4 +204,23 @@ export async function sendMessage(
 
 export function createUserMessage(content: string): ChatMessage {
   return { id: makeId(), role: 'user', content, timestamp: Date.now() };
+}
+
+export function clearChatHistory() {
+  localStorage.removeItem(HISTORY_KEY);
+}
+
+export function clearLLMApiKey() {
+  const cfg = loadLLMConfig();
+  cfg.apiKey = '';
+  saveLLMConfig(cfg);
+}
+
+export function exportChatHistory(): string {
+  return localStorage.getItem(HISTORY_KEY) || '[]';
+}
+
+export function resetAllSettings() {
+  localStorage.removeItem(CONFIG_KEY);
+  localStorage.removeItem(HISTORY_KEY);
 }

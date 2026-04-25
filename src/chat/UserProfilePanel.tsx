@@ -3,7 +3,7 @@
  */
 import { useState } from 'react';
 import { useAuth, type UserRole } from '../auth/AuthContext';
-import { loadLLMConfig, saveLLMConfig } from '../chat/chatService';
+import { loadLLMConfig, saveLLMConfig, clearChatHistory, clearLLMApiKey, exportChatHistory, resetAllSettings } from '../chat/chatService';
 
 interface UserProfilePanelProps {
   open: boolean;
@@ -17,6 +17,7 @@ export default function UserProfilePanel({ open, onClose }: UserProfilePanelProp
   const [saved, setSaved] = useState(false);
   const [llmConfig, setLlmConfig] = useState(() => loadLLMConfig());
   const [keySaved, setKeySaved] = useState(false);
+  const [actionMsg, setActionMsg] = useState('');
 
   if (!open) return null;
 
@@ -117,6 +118,49 @@ export default function UserProfilePanel({ open, onClose }: UserProfilePanelProp
             <option value="right">Right Panel</option>
             <option value="bottom">Bottom Panel</option>
           </select>
+
+          <label className="chat-admin-label">Max Response Tokens</label>
+          <select className="chat-admin-select" value={String(llmConfig.maxTokens)}
+            onChange={e => {
+              const updated = { ...llmConfig, maxTokens: Number(e.target.value) };
+              setLlmConfig(updated);
+              saveLLMConfig(updated);
+            }}>
+            <option value="1024">Short (1024)</option>
+            <option value="2048">Medium (2048)</option>
+            <option value="4096">Long (4096)</option>
+          </select>
+        </div>
+
+        <div className="profile-section">
+          <h4>🗄️ Data Management</h4>
+          {actionMsg && <p className="chat-admin-hint" style={{ color: '#16a34a', fontWeight: 600 }}>{actionMsg}</p>}
+          <div className="dm-actions">
+            <button className="dm-btn" onClick={() => {
+              const blob = new Blob([exportChatHistory()], { type: 'application/json' });
+              const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+              a.download = `iao-chat-history-${new Date().toISOString().slice(0, 10)}.json`;
+              a.click(); URL.revokeObjectURL(a.href);
+              setActionMsg('✓ Exported!'); setTimeout(() => setActionMsg(''), 2000);
+            }}>📥 Export Chat History</button>
+            <button className="dm-btn dm-danger" onClick={() => {
+              if (!confirm('Delete ALL chat history? This cannot be undone.')) return;
+              clearChatHistory();
+              setActionMsg('✓ History cleared!'); setTimeout(() => setActionMsg(''), 2000);
+            }}>🗑 Clear Chat History</button>
+            <button className="dm-btn dm-danger" onClick={() => {
+              if (!confirm('Remove stored API key?')) return;
+              clearLLMApiKey();
+              setLlmConfig(c => ({ ...c, apiKey: '' }));
+              setActionMsg('✓ API key cleared!'); setTimeout(() => setActionMsg(''), 2000);
+            }}>🔑 Clear API Key</button>
+            <button className="dm-btn dm-danger" onClick={() => {
+              if (!confirm('Reset ALL settings, history, and profile to defaults? This cannot be undone.')) return;
+              resetAllSettings();
+              setLlmConfig(loadLLMConfig());
+              setActionMsg('✓ Reset complete!'); setTimeout(() => setActionMsg(''), 2000);
+            }}>⚠️ Reset All Settings</button>
+          </div>
         </div>
 
         {isAdmin && (

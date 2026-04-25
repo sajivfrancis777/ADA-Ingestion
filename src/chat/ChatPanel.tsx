@@ -13,7 +13,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import {
   sendMessage, createUserMessage, loadLLMConfig, saveLLMConfig,
-  loadChatHistory, saveChatHistory,
+  loadChatHistory, saveChatHistory, clearChatHistory,
   type ChatMessage,
 } from './chatService';
 import { PROMPT_TEMPLATES, TEMPLATE_CATEGORIES } from './promptTemplates';
@@ -100,6 +100,21 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
     setMessages(sessions[idx] ?? []);
     setView('chat');
   }, [sessions]);
+
+  const deleteSession = useCallback((idx: number) => {
+    if (!confirm('Delete this conversation?')) return;
+    const updated = [...sessions];
+    updated.splice(idx, 1);
+    setSessions(updated);
+    saveChatHistory(updated);
+  }, [sessions]);
+
+  const clearAllSessions = useCallback(() => {
+    if (!confirm('Delete ALL conversation history? This cannot be undone.')) return;
+    setSessions([]);
+    setMessages([]);
+    clearChatHistory();
+  }, []);
 
   const useTemplate = useCallback((prompt: string) => {
     setInput(prompt);
@@ -247,21 +262,30 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
             {sessions.length === 0 ? (
               <div className="chat-empty">No conversation history yet</div>
             ) : (
-              sessions.map((session, idx) => {
-                const firstUser = session.find(m => m.role === 'user');
-                const msgCount = session.length;
-                const time = session[0]?.timestamp;
-                return (
-                  <div key={idx} className="chat-history-item" onClick={() => loadSession(idx)}>
-                    <div className="chat-history-preview">
-                      {firstUser?.content.slice(0, 100) ?? 'Empty session'}
+              <>
+                <div className="chat-history-toolbar">
+                  <span className="chat-history-count">{sessions.length} conversation{sessions.length !== 1 ? 's' : ''}</span>
+                  <button className="chat-history-clear-all" onClick={clearAllSessions}>🗑 Clear All</button>
+                </div>
+                {sessions.map((session, idx) => {
+                  const firstUser = session.find(m => m.role === 'user');
+                  const msgCount = session.length;
+                  const time = session[0]?.timestamp;
+                  return (
+                    <div key={idx} className="chat-history-item">
+                      <div className="chat-history-content" onClick={() => loadSession(idx)}>
+                        <div className="chat-history-preview">
+                          {firstUser?.content.slice(0, 100) ?? 'Empty session'}
+                        </div>
+                        <div className="chat-history-meta">
+                          {msgCount} messages · {time ? new Date(time).toLocaleDateString() : ''}
+                        </div>
+                      </div>
+                      <button className="chat-history-del" onClick={() => deleteSession(idx)} title="Delete">🗑</button>
                     </div>
-                    <div className="chat-history-meta">
-                      {msgCount} messages · {time ? new Date(time).toLocaleDateString() : ''}
-                    </div>
-                  </div>
-                );
-              }).reverse()
+                  );
+                }).reverse()}
+              </>
             )}
           </div>
         )}
