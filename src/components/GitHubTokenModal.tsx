@@ -44,7 +44,7 @@ export default function GitHubTokenModal({ open, onClose }: Props) {
         <p className="modal-desc">
           Enter a <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noreferrer">
           fine-grained PAT</a> with <strong>Contents: Read and write</strong> access
-          to <code>sajivfrancis777/IAO-Architecture</code>.
+          to <code>sajivfrancis777/ADA-Artifacts</code>.
         </p>
         <input
           type="password"

@@ -1,5 +1,5 @@
 /**
- * GitHub Contents API — save workbook data as XLSX to the IAO-Architecture repo.
+ * GitHub Contents API — save workbook data as XLSX to the ADA-Artifacts repo.
  *
  * Commits directly via the GitHub Contents API (PUT /repos/.../contents/...).
  * Requires a PAT with `contents:write` scope on the target repo.
@@ -13,7 +13,7 @@ import { workbookToXlsxBase64 } from './xlsxUtils';
 import { resolveFilePath, resolveCapabilityBasePath, invalidateTreeCache } from './githubFetch';
 
 const OWNER = 'sajivfrancis777';
-const REPO  = 'IAO-Architecture';
+const REPO  = 'ADA-Artifacts';
 const API   = `https://api.github.com/repos/${OWNER}/${REPO}/contents`;
 
 /* ── Token management ──────────────────────────────────────────── */

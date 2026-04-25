@@ -16,7 +16,7 @@ AG Grid-powered web editor for tower capability architecture data. Part of the I
                         │  (GitHub Contents API)
                         ▼
 ┌───────────────────────────────────────────────────────────────┐
-│  Architecture Portal (sajivfrancis777/IAO-Architecture)       │
+│  Architecture Portal (sajivfrancis777/ADA-Artifacts)       │
 │                                                               │
 │  enrich_flows.py → expands 14 cols to 47 (IAPM + inference)   │
 │  generate-architecture.yml → SADs, dashboards, summaries      │
@@ -80,7 +80,7 @@ IAPM URL, Product Owner, Business Owner, Application Status, Middleware, Protoco
 
 ```bash
 npm install
-npm run dev       # http://localhost:5173/IAO-Architecture-Input-Portal/
+npm run dev       # http://localhost:5173/ADA-Ingestion/
 npm run build     # Production build → dist/
 ```
 
@@ -112,7 +112,7 @@ npm run build     # Production build → dist/
 
 A **2:28 hybrid demo video** covers the full IAO Architecture solution — including this Input Portal's AG Grid editor, bulk editing, and XLSX import/export workflow. The video combines AI motion graphics with real browser walkthrough footage, rendered using [Remotion](https://www.remotion.dev/).
 
-**Video**: Available in the [IAO-Architecture](https://github.com/sajivfrancis777/IAO-Architecture) repo at `remotion-demo/out/IAO-Architecture-Demo.mp4` (60 MB, 1920×1080, 30fps)
+**Video**: Available in the [ADA-Artifacts](https://github.com/sajivfrancis777/ADA-Artifacts) repo at `remotion-demo/out/ADA-Artifacts-Demo.mp4` (60 MB, 1920×1080, 30fps)
 
 | Segment | Duration | What It Shows |
 |---|---|---|
@@ -120,7 +120,7 @@ A **2:28 hybrid demo video** covers the full IAO Architecture solution — inclu
 | **Input Portal** | **25s** | **AG Grid data editor, bulk cell editing, XLSX import/export** |
 | Dashboards & Chatbot | 31s | Plotly.js dashboards, MCP chatbot queries |
 
-> Source code: [`remotion-demo/`](https://github.com/sajivfrancis777/IAO-Architecture/tree/main/remotion-demo) in the Architecture repo.
+> Source code: [`remotion-demo/`](https://github.com/sajivfrancis777/ADA-Artifacts/tree/main/remotion-demo) in the Architecture repo.
 
 ---
 

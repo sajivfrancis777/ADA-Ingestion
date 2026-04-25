@@ -81,7 +81,7 @@ export default function Toolbar({
           onClick={onPushToGitHub}
           disabled={!hasData || githubStatus === 'pushing' || !hasGitHubToken}
           title={hasGitHubToken
-            ? (githubMessage || 'Commit data to the IAO-Architecture GitHub repo')
+            ? (githubMessage || 'Commit data to the ADA-Artifacts GitHub repo')
             : 'Set up GitHub token first (click ⚙)'}
         >
           {ghLabel}

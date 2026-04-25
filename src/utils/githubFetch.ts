@@ -1,5 +1,5 @@
 /**
- * GitHub API utilities for fetching XLSX files from the IAO-Architecture repo.
+ * GitHub API utilities for fetching XLSX files from the ADA-Artifacts repo.
  *
  * Uses the Git Trees API (one call, cached) to discover all file paths,
  * then the Git Blobs API to fetch content as ArrayBuffer.
@@ -10,7 +10,7 @@
  */
 
 const OWNER = 'sajivfrancis777';
-const REPO = 'IAO-Architecture';
+const REPO = 'ADA-Artifacts';
 const API_BASE = `https://api.github.com/repos/${OWNER}/${REPO}`;
 const BRANCH = 'main';
 

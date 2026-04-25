@@ -302,7 +302,7 @@ export default function App() {
         <h1>IAO Architecture — Input Portal</h1>
         <span className="header-subtitle">IDM 2.0 Capability Data Editor</span>
         <a
-          href="https://sajivfrancis777.github.io/IAO-Architecture/"
+          href="https://sajivfrancis777.github.io/ADA-Artifacts/"
           className="portal-switch"
           target="_blank"
           rel="noopener noreferrer"
