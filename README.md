@@ -108,6 +108,22 @@ npm run build     # Production build → dist/
 - **GitHub Contents API** — direct browser-to-repo save via PAT
 - **IAPM System Registry** — 4,953 active applications for autocomplete (generated from IAPM CSV)
 
+## Demo Video
+
+A **2:28 hybrid demo video** covers the full IAO Architecture solution — including this Input Portal's AG Grid editor, bulk editing, and XLSX import/export workflow. The video combines AI motion graphics with real browser walkthrough footage, rendered using [Remotion](https://www.remotion.dev/).
+
+**Video**: Available in the [IAO-Architecture](https://github.com/sajivfrancis777/IAO-Architecture) repo at `remotion-demo/out/IAO-Architecture-Demo.mp4` (60 MB, 1920×1080, 30fps)
+
+| Segment | Duration | What It Shows |
+|---|---|---|
+| Architecture Portal | 57s | Tower landing pages, capability navigation, SAD documents |
+| **Input Portal** | **25s** | **AG Grid data editor, bulk cell editing, XLSX import/export** |
+| Dashboards & Chatbot | 31s | Plotly.js dashboards, MCP chatbot queries |
+
+> Source code: [`remotion-demo/`](https://github.com/sajivfrancis777/IAO-Architecture/tree/main/remotion-demo) in the Architecture repo.
+
+---
+
 ## Phased Roadmap
 
 | Phase | Feature | Status |
