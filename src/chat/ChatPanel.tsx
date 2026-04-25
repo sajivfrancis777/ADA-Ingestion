@@ -17,6 +17,7 @@ import {
   type ChatMessage,
 } from './chatService';
 import { PROMPT_TEMPLATES, TEMPLATE_CATEGORIES } from './promptTemplates';
+import { renderMarkdown } from './renderMarkdown';
 import ChatIcon from './ChatIcon';
 
 type ChatView = 'chat' | 'history' | 'templates' | 'admin';
@@ -169,7 +170,10 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
                       <span className="chat-msg-name">{msg.role === 'user' ? user.displayName : 'Assistant'}</span>
                       <span className="chat-msg-time">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
-                    <div className="chat-msg-content">{msg.content}</div>
+                    {msg.role === 'user'
+                      ? <div className="chat-msg-content">{msg.content}</div>
+                      : <div className="chat-msg-content md-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
+                    }
                   </div>
                 </div>
               ))}
