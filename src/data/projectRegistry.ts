@@ -30,15 +30,15 @@ export const PROJECTS: ProjectInfo[] = [
     theme: { primary: '#00285a', accent: '#0071c5', icon: '🏗️' },
   },
   // Example: adding a second project
-  // {
-  //   id: 'erp-modernization',
-  //   name: 'ERP Modernization',
-  //   subtitle: 'Legacy ERP to Cloud Migration',
-  //   docsUrl: 'https://sajivfrancis777.github.io/ADA-Artifacts/erp-modernization/',
-  //   towers: ['Finance', 'Supply-Chain', 'HR'],
-  //   releases: ['Phase1', 'Phase2'],
-  //   theme: { primary: '#1a3c5e', accent: '#2196f3', icon: '🔄' },
-  // },
+  {
+    id: 'sample-project',
+    name: 'Sample Project',
+    subtitle: 'Demonstrates multi-project scalability',
+    docsUrl: 'https://sajivfrancis777.github.io/ADA-Artifacts/projects.html',
+    towers: ['Finance', 'Supply-Chain', 'HR'],
+    releases: ['Phase1', 'Phase2'],
+    theme: { primary: '#1a3c5e', accent: '#2196f3', icon: '🔮' },
+  },
 ];
 
 export const DEFAULT_PROJECT_ID = 'iao';
