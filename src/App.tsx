@@ -1,5 +1,5 @@
 /**
- * IAO Architecture Input Portal — Main Application
+ * IAO Architecture — ADA Editor — Main Application
  *
  * Provides tower/capability/release/state selectors, 6-tab AG Grid editor,
  * and XLSX load/download via SheetJS.
@@ -299,7 +299,7 @@ export default function App() {
       {/* Header */}
       <header className="app-header">
         <img src="favicon.ico" alt="IAO" className="header-logo" />
-        <h1>IAO Architecture — Input Portal</h1>
+        <h1>IAO Architecture — ADA Editor</h1>
         <span className="header-subtitle">IDM 2.0 Capability Data Editor</span>
         <a
           href="https://sajivfrancis777.github.io/ADA-Artifacts/"
