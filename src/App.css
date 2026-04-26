@@ -372,6 +372,22 @@ body {
   opacity: 0.8;
 }
 
+.project-selector {
+  font-size: 18px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 4px 12px;
+  cursor: pointer;
+  outline: none;
+}
+.project-selector option {
+  color: #00285a;
+  background: #fff;
+}
+
 .portal-switch {
   margin-left: auto;
   padding: 6px 16px;

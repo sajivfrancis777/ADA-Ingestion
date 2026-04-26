@@ -17,6 +17,7 @@ import { AuthProvider } from './auth/AuthContext';
 import ChatFAB from './chat/ChatFAB';
 import './chat/chat.css';
 import { TOWERS, CAPABILITIES } from './data/towerRegistry';
+import { PROJECTS, getDefaultProject, type ProjectInfo } from './data/projectRegistry';
 import { generateSampleData } from './data/sampleDataGenerator';
 import { loadWorkbook, downloadWorkbook, createBlankWorkbook } from './utils/xlsxUtils';
 import { resolveFilePath, fetchFileContent, parseFileInfo } from './utils/githubFetch';
@@ -49,6 +50,7 @@ function getTemplateData(towerId?: string, capId?: string): WorkbookData {
 }
 
 export default function App() {
+  const [project, setProject] = useState<ProjectInfo>(getDefaultProject());
   const [tower, setTower] = useState(TOWERS[0].id);
   const firstCap = CAPABILITIES[TOWERS[0].id]?.[0]?.id ?? '';
   const [cap, setCap] = useState(firstCap);
@@ -298,11 +300,28 @@ export default function App() {
     <div className="app">
       {/* Header */}
       <header className="app-header">
-        <img src="favicon.ico" alt="IAO" className="header-logo" />
-        <h1>IAO Architecture — ADA Editor</h1>
-        <span className="header-subtitle">IDM 2.0 Capability Data Editor</span>
+        <img src="favicon.ico" alt="ADA" className="header-logo" />
+        {PROJECTS.length > 1 ? (
+          <select
+            className="project-selector"
+            value={project.id}
+            onChange={e => {
+              const p = PROJECTS.find(p => p.id === e.target.value);
+              if (p) setProject(p);
+            }}
+          >
+            {PROJECTS.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.theme?.icon ?? '📁'} {p.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <h1>{project.name} — ADA Editor</h1>
+        )}
+        <span className="header-subtitle">{project.subtitle}</span>
         <a
-          href="https://sajivfrancis777.github.io/ADA-Artifacts/"
+          href={project.docsUrl}
           className="portal-switch"
           target="_blank"
           rel="noopener noreferrer"
