@@ -307,7 +307,7 @@ export default function App() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          📄 Architecture Docs ↗
+          📄 ADA Docs ↗
         </a>
       </header>
 
