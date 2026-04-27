@@ -466,6 +466,84 @@
   max-height: 200px;
 }
 
+/* Mermaid toolbar & expand */
+
+.md-mermaid-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.md-mermaid-expand {
+  background: #0071C5;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.md-mermaid-expand:hover {
+  background: #005a9e;
+}
+
+/* Fullscreen overlay */
+
+.md-mermaid-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.md-mermaid-overlay-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow: auto;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.md-mermaid-overlay-content svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.md-mermaid-overlay-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: #e4e7eb;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.md-mermaid-overlay-close:hover {
+  background: #ccc;
+}
+
 /* ── Typing indicator ────────────────────────────────────────── */
 
 .chat-typing {

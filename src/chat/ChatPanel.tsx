@@ -47,11 +47,29 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Render Mermaid diagrams after messages update
+  // Render Mermaid diagrams + bind expand buttons after messages update
   useEffect(() => {
-    if (messagesContainerRef.current) {
-      renderMermaidDiagrams(messagesContainerRef.current);
-    }
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    renderMermaidDiagrams(container);
+    // Bind expand buttons
+    container.querySelectorAll<HTMLButtonElement>('.md-mermaid-expand').forEach((btn) => {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = 'true';
+      btn.addEventListener('click', () => {
+        const wrap = btn.closest('.md-mermaid-wrap');
+        const mermaidEl = wrap?.querySelector('.md-mermaid');
+        if (!mermaidEl) return;
+        const svg = mermaidEl.querySelector('svg');
+        const content = svg ? svg.outerHTML : '<pre class="md-pre" style="max-height:none">' + mermaidEl.innerHTML + '</pre>';
+        const overlay = document.createElement('div');
+        overlay.className = 'md-mermaid-overlay';
+        overlay.innerHTML = '<div class="md-mermaid-overlay-content"><button class="md-mermaid-overlay-close" title="Close">\u2715</button>' + content + '</div>';
+        overlay.querySelector('.md-mermaid-overlay-close')!.addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        document.body.appendChild(overlay);
+      });
+    });
   }, [messages]);
 
   // Focus input when panel opens

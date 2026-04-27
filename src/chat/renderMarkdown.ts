@@ -16,10 +16,13 @@ export function renderMarkdown(raw: string): string {
   let t = raw.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang: string, code: string) => {
     const trimmed = code.trim();
     if (lang && lang.toLowerCase() === 'mermaid') {
-      // Mermaid: render as placeholder div + collapsible code
+      // Mermaid: render as placeholder div + toolbar + collapsible code
       const id = 'mmd-' + Date.now() + '-' + blocks.length;
       blocks.push(
         '<div class="md-mermaid-wrap">' +
+          '<div class="md-mermaid-toolbar">' +
+            '<button class="md-mermaid-expand" title="Expand diagram">⛶ Expand</button>' +
+          '</div>' +
           '<div class="md-mermaid" data-mermaid-id="' + id + '">' + esc(trimmed) + '</div>' +
           '<details class="md-mermaid-code"><summary>View Mermaid Code</summary>' +
           '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(trimmed) + '</code></pre>' +

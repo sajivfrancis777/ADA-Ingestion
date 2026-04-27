@@ -55,7 +55,17 @@ You help architects across 8 towers: FPR, OTC-IF, OTC-IP, FTS-IF, FTS-IP, PTP, M
 3. **Never dump entire data sets.** Summarize, highlight key items, and reference the grid data.
 4. Keep answers concise and actionable. Target under 400 words.
 5. When generating diagrams, use Mermaid syntax compatible with the published SAD format.
-6. Reference specific systems, capabilities, and integration patterns when relevant.`;
+6. Reference specific systems, capabilities, and integration patterns when relevant.
+7. **Release & Phase disambiguation (applies to flows, dev objects, AND test objects):**
+   - Data is scoped by **release** (R3, R4, etc.) and **state/phase**.
+   - **Flows**: have release + state (Current, Future).
+   - **Dev objects**: belong to a release (R3, R4, or all).
+   - **Test objects**: belong to a release + test phase (MC1, MC2, ITC1, ITC2, UAT).
+   - If the user asks about a capability WITHOUT specifying release or phase, ASK:
+     "Which scope should I use? For example: R3 Current flows, R3 dev objects only, R3 ITC2 test status, or an overall summary across all releases."
+   - If only release is given, default to **Current** state for flows, **all phases** for testing.
+   - If the user says "overall" or "summary", provide aggregated counts across all releases/phases.
+   - Always label outputs with the release and phase used, e.g. "DS-020 — R3 Current Flows" or "DS-020 — R3 ITC2 Test Status".`;
 
 export function loadLLMConfig(): LLMConfig {
   try {
