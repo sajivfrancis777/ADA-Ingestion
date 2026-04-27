@@ -27,7 +27,7 @@ interface DropdownEditorParams extends ICellEditorParams {
 
 const ITEM_HEIGHT = 32;
 const MAX_VISIBLE = 10;
-const MIN_DROPDOWN_WIDTH = 240;
+const MIN_DROPDOWN_WIDTH = 320;
 const HEADER_HEIGHT = 36; // height of current-value header bar
 
 const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {

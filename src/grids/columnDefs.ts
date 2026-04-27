@@ -105,12 +105,12 @@ const flowsColumns: (ColDef | ColGroupDef)[] = [
     marryChildren: true,
     children: [
       // AutocompleteCellEditor with isPopup()=true prevents stopEditingWhenCellsLoseFocus race
-      { field: 'Source System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, valueSetter: systemAutoFillSetter('Source DB Platform', 'Source Tech Platform') },
+      { field: 'Source System', width: 240, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, valueSetter: systemAutoFillSetter('Source DB Platform', 'Source Tech Platform') },
       { field: 'Source Lane', width: 160 },
-      { field: 'Target System', width: 180, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, valueSetter: systemAutoFillSetter('Target DB Platform', 'Target Tech Platform') },
+      { field: 'Target System', width: 240, cellEditor: AutocompleteCellEditor, cellEditorParams: { values: ALL_SYSTEMS }, valueSetter: systemAutoFillSetter('Target DB Platform', 'Target Tech Platform') },
       { field: 'Target Lane', width: 160 },
-      { field: 'Interface / Technology', width: 180, ...selectEditor(INTERFACE_VALUES) },
-      { field: 'Frequency', width: 140, ...selectEditor(FREQUENCY_VALUES) },
+      { field: 'Interface / Technology', width: 220, ...selectEditor(INTERFACE_VALUES) },
+      { field: 'Frequency', width: 180, ...selectEditor(FREQUENCY_VALUES) },
       { field: 'Data Description', width: 280 },
     ],
   },
@@ -118,17 +118,17 @@ const flowsColumns: (ColDef | ColGroupDef)[] = [
     headerName: 'Data Architecture',
     marryChildren: true,
     children: [
-      { field: 'Source DB Platform', width: 160, ...selectEditor(DB_PLATFORM_VALUES) },
-      { field: 'Target DB Platform', width: 160, ...selectEditor(DB_PLATFORM_VALUES) },
+      { field: 'Source DB Platform', width: 200, ...selectEditor(DB_PLATFORM_VALUES) },
+      { field: 'Target DB Platform', width: 200, ...selectEditor(DB_PLATFORM_VALUES) },
     ],
   },
   {
     headerName: 'Technology Architecture (optional — auto-filled if blank)',
     marryChildren: true,
     children: [
-      { field: 'Source Tech Platform', width: 180, ...selectEditor(TECH_PLATFORM_VALUES) },
-      { field: 'Target Tech Platform', width: 180, ...selectEditor(TECH_PLATFORM_VALUES) },
-      { field: 'Integration Pattern', width: 160, ...selectEditor(INTEGRATION_PATTERN_VALUES) },
+      { field: 'Source Tech Platform', width: 220, ...selectEditor(TECH_PLATFORM_VALUES) },
+      { field: 'Target Tech Platform', width: 220, ...selectEditor(TECH_PLATFORM_VALUES) },
+      { field: 'Integration Pattern', width: 200, ...selectEditor(INTEGRATION_PATTERN_VALUES) },
     ],
   },
 ];
@@ -139,7 +139,7 @@ const businessDriversColumns: ColDef[] = [
   { field: 'Driver Name', width: 220 },
   { field: 'Description', ...textCol(400) },
   { field: 'Strategic Alignment', ...textCol(280) },
-  { field: 'Priority', width: 110, ...selectEditor(PRIORITY_VALUES) },
+  { field: 'Priority', width: 160, ...selectEditor(PRIORITY_VALUES) },
 ];
 
 // ─── Tab 3: Success Criteria ─────────────────────────────────────
@@ -158,7 +158,7 @@ const nfrsColumns: ColDef[] = [
   { field: 'Category', width: 160 },
   { field: 'Requirement', ...textCol(350) },
   { field: 'Target / SLA', width: 180 },
-  { field: 'Priority', width: 110, ...selectEditor(PRIORITY_VALUES) },
+  { field: 'Priority', width: 160, ...selectEditor(PRIORITY_VALUES) },
   { field: 'Notes', ...textCol(280) },
 ];
 
@@ -178,10 +178,10 @@ const recommendationsColumns: ColDef[] = [
   { field: '#', width: 60, ...numericCol() },
   { field: 'Category', width: 160 },
   { field: 'Recommendation', ...textCol(400) },
-  { field: 'Priority', width: 110, ...selectEditor(PRIORITY_VALUES) },
+  { field: 'Priority', width: 160, ...selectEditor(PRIORITY_VALUES) },
   { field: 'Owner', width: 180 },
   { field: 'Target Date', width: 130 },
-  { field: 'Status', width: 130, ...selectEditor(STATUS_VALUES) },
+  { field: 'Status', width: 160, ...selectEditor(STATUS_VALUES) },
 ];
 
 // ─── Exports ─────────────────────────────────────────────────────
