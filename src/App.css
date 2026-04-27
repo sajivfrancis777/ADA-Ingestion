@@ -35,6 +35,17 @@
   padding: 8px !important;
 }
 
+/* ─── AG Grid popup editors (DropdownEditor / AutocompleteCellEditor) ─── */
+/* popupParent=document.body → popups escape the grid's overflow clip      */
+.ag-popup-editor {
+  z-index: 9999 !important;
+  overflow: visible !important;
+}
+
+.ag-popup-editor .ag-popup-child {
+  overflow: visible !important;
+}
+
 * {
   margin: 0;
   padding: 0;

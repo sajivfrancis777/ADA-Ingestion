@@ -26,7 +26,7 @@ interface AutocompleteParams extends ICellEditorParams {
 const MAX_VISIBLE = 10;
 const ITEM_HEIGHT = 30;
 const DEBOUNCE_MS = 150;
-const DROPDOWN_WIDTH = 320;
+const MIN_DROPDOWN_WIDTH = 320;
 
 const AutocompleteCellEditor = forwardRef(
   (props: AutocompleteParams, ref) => {
@@ -40,6 +40,10 @@ const AutocompleteCellEditor = forwardRef(
     const listRef = useRef<HTMLDivElement>(null);
     const rootRef = useRef<HTMLDivElement>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+    // Size dropdown to at least the cell width so it aligns visually
+    const cellWidth = props.eGridCell?.getBoundingClientRect().width ?? 0;
+    const dropdownWidth = Math.max(cellWidth, MIN_DROPDOWN_WIDTH);
 
     // Focus input on mount
     useEffect(() => {
@@ -139,7 +143,7 @@ const AutocompleteCellEditor = forwardRef(
     return (
       <div
         ref={rootRef}
-        style={{ width: DROPDOWN_WIDTH, background: '#fff' }}
+        style={{ width: dropdownWidth, background: '#fff' }}
         onMouseDown={e => e.stopPropagation()}
         onClick={e => e.stopPropagation()}
       >
@@ -174,7 +178,7 @@ const AutocompleteCellEditor = forwardRef(
               border: '1px solid #ccc',
               borderTop: 'none',
               borderRadius: '0 0 4px 4px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
               background: '#fff',
               fontSize: 13,
             }}

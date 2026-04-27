@@ -27,7 +27,7 @@ interface DropdownEditorParams extends ICellEditorParams {
 
 const ITEM_HEIGHT = 32;
 const MAX_VISIBLE = 10;
-const DROPDOWN_WIDTH = 240;
+const MIN_DROPDOWN_WIDTH = 240;
 
 const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
   const [selectedValue, setSelectedValue] = useState(props.value ?? '');
@@ -40,6 +40,10 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
 
   // All items: clear option + values
   const allItems = ['', ...props.values];
+
+  // Size dropdown to at least the cell width so it aligns visually
+  const cellWidth = props.eGridCell?.getBoundingClientRect().width ?? 0;
+  const dropdownWidth = Math.max(cellWidth, MIN_DROPDOWN_WIDTH);
 
   useImperativeHandle(ref, () => ({
     getValue() {
@@ -117,7 +121,7 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
       onKeyDown={handleKeyDown}
       onMouseDown={e => e.stopPropagation()}
       onClick={e => e.stopPropagation()}
-      style={{ width: DROPDOWN_WIDTH, outline: 'none' }}
+      style={{ width: dropdownWidth, outline: 'none' }}
     >
       <div
         ref={listRef}
@@ -126,7 +130,7 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
           overflowY: 'auto',
           border: '2px solid #0071C5',
           borderRadius: 4,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
           background: '#fff',
           fontSize: 13,
           fontFamily: 'inherit',
@@ -159,6 +163,19 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
           );
         })}
       </div>
+      {allItems.length > MAX_VISIBLE && (
+        <div style={{
+          padding: '4px 12px',
+          fontSize: 11,
+          color: '#888',
+          background: '#f8f8f8',
+          borderTop: '1px solid #eee',
+          borderRadius: '0 0 4px 4px',
+          textAlign: 'right',
+        }}>
+          {allItems.length} items — ↑↓ to scroll
+        </div>
+      )}
     </div>
   );
 });

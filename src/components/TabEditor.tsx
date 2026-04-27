@@ -381,6 +381,7 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
           undoRedoCellEditingLimit={20}
           enableCellTextSelection={true}
           loadThemeGoogleFonts={false}
+          popupParent={document.body}
         />
 
         {/* Custom right-click context menu */}
