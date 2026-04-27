@@ -97,6 +97,8 @@ interface ContextIndexMeta {
   capabilityCount: number;
   flowCount: number;
   systemCount: number;
+  iapmMappedCount?: number;
+  iapmUnmatchedCount?: number;
 }
 
 interface FlowEntry {
@@ -123,9 +125,19 @@ interface CapabilityEntry {
   flowCount: number;
 }
 
+interface IapmSystemEntry {
+  iapmId: string;
+  iapmAcronym: string;
+  iapmName: string;
+  category: string;
+  aliases: string[];
+  usedInFlows: boolean;
+}
+
 interface ContextIndex {
   _meta: ContextIndexMeta;
   systems: string[];
+  iapmSystems?: Record<string, IapmSystemEntry>;
   capabilities: Record<string, CapabilityEntry>;
   flowIndex: FlowEntry[];
   systemGraph: Record<string, Array<{ target: string; via: string; pattern: string; cap: string; tower: string; state: string }>>;
@@ -150,16 +162,38 @@ async function loadContextIndex(): Promise<ContextIndex | null> {
   return contextIndex;
 }
 
-/** Extract known system names from user text */
+/** Extract known system names from user text (including IAPM aliases) */
 function detectSystemNames(text: string): string[] {
-  if (!contextIndex?.systems) return [];
-  const found: string[] = [];
-  for (const sys of contextIndex.systems) {
-    const escaped = sys.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const re = new RegExp('\\b' + escaped + '\\b', 'i');
-    if (re.test(text)) found.push(sys);
+  if (!contextIndex) return [];
+  const found = new Set<string>();
+
+  // Match against raw flow system names
+  if (contextIndex.systems) {
+    for (const sys of contextIndex.systems) {
+      const escaped = sys.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp('\\b' + escaped + '\\b', 'i');
+      if (re.test(text)) found.add(sys);
+    }
   }
-  return found;
+
+  // Match against IAPM canonical names and aliases
+  if (contextIndex.iapmSystems) {
+    for (const [canonical, info] of Object.entries(contextIndex.iapmSystems)) {
+      const escC = canonical.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (new RegExp('\\b' + escC + '\\b', 'i').test(text)) {
+        for (const alias of (info.aliases || [])) found.add(alias);
+        if (found.size === 0) found.add(canonical);
+      }
+      if (info.iapmName) {
+        const escN = info.iapmName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (new RegExp('\\b' + escN + '\\b', 'i').test(text)) {
+          for (const alias of (info.aliases || [])) found.add(alias);
+        }
+      }
+    }
+  }
+
+  return [...found];
 }
 
 /** Search context index for flows matching system names or cap IDs */
@@ -203,6 +237,29 @@ function searchContextIndex(text: string): string {
         section += '\n';
       }
       parts.push(section);
+    }
+
+    // IAPM application metadata for mentioned systems
+    if (contextIndex.iapmSystems) {
+      const iapmRows: string[] = [];
+      const matched = new Set<string>();
+      for (const sys of systems) {
+        for (const [canonical, info] of Object.entries(contextIndex.iapmSystems)) {
+          if (matched.has(canonical)) continue;
+          const aliases = (info.aliases || []).map((a: string) => a.toUpperCase());
+          if (aliases.includes(sys.toUpperCase()) || canonical.toUpperCase() === sys.toUpperCase()) {
+            iapmRows.push(`| ${canonical} | ${info.iapmId || '—'} | ${info.iapmName} | ${info.category} |`);
+            matched.add(canonical);
+          }
+        }
+      }
+      if (iapmRows.length > 0) {
+        let iapmSection = `### IAPM Application Registry (Corporate Vetted)\n`;
+        iapmSection += '| System | IAPM ID | Official Name | Category |\n';
+        iapmSection += '|--------|---------|---------------|----------|\n';
+        iapmSection += iapmRows.join('\n');
+        parts.push(iapmSection);
+      }
     }
 
     // System adjacency
