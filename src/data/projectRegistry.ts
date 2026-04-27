@@ -29,16 +29,16 @@ export const PROJECTS: ProjectInfo[] = [
     releases: ['R1', 'R2', 'R3', 'R4', 'R5'],
     theme: { primary: '#00285a', accent: '#0071c5', icon: '🏗️' },
   },
-  // Example: adding a second project
-  {
-    id: 'sample-project',
-    name: 'Sample Project',
-    subtitle: 'Demonstrates multi-project scalability',
-    docsUrl: 'https://sajivfrancis777.github.io/ADA-Artifacts/projects.html',
-    towers: ['Finance', 'Supply-Chain', 'HR'],
-    releases: ['Phase1', 'Phase2'],
-    theme: { primary: '#1a3c5e', accent: '#2196f3', icon: '🔮' },
-  },
+  // To add a second project, uncomment and customize:
+  // {
+  //   id: 'sample-project',
+  //   name: 'Sample Project',
+  //   subtitle: 'Demonstrates multi-project scalability',
+  //   docsUrl: 'https://sajivfrancis777.github.io/ADA-Artifacts/projects.html',
+  //   towers: ['Finance', 'Supply-Chain', 'HR'],
+  //   releases: ['Phase1', 'Phase2'],
+  //   theme: { primary: '#1a3c5e', accent: '#2196f3', icon: '🔮' },
+  // },
 ];
 
 export const DEFAULT_PROJECT_ID = 'iao';
