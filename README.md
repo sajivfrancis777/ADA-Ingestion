@@ -1,6 +1,6 @@
 # ADA — Architecture Delivery Accelerator (Input Portal)
 
-> **ADA** = **A**rchitecture **D**elivery **A**ccelerator — an automation pipeline for architecture documentation, developed for the **IAO (Intel Architecture Office) Program**.
+> **ADA** = **A**rchitecture **D**elivery **A**ccelerator — an automation pipeline for architecture documentation, developed for the **IAO (IDM Acceleration Office) Program**.
 
 AG Grid-powered web editor for tower capability architecture data. Part of the ADA two-repo solution.
 
