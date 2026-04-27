@@ -336,8 +336,11 @@
   padding: 12px;
   margin: 8px 0;
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 300px;
   font-size: 12px;
   line-height: 1.5;
+  position: relative;
 }
 
 .chat-msg-content.md-content .md-code {
@@ -411,6 +414,56 @@
 
 .chat-msg-content.md-content em {
   font-style: italic;
+}
+
+/* ── Mermaid diagrams ────────────────────────────────────────── */
+
+.md-mermaid-wrap {
+  margin: 8px 0;
+}
+
+.md-mermaid {
+  background: #f8f9fa;
+  border: 1px solid #e4e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  overflow-x: auto;
+}
+
+.md-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.md-mermaid-rendered {
+  min-height: 60px;
+}
+
+.md-mermaid-error {
+  background: #fff5f5;
+  border-color: #fecaca;
+}
+
+.md-mermaid-code {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+.md-mermaid-code summary {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  user-select: none;
+}
+
+.md-mermaid-code summary:hover {
+  background: #f0f4f8;
+}
+
+.md-mermaid-code .md-pre {
+  max-height: 200px;
 }
 
 /* ── Typing indicator ────────────────────────────────────────── */

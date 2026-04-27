@@ -14,11 +14,25 @@ function esc(s: string): string {
 export function renderMarkdown(raw: string): string {
   const blocks: string[] = [];
   let t = raw.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang: string, code: string) => {
-    blocks.push(
-      '<pre class="md-pre"><code class="md-code' +
-      (lang ? ' lang-' + esc(lang) : '') + '">' +
-      esc(code.trim()) + '</code></pre>'
-    );
+    const trimmed = code.trim();
+    if (lang && lang.toLowerCase() === 'mermaid') {
+      // Mermaid: render as placeholder div + collapsible code
+      const id = 'mmd-' + Date.now() + '-' + blocks.length;
+      blocks.push(
+        '<div class="md-mermaid-wrap">' +
+          '<div class="md-mermaid" data-mermaid-id="' + id + '">' + esc(trimmed) + '</div>' +
+          '<details class="md-mermaid-code"><summary>View Mermaid Code</summary>' +
+          '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(trimmed) + '</code></pre>' +
+          '</details>' +
+        '</div>'
+      );
+    } else {
+      blocks.push(
+        '<pre class="md-pre"><code class="md-code' +
+        (lang ? ' lang-' + esc(lang) : '') + '">' +
+        esc(trimmed) + '</code></pre>'
+      );
+    }
     return '\x00B' + (blocks.length - 1) + '\x00';
   });
 
@@ -90,4 +104,64 @@ export function renderMarkdown(raw: string): string {
   }
   closeAll();
   return out.join('');
+}
+
+// ── Mermaid Diagram Renderer ──────────────────────────────────
+// Lazy-loads mermaid.js from CDN, then renders all pending
+// .md-mermaid elements into inline SVGs.
+
+declare global {
+  interface Window { mermaid?: { initialize: (cfg: object) => void; render: (id: string, code: string) => Promise<{ svg: string }> } }
+}
+
+const MERMAID_CDN = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+let mermaidLoading = false;
+
+function loadMermaidCDN(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.mermaid) { resolve(); return; }
+    if (mermaidLoading) {
+      const check = setInterval(() => {
+        if (window.mermaid) { clearInterval(check); resolve(); }
+      }, 100);
+      return;
+    }
+    mermaidLoading = true;
+    const s = document.createElement('script');
+    s.src = MERMAID_CDN;
+    s.onload = () => {
+      window.mermaid!.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict' });
+      mermaidLoading = false;
+      resolve();
+    };
+    s.onerror = () => { mermaidLoading = false; reject(new Error('Mermaid CDN failed')); };
+    document.head.appendChild(s);
+  });
+}
+
+export function renderMermaidDiagrams(container?: HTMLElement | null): void {
+  const els = (container || document).querySelectorAll<HTMLElement>('.md-mermaid[data-mermaid-id]');
+  if (!els.length) return;
+  loadMermaidCDN().then(() => {
+    els.forEach((el) => {
+      if (el.dataset.rendered) return;
+      el.dataset.rendered = 'true';
+      const code = el.textContent || '';
+      const id = el.dataset.mermaidId!;
+      try {
+        window.mermaid!.render(id, code).then((result) => {
+          el.innerHTML = result.svg;
+          el.classList.add('md-mermaid-rendered');
+        }).catch(() => {
+          el.innerHTML = '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(code) + '</code></pre>';
+          el.classList.add('md-mermaid-error');
+        });
+      } catch {
+        el.innerHTML = '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(code) + '</code></pre>';
+        el.classList.add('md-mermaid-error');
+      }
+    });
+  }).catch(() => {
+    console.warn('[ADA Chat] Mermaid CDN unavailable — showing code fallback');
+  });
 }

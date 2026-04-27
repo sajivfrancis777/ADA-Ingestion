@@ -17,7 +17,7 @@ import {
   type ChatMessage,
 } from './chatService';
 import { PROMPT_TEMPLATES, TEMPLATE_CATEGORIES } from './promptTemplates';
-import { renderMarkdown } from './renderMarkdown';
+import { renderMarkdown, renderMermaidDiagrams } from './renderMarkdown';
 import ChatIcon from './ChatIcon';
 
 type ChatView = 'chat' | 'history' | 'templates' | 'admin';
@@ -39,11 +39,19 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [maximized, setMaximized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-scroll on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Render Mermaid diagrams after messages update
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      renderMermaidDiagrams(messagesContainerRef.current);
+    }
   }, [messages]);
 
   // Focus input when panel opens
@@ -160,7 +168,7 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
         {/* Chat view */}
         {view === 'chat' && (
           <>
-            <div className="chat-messages">
+            <div className="chat-messages" ref={messagesContainerRef}>
               {messages.length === 0 && (
                 <div className="chat-welcome">
                   <div className="chat-welcome-icon"><ChatIcon size={56} color="#0071C5" /></div>
