@@ -109,6 +109,7 @@ export function renderMarkdown(raw: string): string {
 // ── Mermaid Diagram Renderer ──────────────────────────────────
 // Lazy-loads mermaid.js from CDN, then renders all pending
 // .md-mermaid elements into inline SVGs.
+// SVG cache persists across DOM rebuilds (maximize/minimize).
 
 declare global {
   interface Window { mermaid?: { initialize: (cfg: object) => void; render: (id: string, code: string) => Promise<{ svg: string }> } }
@@ -116,6 +117,12 @@ declare global {
 
 const MERMAID_CDN = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
 let mermaidLoading = false;
+const mermaidSvgCache: Record<string, string> = {};  // normalized code → svg
+let mermaidIdCounter = 0;
+
+function mermaidCacheKey(code: string): string {
+  return code.trim().replace(/\s+/g, ' ');
+}
 
 function loadMermaidCDN(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -142,14 +149,34 @@ function loadMermaidCDN(): Promise<void> {
 export function renderMermaidDiagrams(container?: HTMLElement | null): void {
   const els = (container || document).querySelectorAll<HTMLElement>('.md-mermaid[data-mermaid-id]');
   if (!els.length) return;
+
+  // First pass: inject cached SVGs immediately (synchronous)
+  const pending: HTMLElement[] = [];
+  els.forEach((el) => {
+    if (el.dataset.rendered) return;
+    const code = el.textContent || '';
+    const key = mermaidCacheKey(code);
+    if (mermaidSvgCache[key]) {
+      el.innerHTML = mermaidSvgCache[key];
+      el.classList.add('md-mermaid-rendered');
+      el.dataset.rendered = 'true';
+    } else {
+      pending.push(el);
+    }
+  });
+
+  // Second pass: render uncached diagrams via mermaid.js
+  if (!pending.length) return;
   loadMermaidCDN().then(() => {
-    els.forEach((el) => {
+    pending.forEach((el) => {
       if (el.dataset.rendered) return;
       el.dataset.rendered = 'true';
       const code = el.textContent || '';
-      const id = el.dataset.mermaidId!;
+      const key = mermaidCacheKey(code);
+      const id = 'mmd-' + (++mermaidIdCounter);
       try {
         window.mermaid!.render(id, code).then((result) => {
+          mermaidSvgCache[key] = result.svg;
           el.innerHTML = result.svg;
           el.classList.add('md-mermaid-rendered');
         }).catch(() => {
