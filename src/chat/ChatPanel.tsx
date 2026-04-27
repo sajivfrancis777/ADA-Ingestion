@@ -88,7 +88,7 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
             // Rewrite scoped style selectors from old ID to new ID
             const styleEl = clonedSvg.querySelector('style');
             if (styleEl && oldId) {
-              styleEl.textContent = (styleEl.textContent || '').replaceAll('#' + oldId, '#' + freshId);
+              styleEl.textContent = (styleEl.textContent || '').split('#' + oldId).join('#' + freshId);
             }
             clonedSvg.style.width = '100%';
             clonedSvg.style.height = '100%';
