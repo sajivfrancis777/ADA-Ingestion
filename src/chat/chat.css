@@ -218,6 +218,7 @@
   flex: 1 1 0;
   min-height: 0;  /* Critical: allows flex child to shrink below content height */
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 16px;
   display: flex;
@@ -231,6 +232,7 @@
   display: flex;
   gap: 10px;
   max-width: 92%;
+  flex-shrink: 0;
 }
 
 .chat-msg-user {
@@ -240,6 +242,7 @@
 
 .chat-msg-assistant {
   align-self: flex-start;
+  max-width: 96%;
 }
 
 .chat-msg-avatar {
@@ -285,6 +288,8 @@
   line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .chat-msg-user .chat-msg-content {
@@ -354,6 +359,8 @@
   border-collapse: collapse;
   margin: 8px 0;
   font-size: 12px;
+  display: block;
+  overflow-x: auto;
 }
 
 .chat-msg-content.md-content .md-tbl th {
