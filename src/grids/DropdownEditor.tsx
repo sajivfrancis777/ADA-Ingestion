@@ -68,9 +68,10 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
     const cell = props.eGridCell;
     if (cell) {
       const rect = cell.getBoundingClientRect();
+      // Use viewport coords directly — the portal uses position:fixed
       setListPos({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
+        top: rect.bottom,
+        left: rect.left,
       });
     }
   }, [props.eGridCell]);
@@ -138,7 +139,7 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
       // editor when the user clicks inside the portal dropdown.
       onMouseDown={e => e.preventDefault()}
       style={{
-        position: 'absolute',
+        position: 'fixed',
         top: listPos.top,
         left: listPos.left,
         width: dropdownWidth,
