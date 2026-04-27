@@ -72,12 +72,29 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
         closeBtn.addEventListener('click', () => overlay.remove());
         contentDiv.appendChild(closeBtn);
         if (svg) {
-          const cloned = svg.cloneNode(true) as SVGElement;
-          cloned.removeAttribute('id');
-          cloned.style.width = '100%';
-          cloned.style.height = '100%';
-          cloned.style.maxWidth = 'none';
-          contentDiv.appendChild(cloned);
+          // Use outerHTML so embedded <style> with scoped selectors
+          // (classDef fill colors) are preserved in the clone.
+          const wrapper = document.createElement('div');
+          wrapper.style.width = '100%';
+          wrapper.style.height = '100%';
+          wrapper.style.background = '#fff';
+          wrapper.innerHTML = svg.outerHTML;
+          const clonedSvg = wrapper.querySelector('svg');
+          if (clonedSvg) {
+            // Assign a fresh ID so scoped styles don't collide
+            const freshId = 'mmd-expand-' + Date.now();
+            const oldId = clonedSvg.getAttribute('id') || '';
+            clonedSvg.setAttribute('id', freshId);
+            // Rewrite scoped style selectors from old ID to new ID
+            const styleEl = clonedSvg.querySelector('style');
+            if (styleEl && oldId) {
+              styleEl.textContent = (styleEl.textContent || '').replaceAll('#' + oldId, '#' + freshId);
+            }
+            clonedSvg.style.width = '100%';
+            clonedSvg.style.height = '100%';
+            clonedSvg.style.maxWidth = 'none';
+          }
+          contentDiv.appendChild(wrapper);
         } else {
           const pre = document.createElement('pre');
           pre.className = 'md-pre';
@@ -90,7 +107,7 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
         document.body.appendChild(overlay);
       });
     });
-  }, [messages]);
+  }, [messages, maximized]);
 
   // Focus input when panel opens
   useEffect(() => {
