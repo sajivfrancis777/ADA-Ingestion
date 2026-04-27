@@ -206,10 +206,21 @@ function detectSystemNames(text: string): string[] {
   return [...found];
 }
 
+/** Detect release and state filters from user text */
+function detectFilters(text: string): { release?: string; state?: string } {
+  const relMatch = text.match(/\b(R[0-9])\b/i);
+  const release = relMatch ? relMatch[1].toUpperCase() : undefined;
+  let state: string | undefined;
+  if (/\bfuture\b/i.test(text)) state = 'future';
+  else if (/\bcurrent\b/i.test(text)) state = 'current';
+  return { release, state };
+}
+
 /** Search context index for flows matching system names or cap IDs */
 function searchContextIndex(text: string): string {
   if (!contextIndex) return '';
   const systems = detectSystemNames(text);
+  const { release, state } = detectFilters(text);
   // Also detect cap IDs
   const capIdRe = /\b([A-Z]{1,4}-(?:IF-|IP-)?[A-Z]{0,3}-?\d{2,3})\b/gi;
   const capIds = [...new Set((text.match(capIdRe) || []).map(m => m.toUpperCase()))];
@@ -294,12 +305,36 @@ function searchContextIndex(text: string): string {
     }
   }
 
-  // Capability metadata for detected cap IDs
+  // Capability metadata AND flow rows for detected cap IDs
   if (capIds.length > 0 && contextIndex.capabilities) {
     for (const cid of capIds.slice(0, 5)) {
       const cap = contextIndex.capabilities[cid];
       if (!cap) continue;
       parts.push(`### ${cid} — ${cap.name} (${cap.tower})\n**Group:** ${cap.group} | **Systems:** ${cap.systems.join(', ')} | **Flow Count:** ${cap.flowCount}`);
+
+      // Pull actual flow rows for this capability from the flow index
+      if (contextIndex.flowIndex) {
+        let capFlows = contextIndex.flowIndex.filter(f => f.cap === cid);
+        // Apply release/state filters if user specified them
+        if (release) capFlows = capFlows.filter(f => f.release?.toUpperCase() === release);
+        if (state) capFlows = capFlows.filter(f => f.state?.toLowerCase() === state);
+        // Skip rows that are clearly template/placeholder data
+        capFlows = capFlows.filter(f => f.source && !f.source.startsWith('e.g.'));
+
+        if (capFlows.length > 0) {
+          const filterLabel = [release, state].filter(Boolean).join(' ') || 'All';
+          let section = `### ${cid} Flow Data (${filterLabel}) — ${capFlows.length} rows\n`;
+          section += '| Release | State | Flow Chain | Hop | Source | Target | Via | Pattern | Frequency | Data |\n';
+          section += '|---------|-------|------------|-----|--------|--------|-----|---------|-----------|------|\n';
+          const maxRows = Math.min(capFlows.length, 80);
+          for (let i = 0; i < maxRows; i++) {
+            const f = capFlows[i];
+            section += `| ${f.release} | ${f.state} | ${f.chain} | ${f.hop} | ${f.source} | ${f.target} | ${f.via} | ${f.pattern} | ${f.frequency} | ${f.dataDesc} |\n`;
+          }
+          if (capFlows.length > 80) section += `| … | | ${capFlows.length - 80} more rows | | | | | | | |\n`;
+          parts.push(section);
+        }
+      }
     }
   }
 
@@ -338,10 +373,16 @@ export async function sendMessage(
   // Build system prompt with all grounding sources
   let systemPrompt = SYSTEM_PROMPT;
   if (gridContext) {
-    systemPrompt += `\n\n## Current Architecture Data (from the editor grid)\n${gridContext}`;
+    // Check if grid data is mostly empty template rows
+    const hasRealData = gridContext.includes('|') && !/e\.g\. MES|e\.g\. XEUS/.test(gridContext.slice(0, 500));
+    if (hasRealData) {
+      systemPrompt += `\n\n## Current Architecture Data (from the editor grid)\n${gridContext}`;
+    } else {
+      systemPrompt += `\n\n## Note: Editor grid contains template/placeholder rows. Use the cross-capability context below as the authoritative data source.`;
+    }
   }
   if (crossCapContext) {
-    systemPrompt += `\n\n## Cross-Capability Context (from architecture knowledge base)\nThe following data spans ALL towers and capabilities in the program:\n\n${crossCapContext}`;
+    systemPrompt += `\n\n## Cross-Capability Context (from architecture knowledge base)\nThe following data spans ALL towers and capabilities in the program. This is the AUTHORITATIVE source — prefer it over grid data when the grid appears empty or contains placeholders.\n\n${crossCapContext}`;
   }
 
   // Send only last 6 messages to reduce token cost

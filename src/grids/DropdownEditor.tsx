@@ -28,6 +28,7 @@ interface DropdownEditorParams extends ICellEditorParams {
 const ITEM_HEIGHT = 32;
 const MAX_VISIBLE = 10;
 const MIN_DROPDOWN_WIDTH = 240;
+const HEADER_HEIGHT = 36; // height of current-value header bar
 
 const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
   const [selectedValue, setSelectedValue] = useState(props.value ?? '');
@@ -57,7 +58,8 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
     },
   }));
 
-  // Focus root div on mount and scroll selected item into view
+  // Focus root div on mount, scroll selected item into view, and fix
+  // first-row clipping where the popup renders behind the grid header.
   useEffect(() => {
     rootRef.current?.focus();
     if (listRef.current && highlightIdx > 0) {
@@ -67,6 +69,34 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
         listRef.current.scrollTop = itemTop - containerH / 2;
       }
     }
+
+    // Nudge popup down if it's clipped behind the AG Grid header row.
+    // popupParent=document.body means the popup is a direct child of <body>,
+    // so we check its bounding rect against the viewport top.
+    requestAnimationFrame(() => {
+      const popup = rootRef.current?.closest('.ag-popup-editor') as HTMLElement | null;
+      if (!popup) return;
+      const rect = popup.getBoundingClientRect();
+      // If the popup's top edge is above or too close to the viewport top, push it down
+      if (rect.top < 4) {
+        const currentTop = parseFloat(popup.style.top) || 0;
+        popup.style.top = `${currentTop + Math.abs(rect.top) + 4}px`;
+      }
+      // Also guard the cell rect: if the cell is in the first visible row,
+      // the AG Grid header may overlap. Use the grid header height as the
+      // minimum safe Y position.
+      const gridEl = props.eGridCell?.closest('.ag-root-wrapper') as HTMLElement | null;
+      if (gridEl) {
+        const headerEl = gridEl.querySelector('.ag-header') as HTMLElement | null;
+        if (headerEl) {
+          const headerBottom = headerEl.getBoundingClientRect().bottom;
+          if (rect.top < headerBottom + 2) {
+            const currentTop = parseFloat(popup.style.top) || 0;
+            popup.style.top = `${currentTop + (headerBottom - rect.top) + 4}px`;
+          }
+        }
+      }
+    });
   }, []);
 
   const commitValue = useCallback((val: string) => {
@@ -123,13 +153,32 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
       onClick={e => e.stopPropagation()}
       style={{ width: dropdownWidth, outline: 'none' }}
     >
+      {/* Current value header — always visible so text isn't clipped */}
+      <div style={{
+        height: HEADER_HEIGHT,
+        lineHeight: `${HEADER_HEIGHT}px`,
+        padding: '0 12px',
+        background: '#e6f0fa',
+        borderRadius: '4px 4px 0 0',
+        border: '2px solid #0071C5',
+        borderBottom: 'none',
+        fontSize: 13,
+        fontWeight: 600,
+        color: '#0071C5',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}>
+        {selectedValue || '— none selected —'}
+      </div>
       <div
         ref={listRef}
         style={{
           maxHeight: containerHeight,
           overflowY: 'auto',
           border: '2px solid #0071C5',
-          borderRadius: 4,
+          borderTop: '1px solid #b0d4f1',
+          borderRadius: '0 0 4px 4px',
           boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
           background: '#fff',
           fontSize: 13,
