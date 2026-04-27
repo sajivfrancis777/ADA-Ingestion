@@ -86,6 +86,160 @@ function makeId(): string {
   return `msg_${Date.now()}_${++messageCounter}`;
 }
 
+// ── Cross-Repo Context Index ────────────────────────────────
+// Fetched from ADA-Artifacts GitHub Pages. Contains all flow rows,
+// system names, and capability metadata across every tower.
+// When repos merge into one Azure repo, change CONTEXT_INDEX_BASE
+// to same-origin (or remove it) — everything else works unchanged.
+const CONTEXT_INDEX_BASE = 'https://sajivfrancis777.github.io/ADA-Artifacts/';
+
+interface ContextIndexMeta {
+  capabilityCount: number;
+  flowCount: number;
+  systemCount: number;
+}
+
+interface FlowEntry {
+  cap: string;
+  tower: string;
+  release: string;
+  state: string;
+  chain: string;
+  hop: string;
+  source: string;
+  target: string;
+  via: string;
+  pattern: string;
+  frequency: string;
+  dataDesc: string;
+}
+
+interface CapabilityEntry {
+  name: string;
+  tower: string;
+  towerName: string;
+  group: string;
+  systems: string[];
+  flowCount: number;
+}
+
+interface ContextIndex {
+  _meta: ContextIndexMeta;
+  systems: string[];
+  capabilities: Record<string, CapabilityEntry>;
+  flowIndex: FlowEntry[];
+  systemGraph: Record<string, Array<{ target: string; via: string; pattern: string; cap: string; tower: string; state: string }>>;
+}
+
+let contextIndex: ContextIndex | null = null;
+let contextIndexLoading = false;
+
+async function loadContextIndex(): Promise<ContextIndex | null> {
+  if (contextIndex || contextIndexLoading) return contextIndex;
+  contextIndexLoading = true;
+  try {
+    const r = await fetch(CONTEXT_INDEX_BASE + 'context-index.json');
+    if (r.ok) {
+      contextIndex = await r.json();
+      console.log('[ADA Chat] Loaded context index:', contextIndex?._meta?.capabilityCount, 'capabilities,', contextIndex?._meta?.flowCount, 'flows');
+    }
+  } catch (e) {
+    console.warn('[ADA Chat] Could not load context-index.json:', e);
+  }
+  contextIndexLoading = false;
+  return contextIndex;
+}
+
+/** Extract known system names from user text */
+function detectSystemNames(text: string): string[] {
+  if (!contextIndex?.systems) return [];
+  const found: string[] = [];
+  for (const sys of contextIndex.systems) {
+    const escaped = sys.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp('\\b' + escaped + '\\b', 'i');
+    if (re.test(text)) found.push(sys);
+  }
+  return found;
+}
+
+/** Search context index for flows matching system names or cap IDs */
+function searchContextIndex(text: string): string {
+  if (!contextIndex) return '';
+  const systems = detectSystemNames(text);
+  // Also detect cap IDs
+  const capIdRe = /\b([A-Z]{1,4}-(?:IF-|IP-)?[A-Z]{0,3}-?\d{2,3})\b/gi;
+  const capIds = [...new Set((text.match(capIdRe) || []).map(m => m.toUpperCase()))];
+
+  if (systems.length === 0 && capIds.length === 0) return '';
+
+  const parts: string[] = [];
+
+  // Find flows involving mentioned systems across ALL capabilities
+  if (systems.length > 0 && contextIndex.flowIndex) {
+    const sysSet = new Set(systems.map(s => s.toUpperCase()));
+    const matchingFlows = contextIndex.flowIndex.filter(f =>
+      sysSet.has((f.source || '').toUpperCase()) || sysSet.has((f.target || '').toUpperCase())
+    );
+    if (matchingFlows.length > 0) {
+      const byCap: Record<string, FlowEntry[]> = {};
+      for (const f of matchingFlows) {
+        const key = `${f.cap} (${f.tower})`;
+        if (!byCap[key]) byCap[key] = [];
+        byCap[key].push(f);
+      }
+      let section = `### Cross-Capability Flow Data for: ${systems.join(', ')}\nFound ${matchingFlows.length} flow rows across ${Object.keys(byCap).length} capabilities.\n\n`;
+      let totalRows = 0;
+      for (const [capKey, flows] of Object.entries(byCap)) {
+        if (totalRows > 80) { section += `\n…(${matchingFlows.length - totalRows} more rows across additional capabilities)\n`; break; }
+        const capInfo = contextIndex.capabilities[flows[0].cap];
+        section += `**${capKey}** — ${capInfo?.name || ''}\n`;
+        section += '| Release | State | Flow Chain | Source | Target | Via | Pattern | Frequency | Data |\n';
+        section += '|---------|-------|------------|--------|--------|-----|---------|-----------|------|\n';
+        for (const f of flows.slice(0, 15)) {
+          section += `| ${f.release} | ${f.state} | ${f.chain} | ${f.source} | ${f.target} | ${f.via} | ${f.pattern} | ${f.frequency} | ${f.dataDesc} |\n`;
+          totalRows++;
+        }
+        if (flows.length > 15) section += `| … | | ${flows.length - 15} more rows | | | | | | |\n`;
+        section += '\n';
+      }
+      parts.push(section);
+    }
+
+    // System adjacency
+    if (contextIndex.systemGraph) {
+      const edges: string[] = [];
+      for (const sys of systems) {
+        for (const e of (contextIndex.systemGraph[sys] || []).slice(0, 10)) {
+          edges.push(`${sys} → ${e.target} (via ${e.via || 'direct'}, ${e.pattern || 'unknown'}, cap ${e.cap})`);
+        }
+        for (const [src, targets] of Object.entries(contextIndex.systemGraph)) {
+          for (const e of targets) {
+            if (e.target === sys) {
+              edges.push(`${src} → ${sys} (via ${e.via || 'direct'}, ${e.pattern || 'unknown'}, cap ${e.cap})`);
+            }
+          }
+        }
+      }
+      const unique = [...new Set(edges)].slice(0, 30);
+      if (unique.length > 0) {
+        parts.push(`### System Connectivity: ${systems.join(', ')}\n${unique.join('\n')}`);
+      }
+    }
+  }
+
+  // Capability metadata for detected cap IDs
+  if (capIds.length > 0 && contextIndex.capabilities) {
+    for (const cid of capIds.slice(0, 5)) {
+      const cap = contextIndex.capabilities[cid];
+      if (!cap) continue;
+      parts.push(`### ${cid} — ${cap.name} (${cap.tower})\n**Group:** ${cap.group} | **Systems:** ${cap.systems.join(', ')} | **Flow Count:** ${cap.flowCount}`);
+    }
+  }
+
+  const result = parts.join('\n\n---\n\n');
+  return result.length > 16000 ? result.slice(0, 16000) + '\n\n…(context truncated)' : result;
+}
+
 /**
  * Send a message to the configured LLM and get a response.
  * @param gridContext — optional stringified grid data for context-aware answers
@@ -104,10 +258,23 @@ export async function sendMessage(
     };
   }
 
-  // Build system prompt with optional grid context
+  // Load cross-repo context index (from ADA-Artifacts GitHub Pages)
+  await loadContextIndex();
+
+  // Extract user's latest message text for context search
+  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+  const userText = lastUserMsg?.content || '';
+
+  // Search context index for cross-capability grounding
+  const crossCapContext = searchContextIndex(userText);
+
+  // Build system prompt with all grounding sources
   let systemPrompt = SYSTEM_PROMPT;
   if (gridContext) {
     systemPrompt += `\n\n## Current Architecture Data (from the editor grid)\n${gridContext}`;
+  }
+  if (crossCapContext) {
+    systemPrompt += `\n\n## Cross-Capability Context (from architecture knowledge base)\nThe following data spans ALL towers and capabilities in the program:\n\n${crossCapContext}`;
   }
 
   // Send only last 6 messages to reduce token cost
