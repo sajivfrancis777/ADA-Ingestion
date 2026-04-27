@@ -4,8 +4,10 @@
  * Uses props.onValueChange() to notify AG Grid of value changes — the
  * critical fix that was missing in all previous iterations.
  *
- * No React portal. The dropdown is a direct child rendered inside AG Grid's
- * popup wrapper (isPopup=true).
+ * Inline editor (isPopup=false) with React Portal for the dropdown list.
+ * The input renders inside the cell; the suggestion list is portaled to
+ * document.body with position:fixed so it escapes AG Grid's header
+ * stacking context and overflow clips.
  */
 import {
   forwardRef,
@@ -15,6 +17,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { createPortal } from 'react-dom';
 import type { ICellEditorParams } from 'ag-grid-community';
 
 interface AutocompleteParams extends ICellEditorParams {
@@ -36,22 +39,28 @@ const AutocompleteCellEditor = forwardRef(
     const [filtered, setFiltered] = useState<string[]>([]);
     const [selectedIdx, setSelectedIdx] = useState(-1);
     const [isOpen, setIsOpen] = useState(true);
+    const [listPos, setListPos] = useState<{ top: number; left: number } | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
     const rootRef = useRef<HTMLDivElement>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-    // Size dropdown to at least the cell width so it aligns visually
+    // Size dropdown to at least the cell width
     const cellWidth = props.eGridCell?.getBoundingClientRect().width ?? 0;
     const dropdownWidth = Math.max(cellWidth, MIN_DROPDOWN_WIDTH);
 
-    // Focus input on mount
+    // Focus input on mount and compute portal position
     useEffect(() => {
       setTimeout(() => {
         inputRef.current?.focus();
         inputRef.current?.select();
       }, 0);
-    }, []);
+      const cell = props.eGridCell;
+      if (cell) {
+        const rect = cell.getBoundingClientRect();
+        setListPos({ top: rect.bottom, left: rect.left });
+      }
+    }, [props.eGridCell]);
 
     // Debounced filter
     useEffect(() => {
@@ -84,11 +93,10 @@ const AutocompleteCellEditor = forwardRef(
       }
     }, [selectedIdx]);
 
-    // AG Grid editor interface
+    // AG Grid editor interface — INLINE (isPopup false)
     useImperativeHandle(ref, () => ({
       getValue: () => selectedValue,
-      isPopup: () => true,
-      getPopupPosition: () => 'under' as const,
+      isPopup: () => false,
       isCancelBeforeStart: () => false,
       isCancelAfterEnd: () => false,
     }));
@@ -140,15 +148,75 @@ const AutocompleteCellEditor = forwardRef(
 
     const containerHeight = Math.min(filtered.length, MAX_VISIBLE) * ITEM_HEIGHT;
 
+    // Floating suggestion list — portaled to document.body with position:fixed
+    const portalList = isOpen && filtered.length > 0 && listPos && createPortal(
+      <div
+        onMouseDown={e => e.preventDefault()}
+        style={{
+          position: 'fixed',
+          top: listPos.top,
+          left: listPos.left,
+          width: dropdownWidth,
+          zIndex: 99999,
+        }}
+      >
+        <div
+          ref={listRef}
+          style={{
+            maxHeight: containerHeight,
+            overflowY: 'auto',
+            border: '1px solid #ccc',
+            borderRadius: '0 0 4px 4px',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+            background: '#fff',
+            fontSize: 13,
+          }}
+        >
+          {filtered.map((item, i) => (
+            <div
+              key={item}
+              onMouseDown={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                commitValue(item);
+              }}
+              onMouseEnter={() => setSelectedIdx(i)}
+              style={{
+                height: ITEM_HEIGHT,
+                padding: '4px 8px',
+                cursor: 'pointer',
+                backgroundColor: i === selectedIdx ? '#0071C5' : 'transparent',
+                color: i === selectedIdx ? '#fff' : '#333',
+                borderBottom: '1px solid #f0f0f0',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                lineHeight: `${ITEM_HEIGHT - 8}px`,
+                boxSizing: 'border-box',
+              }}
+            >
+              {item}
+            </div>
+          ))}
+          {filtered.length >= maxResults && (
+            <div style={{ padding: '4px 8px', color: '#999', fontStyle: 'italic', fontSize: 11 }}>
+              Type more to narrow results…
+            </div>
+          )}
+        </div>
+      </div>,
+      document.body,
+    );
+
     return (
       <div
         ref={rootRef}
-        style={{ width: dropdownWidth, background: '#fff' }}
-        onMouseDown={e => e.stopPropagation()}
-        onClick={e => e.stopPropagation()}
+        className="ag-cell-edit-wrapper"
+        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center' }}
       >
         <input
           ref={inputRef}
+          className="ag-cell-editor"
           type="text"
           value={text}
           onChange={e => {
@@ -158,9 +226,9 @@ const AutocompleteCellEditor = forwardRef(
           onKeyDown={handleKeyDown}
           style={{
             width: '100%',
-            height: 32,
+            height: '100%',
             border: '2px solid #0071C5',
-            borderRadius: isOpen && filtered.length > 0 ? '3px 3px 0 0' : 3,
+            borderRadius: 3,
             padding: '2px 8px',
             fontSize: 13,
             boxSizing: 'border-box',
@@ -168,54 +236,7 @@ const AutocompleteCellEditor = forwardRef(
           }}
           placeholder="Type to search systems…"
         />
-
-        {isOpen && filtered.length > 0 && (
-          <div
-            ref={listRef}
-            style={{
-              maxHeight: containerHeight,
-              overflowY: 'auto',
-              border: '1px solid #ccc',
-              borderTop: 'none',
-              borderRadius: '0 0 4px 4px',
-              boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
-              background: '#fff',
-              fontSize: 13,
-            }}
-          >
-            {filtered.map((item, i) => (
-              <div
-                key={item}
-                onMouseDown={e => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  commitValue(item);
-                }}
-                onMouseEnter={() => setSelectedIdx(i)}
-                style={{
-                  height: ITEM_HEIGHT,
-                  padding: '4px 8px',
-                  cursor: 'pointer',
-                  backgroundColor: i === selectedIdx ? '#0071C5' : 'transparent',
-                  color: i === selectedIdx ? '#fff' : '#333',
-                  borderBottom: '1px solid #f0f0f0',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  lineHeight: `${ITEM_HEIGHT - 8}px`,
-                  boxSizing: 'border-box',
-                }}
-              >
-                {item}
-              </div>
-            ))}
-            {filtered.length >= maxResults && (
-              <div style={{ padding: '4px 8px', color: '#999', fontStyle: 'italic', fontSize: 11 }}>
-                Type more to narrow results…
-              </div>
-            )}
-          </div>
-        )}
+        {portalList}
       </div>
     );
   },
