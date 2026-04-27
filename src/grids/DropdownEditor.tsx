@@ -1,14 +1,18 @@
 /**
- * DropdownEditor — AG Grid custom cell editor using a div-based clickable list.
+ * DropdownEditor — AG Grid custom cell editor (inline + portal pattern).
+ *
+ * isPopup() returns FALSE so AG Grid renders the editor inside the cell.
+ * The floating dropdown list is rendered via createPortal to document.body,
+ * positioned via getBoundingClientRect() of the cell. This completely
+ * bypasses AG Grid's popup positioning — no header-clipping issues.
  *
  * The CRITICAL fix: props.onValueChange() is called on every selection.
  * Without this call, AG Grid never marks the cell dirty and silently
  * reverts the value when the editor closes.
  *
- * Uses the same div-list pattern as AutocompleteCellEditor (which has no
- * sizing issues) instead of a native <select> (which AG Grid constrains).
- *
- * Reference: https://stackoverflow.com/a/79650916 (CC BY-SA 4.0)
+ * References:
+ *   - https://bkjam.github.io/posts/2023-11-06-react-how-to-implement-custom-multiselect-cell-editor-in-aggrid/
+ *   - https://stackoverflow.com/a/79650916 (CC BY-SA 4.0)
  */
 import {
   forwardRef,
@@ -18,6 +22,7 @@ import {
   useRef,
   useEffect,
 } from 'react';
+import { createPortal } from 'react-dom';
 import type { ICellEditorParams } from 'ag-grid-community';
 
 interface DropdownEditorParams extends ICellEditorParams {
@@ -28,7 +33,6 @@ interface DropdownEditorParams extends ICellEditorParams {
 const ITEM_HEIGHT = 32;
 const MAX_VISIBLE = 10;
 const MIN_DROPDOWN_WIDTH = 320;
-const HEADER_HEIGHT = 36; // height of current-value header bar
 
 const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
   const [selectedValue, setSelectedValue] = useState(props.value ?? '');
@@ -36,13 +40,14 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
     const idx = props.values.indexOf(props.value ?? '');
     return idx >= 0 ? idx + 1 : 0; // +1 for "— clear —" at index 0
   });
+  const [listPos, setListPos] = useState<{ top: number; left: number } | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
   // All items: clear option + values
   const allItems = ['', ...props.values];
 
-  // Size dropdown to at least the cell width so it aligns visually
+  // Size dropdown to at least the cell width
   const cellWidth = props.eGridCell?.getBoundingClientRect().width ?? 0;
   const dropdownWidth = Math.max(cellWidth, MIN_DROPDOWN_WIDTH);
 
@@ -50,18 +55,28 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
     getValue() {
       return selectedValue;
     },
+    // INLINE editor — AG Grid does NOT create a popup container.
+    // The dropdown list is portaled to document.body by us.
     isPopup() {
-      return true;
-    },
-    getPopupPosition() {
-      return 'under' as const;
+      return false;
     },
   }));
 
-  // Focus root div on mount, scroll selected item into view, and fix
-  // first-row clipping where the popup renders behind the grid header.
+  // Position the portal dropdown list below the cell
   useEffect(() => {
     rootRef.current?.focus();
+    const cell = props.eGridCell;
+    if (cell) {
+      const rect = cell.getBoundingClientRect();
+      setListPos({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+      });
+    }
+  }, [props.eGridCell]);
+
+  // Scroll selected item into view on mount
+  useEffect(() => {
     if (listRef.current && highlightIdx > 0) {
       const itemTop = highlightIdx * ITEM_HEIGHT;
       const containerH = MAX_VISIBLE * ITEM_HEIGHT;
@@ -69,35 +84,7 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
         listRef.current.scrollTop = itemTop - containerH / 2;
       }
     }
-
-    // Nudge popup down if it's clipped behind the AG Grid header row.
-    // popupParent=document.body means the popup is a direct child of <body>,
-    // so we check its bounding rect against the viewport top.
-    requestAnimationFrame(() => {
-      const popup = rootRef.current?.closest('.ag-popup-editor') as HTMLElement | null;
-      if (!popup) return;
-      const rect = popup.getBoundingClientRect();
-      // If the popup's top edge is above or too close to the viewport top, push it down
-      if (rect.top < 4) {
-        const currentTop = parseFloat(popup.style.top) || 0;
-        popup.style.top = `${currentTop + Math.abs(rect.top) + 4}px`;
-      }
-      // Also guard the cell rect: if the cell is in the first visible row,
-      // the AG Grid header may overlap. Use the grid header height as the
-      // minimum safe Y position.
-      const gridEl = props.eGridCell?.closest('.ag-root-wrapper') as HTMLElement | null;
-      if (gridEl) {
-        const headerEl = gridEl.querySelector('.ag-header') as HTMLElement | null;
-        if (headerEl) {
-          const headerBottom = headerEl.getBoundingClientRect().bottom;
-          if (rect.top < headerBottom + 2) {
-            const currentTop = parseFloat(popup.style.top) || 0;
-            popup.style.top = `${currentTop + (headerBottom - rect.top) + 4}px`;
-          }
-        }
-      }
-    });
-  }, []);
+  }, [listPos]); // runs after position is set and portal renders
 
   const commitValue = useCallback((val: string) => {
     setSelectedValue(val);
@@ -144,41 +131,27 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
 
   const containerHeight = Math.min(allItems.length, MAX_VISIBLE) * ITEM_HEIGHT;
 
-  return (
+  // The floating dropdown list — rendered via portal to document.body
+  const dropdownList = listPos && createPortal(
     <div
-      ref={rootRef}
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
-      onMouseDown={e => e.stopPropagation()}
-      onClick={e => e.stopPropagation()}
-      style={{ width: dropdownWidth, outline: 'none' }}
+      // Prevent AG Grid's stopEditingWhenCellsLoseFocus from killing the
+      // editor when the user clicks inside the portal dropdown.
+      onMouseDown={e => e.preventDefault()}
+      style={{
+        position: 'absolute',
+        top: listPos.top,
+        left: listPos.left,
+        width: dropdownWidth,
+        zIndex: 99999,
+      }}
     >
-      {/* Current value header — always visible so text isn't clipped */}
-      <div style={{
-        height: HEADER_HEIGHT,
-        lineHeight: `${HEADER_HEIGHT}px`,
-        padding: '0 12px',
-        background: '#e6f0fa',
-        borderRadius: '4px 4px 0 0',
-        border: '2px solid #0071C5',
-        borderBottom: 'none',
-        fontSize: 13,
-        fontWeight: 600,
-        color: '#0071C5',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      }}>
-        {selectedValue || '— none selected —'}
-      </div>
       <div
         ref={listRef}
         style={{
           maxHeight: containerHeight,
           overflowY: 'auto',
           border: '2px solid #0071C5',
-          borderTop: '1px solid #b0d4f1',
-          borderRadius: '0 0 4px 4px',
+          borderRadius: 4,
           boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
           background: '#fff',
           fontSize: 13,
@@ -218,6 +191,7 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
           fontSize: 11,
           color: '#888',
           background: '#f8f8f8',
+          border: '2px solid #0071C5',
           borderTop: '1px solid #eee',
           borderRadius: '0 0 4px 4px',
           textAlign: 'right',
@@ -225,6 +199,35 @@ const DropdownEditor = forwardRef((props: DropdownEditorParams, ref) => {
           {allItems.length} items — ↑↓ to scroll
         </div>
       )}
+    </div>,
+    document.body,
+  );
+
+  return (
+    <div
+      ref={rootRef}
+      className="ag-cell-edit-wrapper"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 12px',
+        fontSize: 13,
+        fontWeight: 600,
+        color: '#0071C5',
+        background: '#e6f0fa',
+        outline: 'none',
+        cursor: 'pointer',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {selectedValue || '— select —'}
+      {dropdownList}
     </div>
   );
 });
