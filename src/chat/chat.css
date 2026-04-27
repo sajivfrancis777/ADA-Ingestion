@@ -509,18 +509,20 @@
 
 .md-mermaid-overlay-content {
   background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  max-width: 95vw;
-  max-height: 90vh;
+  border-radius: 8px;
+  padding: 48px 24px 24px;
+  width: calc(100vw - 48px);
+  height: calc(100vh - 48px);
   overflow: auto;
   position: relative;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
 }
 
 .md-mermaid-overlay-content svg {
-  max-width: 100%;
-  height: auto;
+  width: 100%;
+  height: 100%;
+  max-width: none;
 }
 
 .md-mermaid-overlay-close {

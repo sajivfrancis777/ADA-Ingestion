@@ -61,11 +61,31 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
         const mermaidEl = wrap?.querySelector('.md-mermaid');
         if (!mermaidEl) return;
         const svg = mermaidEl.querySelector('svg');
-        const content = svg ? svg.outerHTML : '<pre class="md-pre" style="max-height:none">' + mermaidEl.innerHTML + '</pre>';
         const overlay = document.createElement('div');
         overlay.className = 'md-mermaid-overlay';
-        overlay.innerHTML = '<div class="md-mermaid-overlay-content"><button class="md-mermaid-overlay-close" title="Close">\u2715</button>' + content + '</div>';
-        overlay.querySelector('.md-mermaid-overlay-close')!.addEventListener('click', () => overlay.remove());
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'md-mermaid-overlay-content';
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'md-mermaid-overlay-close';
+        closeBtn.title = 'Close';
+        closeBtn.textContent = '\u2715';
+        closeBtn.addEventListener('click', () => overlay.remove());
+        contentDiv.appendChild(closeBtn);
+        if (svg) {
+          const cloned = svg.cloneNode(true) as SVGElement;
+          cloned.removeAttribute('id');
+          cloned.style.width = '100%';
+          cloned.style.height = '100%';
+          cloned.style.maxWidth = 'none';
+          contentDiv.appendChild(cloned);
+        } else {
+          const pre = document.createElement('pre');
+          pre.className = 'md-pre';
+          pre.style.maxHeight = 'none';
+          pre.textContent = mermaidEl.textContent;
+          contentDiv.appendChild(pre);
+        }
+        overlay.appendChild(contentDiv);
         overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
         document.body.appendChild(overlay);
       });
