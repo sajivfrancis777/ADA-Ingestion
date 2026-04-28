@@ -468,6 +468,54 @@ body {
   box-shadow: 0 0 0 2px rgba(0, 113, 197, 0.15);
 }
 
+/* ─── Drag-and-drop overlay ─── */
+
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 113, 197, 0.12);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: drop-fade-in 0.15s ease;
+}
+
+@keyframes drop-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.drop-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 64px;
+  border: 3px dashed var(--intel-blue);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.drop-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.drop-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--intel-blue);
+}
+
+.drop-subtitle {
+  font-size: 13px;
+  color: #666;
+}
+
 /* ─── Toolbar (stacked two-row layout) ─── */
 
 .toolbar-stack {
@@ -1080,6 +1128,12 @@ body {
     gap: 6px;
   }
 
+  .toolbar-label {
+    font-size: 10px;
+    padding: 2px 6px;
+    margin-right: 2px;
+  }
+
   .ft-sidebar {
     width: 220px;
   }
@@ -1165,6 +1219,47 @@ body {
     flex-direction: column;
     gap: 6px;
     align-items: stretch;
+    padding: 6px 10px;
+  }
+
+  /* Two-row toolbar: collapse label into icon-only on mobile */
+  .toolbar-label {
+    font-size: 0;        /* hide text */
+    border-right: none;
+    padding: 0;
+    margin-right: 0;
+  }
+  .toolbar-label::before {
+    font-size: 14px;     /* keep the emoji visible */
+  }
+
+  /* Compact row spacing */
+  .toolbar-data,
+  .toolbar-diagrams {
+    padding: 4px 8px;
+  }
+
+  /* Template dropdown: full width on mobile */
+  .template-dropdown-wrap {
+    position: static;
+  }
+  .template-dropdown {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    z-index: 1000;
+  }
+
+  /* Diagram status messages: compact, wrap */
+  .diagram-success,
+  .diagram-error,
+  .github-error {
+    font-size: 10px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .toolbar-left {
@@ -1285,9 +1380,37 @@ body {
     grid-template-columns: 1fr;
   }
 
+  /* Merge both toolbar rows into a single scrollable strip */
+  .toolbar-stack {
+    gap: 0;
+  }
+
+  .toolbar-data,
+  .toolbar-diagrams {
+    padding: 3px 6px;
+  }
+
+  /* Hide the row labels entirely on tiny screens */
+  .toolbar-label {
+    display: none;
+  }
+
   .toolbar-left .btn {
     font-size: 11px;
     padding: 5px 8px;
+  }
+
+  /* Hide non-essential info badges to save space */
+  .file-info {
+    display: none;
+  }
+
+  .file-badge {
+    font-size: 9px;
+  }
+
+  .save-timestamp {
+    display: none;
   }
 
   .tab-btn {

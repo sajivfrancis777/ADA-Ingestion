@@ -20,7 +20,8 @@ import { TOWERS, CAPABILITIES } from './data/towerRegistry';
 import { PROJECTS, getDefaultProject, type ProjectInfo } from './data/projectRegistry';
 import { generateSampleData } from './data/sampleDataGenerator';
 import { loadWorkbook, downloadWorkbook, createBlankWorkbook } from './utils/xlsxUtils';
-import { resolveFilePath, fetchFileContent, parseFileInfo } from './utils/githubFetch';
+import { resolveFilePath, resolveCapabilityBasePath, fetchFileContent, parseFileInfo, listCapabilityInputFiles } from './utils/githubFetch';
+import type { CapabilityInputFiles } from './utils/githubFetch';
 import { saveToLocal, loadFromLocal, getLastSaved } from './utils/localSave';
 import { saveToGitHub, hasWriteToken } from './utils/githubSave';
 import { parseDiagram, buildHopsJson } from './utils/diagramParser';
@@ -82,9 +83,22 @@ export default function App() {
   const [diagramStatus, setDiagramStatus] = useState<'idle' | 'parsing' | 'uploading' | 'done' | 'error'>('idle');
   const [diagramMessage, setDiagramMessage] = useState('');
   const [recentUploads, setRecentUploads] = useState<{ tower: string; cap: string; folder: string; filename: string }[]>([]);
+  const [persistedFiles, setPersistedFiles] = useState<CapabilityInputFiles | undefined>();
+  const [persistedRefresh, setPersistedRefresh] = useState(0);
+  const [dragOver, setDragOver] = useState<'xlsx' | 'diagram' | null>(null);
 
   // Keep dirtyRef in sync for the async effect
   useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
+
+  // Fetch persisted files (uploads/bpmn/extracts) from GitHub when tower/cap changes or after upload
+  useEffect(() => {
+    let cancelled = false;
+    setPersistedFiles(undefined);
+    listCapabilityInputFiles(tower, cap)
+      .then(files => { if (!cancelled) setPersistedFiles(files); })
+      .catch(() => { /* silent — tree still works without persisted files */ });
+    return () => { cancelled = true; };
+  }, [tower, cap, persistedRefresh]);
 
   // Stable callback so TabEditor doesn't re-render when App state changes
   const handleDirty = useCallback(() => {
@@ -249,6 +263,7 @@ export default function App() {
         const bpmnResult = await uploadBpmnToGitHub(tower, cap, file.name, buffer);
         if (bpmnResult.ok) {
           setRecentUploads(prev => [...prev, { tower, cap, folder: 'bpmn', filename: file.name }]);
+          setPersistedRefresh(n => n + 1);
           setDiagramStatus('done');
           setDiagramMessage(
             `✓ BPMN uploaded to input/bpmn/ — will be included in the ${cap} capability documentation build.`
@@ -271,6 +286,7 @@ export default function App() {
         const vsdResult = await uploadDiagramToGitHub(tower, cap, file.name, buffer);
         if (vsdResult.ok) {
           setRecentUploads(prev => [...prev, { tower, cap, folder: 'uploads', filename: file.name }]);
+          setPersistedRefresh(n => n + 1);
           setDiagramStatus('done');
           setDiagramMessage(
             `✓ Visio .vsd uploaded — background processing will extract hops. Check back in a few minutes for results in input/extracts/.`
@@ -327,6 +343,7 @@ export default function App() {
 
       if (diagResult.ok && hopsResult.ok) {
         setRecentUploads(prev => [...prev, { tower, cap, folder: 'uploads', filename: file.name }]);
+        setPersistedRefresh(n => n + 1);
         setDiagramStatus('done');
         setDiagramMessage(
           `✓ ${result.totalHops} hops from ${result.totalChains} chains loaded into grid. Files saved to GitHub.`
@@ -353,6 +370,60 @@ export default function App() {
     setHasToken(hasWriteToken());
   }, []);
 
+  // ── Drag-and-drop support ────────────────────────────────────
+  const XLSX_EXTS = new Set(['xlsx', 'xls']);
+  const DIAGRAM_EXTS = new Set(['drawio', 'bpmn', 'xml', 'vsdx', 'vsd']);
+
+  const classifyFile = useCallback((name: string): 'xlsx' | 'diagram' | null => {
+    const ext = name.toLowerCase().split('.').pop() ?? '';
+    if (XLSX_EXTS.has(ext)) return 'xlsx';
+    if (DIAGRAM_EXTS.has(ext)) return 'diagram';
+    return null;
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Check the first file in the drag
+    const item = e.dataTransfer.items?.[0];
+    if (!item || item.kind !== 'file') return;
+    // Use the filename from items if available, else check types
+    const name = (e.dataTransfer.items[0] as DataTransferItem & { name?: string })?.name ?? '';
+    if (name) {
+      setDragOver(classifyFile(name));
+    } else {
+      // Fallback: we can't know the filename during dragover in some browsers,
+      // so show a generic "drop file" overlay
+      setDragOver('diagram');
+    }
+  }, [classifyFile]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    // Only clear when leaving the app root (not child elements)
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setDragOver(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(null);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    const kind = classifyFile(file.name);
+    if (kind === 'xlsx') {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result instanceof ArrayBuffer) {
+          handleLoadFile(reader.result);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else if (kind === 'diagram') {
+      handleUploadDiagram(file);
+    }
+  }, [classifyFile, handleLoadFile, handleUploadDiagram]);
+
   const handleFileClick = useCallback(async (fileTower: string, capId: string, filename: string) => {
     if (dirty && !window.confirm('You have unsaved changes. Open file from GitHub? Changes will be lost.')) {
       return;
@@ -367,6 +438,48 @@ export default function App() {
       if (capId !== cap) {
         setCap(capId);
       }
+
+      // ── Extract JSON: merge hops into grid ──────────────────
+      if (filename.endsWith('_hops.json')) {
+        const basePath = await resolveCapabilityBasePath(fileTower, capId);
+        if (!basePath) throw new Error(`Cannot resolve path for ${fileTower}/${capId}`);
+        const extractPath = basePath.replace(/data\/$/, `extracts/${filename}`);
+        const buf = await fetchFileContent(extractPath);
+        const text = new TextDecoder().decode(buf);
+        const hopsFile = JSON.parse(text) as {
+          metadata: { source_file: string; total_hops: number; total_chains: number };
+          sheets: { tabName: string; release: string; state: string; hops: Record<string, unknown>[] }[];
+        };
+
+        // Find sheet matching current release/state, or first
+        const matchSheet = hopsFile.sheets.find(
+          s => s.release === release && s.state === state
+        ) ?? hopsFile.sheets[0];
+
+        if (!matchSheet || matchSheet.hops.length === 0) {
+          setDiagramStatus('error');
+          setDiagramMessage(`No hops found in ${filename} for ${release}/${state}.`);
+          return;
+        }
+
+        // Merge into current grid
+        const currentData = editorRef.current?.flush() ?? createBlankWorkbook();
+        const existingFlows = (currentData['Flows'] ?? []).filter(
+          (row: Record<string, unknown>) =>
+            Object.values(row).some(v => v != null && v !== '')
+        );
+        currentData['Flows'] = [...existingFlows, ...matchSheet.hops];
+        editorRef.current?.loadData(currentData);
+        setDirty(true);
+        setDiagramStatus('done');
+        setDiagramMessage(
+          `✓ Loaded ${matchSheet.hops.length} hops from ${filename} (${hopsFile.metadata.source_file}).`
+        );
+        setTimeout(() => { setDiagramStatus('idle'); setDiagramMessage(''); }, 6000);
+        return;
+      }
+
+      // ── XLSX files: existing flow ───────────────────────────
       // Auto-sync release + state from filename
       const info = parseFileInfo(filename);
       setRelease(info.release as Release);
@@ -430,7 +543,32 @@ export default function App() {
 
   return (
     <AuthProvider>
-    <div className="app">
+    <div
+      className="app"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Drag-and-drop overlay */}
+      {dragOver && (
+        <div className="drop-overlay">
+          <div className="drop-overlay-content">
+            {dragOver === 'xlsx' ? (
+              <>
+                <span className="drop-icon">📊</span>
+                <span className="drop-title">Drop XLSX to load data</span>
+                <span className="drop-subtitle">Replaces current grid data with the workbook contents</span>
+              </>
+            ) : (
+              <>
+                <span className="drop-icon">📐</span>
+                <span className="drop-title">Drop diagram to parse &amp; upload</span>
+                <span className="drop-subtitle">.drawio, .vsdx, .vsd, .bpmn, ArchiMate .xml</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="app-header">
         <img src="favicon.ico" alt="ADA" className="header-logo" />
@@ -474,6 +612,7 @@ export default function App() {
           onFileClick={handleFileClick}
           loadingFile={loadingFile}
           recentUploads={recentUploads}
+          persistedFiles={persistedFiles}
         />
         <div className="app-main">
           {/* Tower / Capability / Release / State selectors + file toolbar */}

@@ -171,6 +171,35 @@ export async function listCapabilityFiles(
 }
 
 /**
+ * Grouped file listing for a capability's input/ subfolders.
+ * Returns filenames sorted into data/uploads/bpmn/extracts buckets.
+ */
+export interface CapabilityInputFiles {
+  data: string[];
+  uploads: string[];
+  bpmn: string[];
+  extracts: string[];
+}
+
+export async function listCapabilityInputFiles(
+  tower: string,
+  capId: string,
+): Promise<CapabilityInputFiles> {
+  const index = await ensureIndex();
+  const result: CapabilityInputFiles = { data: [], uploads: [], bpmn: [], extracts: [] };
+
+  for (const [path] of index) {
+    if (!path.startsWith(`towers/${tower}/`) || !path.includes(`/${capId}/input/`)) continue;
+    const filename = path.split('/').pop()!;
+    if (path.includes('/input/data/'))     result.data.push(filename);
+    else if (path.includes('/input/uploads/'))  result.uploads.push(filename);
+    else if (path.includes('/input/bpmn/'))     result.bpmn.push(filename);
+    else if (path.includes('/input/extracts/')) result.extracts.push(filename);
+  }
+  return result;
+}
+
+/**
  * Fetch a file from GitHub by its repo path and return as ArrayBuffer.
  * Uses the Git Blobs API (SHA-based) to avoid path-encoding issues.
  */

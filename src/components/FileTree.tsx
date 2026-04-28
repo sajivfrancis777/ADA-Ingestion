@@ -43,6 +43,13 @@ export interface RecentUpload {
   filename: string;
 }
 
+/** Persisted file listing from GitHub for the current cap. */
+export interface PersistedInputFiles {
+  uploads: string[];
+  bpmn: string[];
+  extracts: string[];
+}
+
 function uploadIcon(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
   if (ext === 'bpmn') return '🔀';
@@ -53,8 +60,13 @@ function uploadIcon(filename: string): string {
   return '📄';
 }
 
-/** Build the full tree from the tower registry + any recent uploads. */
-function buildTree(recentUploads: RecentUpload[] = []): FileNode[] {
+/** Build the full tree from the tower registry + any recent uploads + persisted GitHub files. */
+function buildTree(
+  recentUploads: RecentUpload[] = [],
+  persistedFiles?: PersistedInputFiles,
+  selectedTower?: string,
+  selectedCap?: string,
+): FileNode[] {
   return TOWERS.map(tower => ({
     name: tower.id,
     type: 'folder' as const,
@@ -62,8 +74,18 @@ function buildTree(recentUploads: RecentUpload[] = []): FileNode[] {
     children: (CAPABILITIES[tower.id] ?? []).map(cap => {
       // Collect recent uploads for this tower/cap grouped by folder
       const capUploads = recentUploads.filter(u => u.tower === tower.id && u.cap === cap.id);
-      const bpmnUploads = capUploads.filter(u => u.folder === 'bpmn');
-      const diagramUploads = capUploads.filter(u => u.folder === 'uploads');
+      const sessionBpmn = capUploads.filter(u => u.folder === 'bpmn').map(u => u.filename);
+      const sessionDiagrams = capUploads.filter(u => u.folder === 'uploads').map(u => u.filename);
+
+      // Merge persisted files (from GitHub) with session uploads for the selected cap
+      const isSelected = tower.id === selectedTower && cap.id === selectedCap;
+      const ghUploads = isSelected && persistedFiles ? persistedFiles.uploads : [];
+      const ghBpmn = isSelected && persistedFiles ? persistedFiles.bpmn : [];
+      const ghExtracts = isSelected && persistedFiles ? persistedFiles.extracts : [];
+
+      // Deduplicate: session uploads may already be in GitHub
+      const allUploads = [...new Set([...ghUploads, ...sessionDiagrams])];
+      const allBpmn = [...new Set([...ghBpmn, ...sessionBpmn])];
 
       return {
         name: cap.id,
@@ -84,25 +106,39 @@ function buildTree(recentUploads: RecentUpload[] = []): FileNode[] {
                 name: 'uploads',
                 type: 'folder' as const,
                 icon: '📐',
-                children: diagramUploads.length > 0
-                  ? diagramUploads.map(u => ({
-                      name: u.filename,
+                children: allUploads.length > 0
+                  ? allUploads.map(f => ({
+                      name: f,
                       type: 'file' as const,
-                      icon: uploadIcon(u.filename),
-                      tag: '✓ new',
+                      icon: uploadIcon(f),
+                      tag: sessionDiagrams.includes(f) && !ghUploads.includes(f) ? '✓ new' : undefined,
                     }))
                   : [{ name: '(upload diagrams here)', type: 'file' as const, icon: '💡' }],
+              },
+              {
+                name: 'extracts',
+                type: 'folder' as const,
+                icon: '📋',
+                children: ghExtracts.length > 0
+                  ? ghExtracts.map(f => ({
+                      name: f,
+                      type: 'file' as const,
+                      icon: '📋',
+                      tag: 'json',
+                      meta: { tower: tower.id, capId: cap.id },
+                    }))
+                  : [{ name: '(auto-generated from diagrams)', type: 'file' as const, icon: '💡' }],
               },
               {
                 name: 'bpmn',
                 type: 'folder' as const,
                 icon: '🔀',
-                children: bpmnUploads.length > 0
-                  ? bpmnUploads.map(u => ({
-                      name: u.filename,
+                children: allBpmn.length > 0
+                  ? allBpmn.map(f => ({
+                      name: f,
                       type: 'file' as const,
                       icon: '🔀',
-                      tag: '✓ new',
+                      tag: sessionBpmn.includes(f) && !ghBpmn.includes(f) ? '✓ new' : undefined,
                     }))
                   : [{ name: '(upload .bpmn here)', type: 'file' as const, icon: '💡' }],
               },
@@ -135,6 +171,8 @@ function TreeNode({
   const isCapFolder = depth === 1;
   const isActive = isCapFolder && node.name === selectedCap;
   const isXlsx = !isFolder && node.name.endsWith('.xlsx');
+  const isJson = !isFolder && node.name.endsWith('.json') && !!node.meta;
+  const isClickable = isXlsx || isJson;
   const isLoading = loadingFile === node.name;
 
   const handleClick = () => {
@@ -144,7 +182,7 @@ function TreeNode({
     if (isCapFolder) {
       onSelectCap(node.name);
     }
-    if (isXlsx && node.meta && onFileClick) {
+    if (isClickable && node.meta && onFileClick) {
       onFileClick(node.meta.tower, node.meta.capId, node.name);
     }
   };
@@ -154,10 +192,10 @@ function TreeNode({
   return (
     <>
       <div
-        className={`ft-node ${isActive ? 'ft-active' : ''} ${isFolder ? 'ft-folder' : 'ft-file'} ${isXlsx ? 'ft-xlsx' : ''} ${isLoading ? 'ft-loading' : ''}`}
+        className={`ft-node ${isActive ? 'ft-active' : ''} ${isFolder ? 'ft-folder' : 'ft-file'} ${isClickable ? 'ft-xlsx' : ''} ${isLoading ? 'ft-loading' : ''}`}
         style={{ paddingLeft }}
         onClick={handleClick}
-        title={isXlsx ? `Click to open ${node.name} from GitHub` : isCapFolder ? `Select ${node.name}` : node.name}
+        title={isClickable ? `Click to load ${node.name} from GitHub` : isCapFolder ? `Select ${node.name}` : node.name}
       >
         {isFolder && (
           <span className={`ft-arrow ${open ? 'ft-arrow-open' : ''}`}>▶</span>
@@ -211,6 +249,7 @@ export default function FileTree({
   onFileClick,
   loadingFile,
   recentUploads,
+  persistedFiles,
 }: {
   collapsed: boolean;
   onToggle: () => void;
@@ -220,10 +259,14 @@ export default function FileTree({
   onFileClick?: (tower: string, capId: string, filename: string) => void;
   loadingFile?: string;
   recentUploads?: RecentUpload[];
+  persistedFiles?: PersistedInputFiles;
 }) {
   const [search, setSearch] = useState('');
   const uploads = recentUploads ?? [];
-  const tree = useMemo(() => buildTree(uploads), [uploads]);
+  const tree = useMemo(
+    () => buildTree(uploads, persistedFiles, selectedTower, selectedCap),
+    [uploads, persistedFiles, selectedTower, selectedCap],
+  );
 
   // Show only the selected tower's subtree
   const towerNode = tree.find(t => t.name === selectedTower);
