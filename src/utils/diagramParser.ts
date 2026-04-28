@@ -62,20 +62,65 @@ interface DiagramPage {
 
 // ── Release / State detection from tab names ──────────────────
 
+// Release detection — ordered so more-specific patterns match first.
+// Sub-releases (R1.1, R1.2) map to their parent release.
+// Patterns cover: R1, Release 1, Rel 1, Rel-1, Rel.1, Wave 1, W1,
+//   Phase 1, Ph1, Cutover 1, Go-Live 1, GL1, Sprint 1, and R5–R9.
 const RELEASE_PATTERNS: [RegExp, string][] = [
-  [/\bR1\b/i, 'R1'], [/\bRelease\s*1\b/i, 'R1'],
-  [/\bR2\b/i, 'R2'], [/\bRelease\s*2\b/i, 'R2'],
-  [/\bR3\b/i, 'R3'], [/\bRelease\s*3\b/i, 'R3'],
-  [/\bR4\b/i, 'R4'], [/\bRelease\s*4\b/i, 'R4'],
+  // Sub-releases → parent (must come before Rn)
+  [/\bR1[._]\d\b/i, 'R1'], [/\bR2[._]\d\b/i, 'R2'],
+  [/\bR3[._]\d\b/i, 'R3'], [/\bR4[._]\d\b/i, 'R4'],
+  // Canonical: R1–R9 and long-form variations
+  [/\bR1\b/i, 'R1'], [/\bRelease[\s._-]*1\b/i, 'R1'], [/\bRel[\s._-]*1\b/i, 'R1'],
+  [/\bR2\b/i, 'R2'], [/\bRelease[\s._-]*2\b/i, 'R2'], [/\bRel[\s._-]*2\b/i, 'R2'],
+  [/\bR3\b/i, 'R3'], [/\bRelease[\s._-]*3\b/i, 'R3'], [/\bRel[\s._-]*3\b/i, 'R3'],
+  [/\bR4\b/i, 'R4'], [/\bRelease[\s._-]*4\b/i, 'R4'], [/\bRel[\s._-]*4\b/i, 'R4'],
+  [/\bR5\b/i, 'R5'], [/\bRelease[\s._-]*5\b/i, 'R5'], [/\bRel[\s._-]*5\b/i, 'R5'],
+  [/\bR6\b/i, 'R6'], [/\bRelease[\s._-]*6\b/i, 'R6'],
+  [/\bR7\b/i, 'R7'], [/\bRelease[\s._-]*7\b/i, 'R7'],
+  [/\bR8\b/i, 'R8'], [/\bRelease[\s._-]*8\b/i, 'R8'],
+  [/\bR9\b/i, 'R9'], [/\bRelease[\s._-]*9\b/i, 'R9'],
+  // Alternative naming: Wave, Phase, Cutover, Go-Live, Sprint
+  [/\bWave[\s._-]*1\b/i, 'R1'], [/\bW1\b/i, 'R1'],
+  [/\bWave[\s._-]*2\b/i, 'R2'], [/\bW2\b/i, 'R2'],
+  [/\bWave[\s._-]*3\b/i, 'R3'], [/\bW3\b/i, 'R3'],
+  [/\bWave[\s._-]*4\b/i, 'R4'], [/\bW4\b/i, 'R4'],
+  [/\bPhase[\s._-]*1\b/i, 'R1'], [/\bPh[\s._-]*1\b/i, 'R1'],
+  [/\bPhase[\s._-]*2\b/i, 'R2'], [/\bPh[\s._-]*2\b/i, 'R2'],
+  [/\bPhase[\s._-]*3\b/i, 'R3'], [/\bPh[\s._-]*3\b/i, 'R3'],
+  [/\bPhase[\s._-]*4\b/i, 'R4'], [/\bPh[\s._-]*4\b/i, 'R4'],
+  [/\bCutover[\s._-]*1\b/i, 'R1'], [/\bCutover[\s._-]*2\b/i, 'R2'],
+  [/\bCutover[\s._-]*3\b/i, 'R3'], [/\bCutover[\s._-]*4\b/i, 'R4'],
+  [/\bGo[\s-]?Live[\s._-]*1\b/i, 'R1'], [/\bGL[\s._-]*1\b/i, 'R1'],
+  [/\bGo[\s-]?Live[\s._-]*2\b/i, 'R2'], [/\bGL[\s._-]*2\b/i, 'R2'],
+  [/\bGo[\s-]?Live[\s._-]*3\b/i, 'R3'], [/\bGL[\s._-]*3\b/i, 'R3'],
+  [/\bGo[\s-]?Live[\s._-]*4\b/i, 'R4'], [/\bGL[\s._-]*4\b/i, 'R4'],
+  [/\bSprint[\s._-]*1\b/i, 'R1'], [/\bSprint[\s._-]*2\b/i, 'R2'],
+  [/\bSprint[\s._-]*3\b/i, 'R3'], [/\bSprint[\s._-]*4\b/i, 'R4'],
+  // Early-phase labels
+  [/\bPOC\b/i, 'R1'], [/\bPilot\b/i, 'R1'], [/\bMVP\b/i, 'R1'],
 ];
 
+// State detection — Future vs Current (default: Current)
 const STATE_PATTERNS: [RegExp, string][] = [
+  [/\bfuture[\s-]?state\b/i, 'Future'],
   [/\bfuture\b/i, 'Future'],
   [/\bto[\s-]?be\b/i, 'Future'],
+  [/\btarget[\s-]?state\b/i, 'Future'],
   [/\btarget\b/i, 'Future'],
+  [/\bproposed\b/i, 'Future'],
+  [/\bplanned\b/i, 'Future'],
+  [/\bin[\s-]?design\b/i, 'Future'],
+  [/\bdraft\b/i, 'Future'],
+  [/\bcurrent[\s-]?state\b/i, 'Current'],
   [/\bcurrent\b/i, 'Current'],
   [/\bas[\s-]?is\b/i, 'Current'],
   [/\bbaseline\b/i, 'Current'],
+  [/\bexisting\b/i, 'Current'],
+  [/\blegacy\b/i, 'Current'],
+  [/\bpre[\s-]?migration\b/i, 'Current'],
+  [/\bdelta\b/i, 'Future'],
+  [/\bincremental\b/i, 'Future'],
 ];
 
 function detectReleaseState(tabName: string): { release: string; state: string } {
