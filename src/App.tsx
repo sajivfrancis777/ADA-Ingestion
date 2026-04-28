@@ -515,13 +515,14 @@ export default function App() {
       setLoadedFile(filename);
       setSourceRepoPath(repoPath);
     } catch (err) {
+      console.error('[handleFileClick]', filename, err);
       editorRef.current?.loadData(getTemplateData(fileTower, capId));
       setDirty(false);
       setFetchError(err instanceof Error ? err.message : 'Failed to fetch file');
     } finally {
       setLoadingFile(undefined);
     }
-  }, [dirty, tower, cap]);
+  }, [dirty, tower, cap, release, state]);
 
   const hasData = true;  // Grid always has data (template or loaded)
 
