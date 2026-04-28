@@ -468,23 +468,54 @@ body {
   box-shadow: 0 0 0 2px rgba(0, 113, 197, 0.15);
 }
 
-/* ─── Toolbar ─── */
+/* ─── Toolbar (stacked two-row layout) ─── */
+
+.toolbar-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
 
 .toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding: 6px 12px;
+}
+
+.toolbar-data {
+  background: #f0f4f8;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.toolbar-diagrams {
+  background: #f5f0fa;
+  border-bottom: 1px solid #e0d6ed;
+}
+
+.toolbar-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #666;
+  padding: 2px 8px;
+  border-right: 1px solid var(--border-color);
+  margin-right: 4px;
+  white-space: nowrap;
 }
 
 .toolbar-left {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
 .toolbar-right {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 .file-info {
@@ -506,11 +537,6 @@ body {
   border-radius: 4px;
   margin-left: 8px;
   font-family: 'Consolas', 'Courier New', monospace;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
 }
 
 /* ─── Buttons ─── */

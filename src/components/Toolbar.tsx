@@ -1,5 +1,7 @@
 /**
- * Toolbar — Load XLSX, Save, Push to GitHub, Download XLSX, Templates, and file context display.
+ * Toolbar — Two-row layout:
+ *   Row 1 (Data):      Load XLSX, Save, Push to GitHub, Download XLSX, GitHub settings
+ *   Row 2 (Diagrams):  Download Template, Upload Diagram, status messages
  */
 import { useRef, useState } from 'react';
 
@@ -83,101 +85,112 @@ export default function Toolbar({
     : '';
 
   return (
-    <div className="toolbar">
-      <div className="toolbar-left">
-        <button className="btn btn-primary" onClick={() => fileRef.current?.click()}>
-          Load XLSX
-        </button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={handleFileChange}
-          style={{ display: 'none' }}
-        />
-        <button
-          className={`btn ${dirty ? 'btn-save-dirty' : 'btn-save'}`}
-          onClick={onSave}
-          disabled={saveStatus === 'saving'}
-          title={lastSavedLabel || 'Save changes locally (browser storage)'}
-        >
-          {saveLabel}
-        </button>
-        <button
-          className={`btn ${githubStatus === 'pushed' ? 'btn-save' : githubStatus === 'error' ? 'btn-error' : 'btn-github'}`}
-          onClick={onPushToGitHub}
-          disabled={!hasData || githubStatus === 'pushing' || !hasGitHubToken}
-          title={hasGitHubToken
-            ? (githubMessage || 'Commit data to the ADA-Artifacts GitHub repo')
-            : 'Set up GitHub token first (click ⚙)'}
-        >
-          {ghLabel}
-        </button>
-        <button
-          className="btn btn-icon"
-          onClick={onOpenTokenSettings}
-          title="GitHub token settings"
-        >
-          ⚙
-        </button>
-        <button
-          className="btn btn-success"
-          onClick={onDownload}
-          disabled={!hasData}
-        >
-          Download XLSX
-        </button>
-        <span className="toolbar-divider" />
-        <div className="template-dropdown-wrap">
-          <button
-            className="btn btn-template"
-            onClick={() => setTemplateOpen(!templateOpen)}
-            title="Download a pre-formatted diagram template with correctly named tabs for the parser"
-          >
-            📋 Templates ▾
+    <div className="toolbar-stack">
+      {/* ─── Row 1: Data Operations ─── */}
+      <div className="toolbar toolbar-data">
+        <div className="toolbar-left">
+          <span className="toolbar-label">📊 Data</span>
+          <button className="btn btn-primary" onClick={() => fileRef.current?.click()}>
+            Load XLSX
           </button>
-          {templateOpen && (
-            <ul className="template-dropdown">
-              {TEMPLATES.map(t => (
-                <li key={t.file}>
-                  <button onClick={() => handleDownloadTemplate(t.file)}>{t.label}</button>
-                </li>
-              ))}
-            </ul>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+          />
+          <button
+            className={`btn ${dirty ? 'btn-save-dirty' : 'btn-save'}`}
+            onClick={onSave}
+            disabled={saveStatus === 'saving'}
+            title={lastSavedLabel || 'Save changes locally (browser storage)'}
+          >
+            {saveLabel}
+          </button>
+          <button
+            className={`btn ${githubStatus === 'pushed' ? 'btn-save' : githubStatus === 'error' ? 'btn-error' : 'btn-github'}`}
+            onClick={onPushToGitHub}
+            disabled={!hasData || githubStatus === 'pushing' || !hasGitHubToken}
+            title={hasGitHubToken
+              ? (githubMessage || 'Commit data to the ADA-Artifacts GitHub repo')
+              : 'Set up GitHub token first (click ⚙)'}
+          >
+            {ghLabel}
+          </button>
+          <button
+            className="btn btn-icon"
+            onClick={onOpenTokenSettings}
+            title="GitHub token settings"
+          >
+            ⚙
+          </button>
+          <button
+            className="btn btn-success"
+            onClick={onDownload}
+            disabled={!hasData}
+          >
+            Download XLSX
+          </button>
+        </div>
+        <div className="toolbar-right">
+          {githubMessage && githubStatus === 'error' && (
+            <span className="github-error" title={githubMessage}>⚠ {githubMessage}</span>
+          )}
+          {lastSavedLabel && <span className="save-timestamp">{lastSavedLabel}</span>}
+          <span className="file-info">{tower} / {cap}</span>
+          <span className="file-badge">{filename}</span>
+        </div>
+      </div>
+
+      {/* ─── Row 2: Diagrams & Templates ─── */}
+      <div className="toolbar toolbar-diagrams">
+        <div className="toolbar-left">
+          <span className="toolbar-label">📐 Diagrams</span>
+          <div className="template-dropdown-wrap">
+            <button
+              className="btn btn-template"
+              onClick={() => setTemplateOpen(!templateOpen)}
+              title="Download a pre-formatted diagram template with correctly named tabs for the parser"
+            >
+              📋 Download Template ▾
+            </button>
+            {templateOpen && (
+              <ul className="template-dropdown">
+                {TEMPLATES.map(t => (
+                  <li key={t.file}>
+                    <button onClick={() => handleDownloadTemplate(t.file)}>{t.label}</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <button
+            className="btn btn-diagram"
+            onClick={() => diagramRef.current?.click()}
+            disabled={diagramStatus === 'parsing' || diagramStatus === 'uploading'}
+            title="Upload a diagram (.drawio, .bpmn, .xml, .vsdx, .vsd) to extract integration hops into the Flows grid"
+          >
+            {diagramStatus === 'parsing' ? '⏳ Parsing…'
+              : diagramStatus === 'uploading' ? '⏳ Uploading…'
+              : '📐 Upload Diagram'}
+          </button>
+          <input
+            ref={diagramRef}
+            type="file"
+            accept=".drawio,.bpmn,.xml,.vsdx,.vsd"
+            onChange={handleDiagramChange}
+            style={{ display: 'none' }}
+          />
+        </div>
+        <div className="toolbar-right">
+          {diagramMessage && diagramStatus === 'done' && (
+            <span className="diagram-success" title={diagramMessage}>✓ {diagramMessage}</span>
+          )}
+          {diagramMessage && diagramStatus === 'error' && (
+            <span className="diagram-error" title={diagramMessage}>⚠ {diagramMessage}</span>
           )}
         </div>
-        <span className="toolbar-divider" />
-        <button
-          className="btn btn-diagram"
-          onClick={() => diagramRef.current?.click()}
-          disabled={diagramStatus === 'parsing' || diagramStatus === 'uploading'}
-          title="Upload a diagram (.drawio, .bpmn, .xml, .vsdx, .vsd) to extract integration hops into the Flows grid"
-        >
-          {diagramStatus === 'parsing' ? '⏳ Parsing…'
-            : diagramStatus === 'uploading' ? '⏳ Uploading…'
-            : '📐 Upload Diagram'}
-        </button>
-        <input
-          ref={diagramRef}
-          type="file"
-          accept=".drawio,.bpmn,.xml,.vsdx,.vsd"
-          onChange={handleDiagramChange}
-          style={{ display: 'none' }}
-        />
-      </div>
-      <div className="toolbar-right">
-        {diagramMessage && diagramStatus === 'done' && (
-          <span className="diagram-success" title={diagramMessage}>📐 {diagramMessage}</span>
-        )}
-        {diagramMessage && diagramStatus === 'error' && (
-          <span className="diagram-error" title={diagramMessage}>⚠ {diagramMessage}</span>
-        )}
-        {githubMessage && githubStatus === 'error' && (
-          <span className="github-error" title={githubMessage}>⚠ {githubMessage}</span>
-        )}
-        {lastSavedLabel && <span className="save-timestamp">{lastSavedLabel}</span>}
-        <span className="file-info">{tower} / {cap}</span>
-        <span className="file-badge">{filename}</span>
       </div>
     </div>
   );
