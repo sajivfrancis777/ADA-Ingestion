@@ -259,6 +259,27 @@ export default function App() {
         return;
       }
 
+      // ── .vsd path: legacy binary Visio — upload for background processing ──
+      // .vsd cannot be parsed client-side (OLE binary format).
+      // Upload to GitHub → GitHub Actions converts to .vsdx → Python parses → hops JSON committed.
+      if (ext === 'vsd') {
+        setDiagramStatus('uploading');
+        setDiagramMessage('Uploading legacy Visio (.vsd) for background processing…');
+
+        const vsdResult = await uploadDiagramToGitHub(tower, cap, file.name, buffer);
+        if (vsdResult.ok) {
+          setDiagramStatus('done');
+          setDiagramMessage(
+            `✓ Visio .vsd uploaded — background processing will extract hops. Check back in a few minutes for results in input/extracts/.`
+          );
+          setTimeout(() => { setDiagramStatus('idle'); setDiagramMessage(''); }, 10000);
+        } else {
+          setDiagramStatus('error');
+          setDiagramMessage(vsdResult.message);
+        }
+        return;
+      }
+
       // ── Draw.io / Visio / ArchiMate path: parse → grid → upload ──
       const result = await parseDiagram(file.name, buffer);
 

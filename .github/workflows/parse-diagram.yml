@@ -1,0 +1,132 @@
+# parse-diagram.yml — Background processing for uploaded Visio diagrams.
+#
+# Triggers when .vsd or .vsdx files are pushed to input/uploads/ directories.
+# For .vsd: converts to .vsdx via LibreOffice, then parses.
+# For .vsdx: parses directly.
+# Commits the extracted hops JSON back to input/extracts/.
+#
+# This workflow runs on ADA-Artifacts (target repo) since that's where
+# the diagram files are committed by the ADA-Ingestion upload flow.
+# To use: copy this file to ADA-Artifacts/.github/workflows/parse-diagram.yml
+
+name: Parse Uploaded Diagrams
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'towers/**/input/uploads/**/*.vsd'
+      - 'towers/**/input/uploads/**/*.vsdx'
+
+  workflow_dispatch:
+    inputs:
+      file_path:
+        description: 'Path to a specific diagram file to process'
+        required: false
+
+jobs:
+  parse-diagrams:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit to detect new files
+
+      - name: Install LibreOffice (for .vsd conversion)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libreoffice-draw
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Find new diagram files
+        id: find-files
+        run: |
+          if [ -n "${{ github.event.inputs.file_path }}" ]; then
+            echo "${{ github.event.inputs.file_path }}" > /tmp/diagram_files.txt
+          else
+            # Find .vsd/.vsdx files added in the latest commit
+            git diff --name-only --diff-filter=A HEAD~1 HEAD \
+              | grep -E 'input/uploads/.*\.(vsd|vsdx)$' \
+              > /tmp/diagram_files.txt || true
+          fi
+
+          if [ ! -s /tmp/diagram_files.txt ]; then
+            echo "No new diagram files found."
+            echo "has_files=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Files to process:"
+            cat /tmp/diagram_files.txt
+            echo "has_files=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Process diagrams
+        if: steps.find-files.outputs.has_files == 'true'
+        run: |
+          while IFS= read -r file_path; do
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "Processing: $file_path"
+
+            # Extract tower and capability from path
+            # Format: towers/{TOWER}/{L1}/{CAP-ID}/input/uploads/{filename}
+            tower=$(echo "$file_path" | cut -d'/' -f2)
+            cap=$(echo "$file_path" | sed -n 's|.*towers/[^/]*/[^/]*/\([^/]*\)/input/uploads/.*|\1|p')
+            filename=$(basename "$file_path")
+            ext="${filename##*.}"
+
+            echo "  Tower: $tower"
+            echo "  Cap: $cap"
+            echo "  File: $filename"
+
+            # Determine the .vsdx path to parse
+            vsdx_path="$file_path"
+            if [ "$ext" = "vsd" ]; then
+              echo "  Converting .vsd → .vsdx via LibreOffice..."
+              dir=$(dirname "$file_path")
+              libreoffice --headless --convert-to vsdx "$file_path" --outdir "/tmp/converted/" 2>/dev/null
+              vsdx_path="/tmp/converted/${filename%.*}.vsdx"
+              if [ ! -f "$vsdx_path" ]; then
+                echo "  ERROR: LibreOffice conversion failed for $filename"
+                continue
+              fi
+              echo "  Converted successfully."
+            fi
+
+            # Build output path: input/extracts/{timestamp}_{basename}_hops.json
+            base_name="${filename%.*}"
+            timestamp=$(echo "$filename" | grep -oP '^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z' || date -u +%Y-%m-%dT%H-%M-%SZ)
+            extract_dir=$(echo "$file_path" | sed 's|/uploads/.*|/extracts/|')
+            output_path="${extract_dir}${timestamp}_${base_name}_hops.json"
+
+            echo "  Output: $output_path"
+
+            # Run Python parser
+            python scripts/parse_visio.py \
+              --input "$vsdx_path" \
+              --output "$output_path" \
+              --tower "$tower" \
+              --cap "$cap"
+
+            echo "  Done."
+            echo ""
+          done < /tmp/diagram_files.txt
+
+      - name: Commit extracted hops
+        if: steps.find-files.outputs.has_files == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add 'towers/**/input/extracts/*.json'
+          if git diff --cached --quiet; then
+            echo "No new hops JSON to commit."
+          else
+            git commit -m "chore: extract hops from uploaded Visio diagrams [automated]"
+            git push
+          fi

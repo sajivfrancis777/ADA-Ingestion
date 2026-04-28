@@ -117,7 +117,7 @@ export default function Toolbar({
           className="btn btn-diagram"
           onClick={() => diagramRef.current?.click()}
           disabled={diagramStatus === 'parsing' || diagramStatus === 'uploading'}
-          title="Upload a diagram (.drawio, .bpmn, .xml, .vsdx) to extract integration hops into the Flows grid"
+          title="Upload a diagram (.drawio, .bpmn, .xml, .vsdx, .vsd) to extract integration hops into the Flows grid"
         >
           {diagramStatus === 'parsing' ? '⏳ Parsing…'
             : diagramStatus === 'uploading' ? '⏳ Uploading…'
@@ -126,7 +126,7 @@ export default function Toolbar({
         <input
           ref={diagramRef}
           type="file"
-          accept=".drawio,.bpmn,.xml,.vsdx"
+          accept=".drawio,.bpmn,.xml,.vsdx,.vsd"
           onChange={handleDiagramChange}
           style={{ display: 'none' }}
         />
