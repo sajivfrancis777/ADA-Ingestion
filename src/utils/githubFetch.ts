@@ -104,6 +104,7 @@ async function ensureIndex(): Promise<Map<string, string>> {
  */
 export function invalidateTreeCache(): void {
   pathIndex = null;
+  blobCache.clear();
   try { sessionStorage.removeItem('iao-github-tree'); } catch { /* ok */ }
 }
 
@@ -147,16 +148,6 @@ export async function resolveCapabilityBasePath(
     }
   }
   return null;
-}
-
-/**
- * Invalidate the cached tree index so subsequent calls refetch from GitHub.
- * Called after saving to ensure new/updated files are discovered.
- */
-export function invalidateTreeCache(): void {
-  pathIndex = null;
-  blobCache.clear();
-  sessionStorage.removeItem('iao-github-tree');
 }
 
 /**
