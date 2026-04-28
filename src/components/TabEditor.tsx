@@ -141,6 +141,8 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
       if (gridApiReady.current) {
         pushTabToGrid(TAB_DEFINITIONS[activeTab].name);
       }
+      // Always sync diagram preview with new Flows data
+      setFlowRows((newData['Flows'] ?? []) as FlowRow[]);
     },
   }), [saveCurrentTabToCache, pushTabToGrid, activeTab]);
 
