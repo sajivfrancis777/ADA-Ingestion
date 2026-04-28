@@ -81,6 +81,7 @@ export default function App() {
   const editorRef = useRef<TabEditorHandle>(null);
   const [diagramStatus, setDiagramStatus] = useState<'idle' | 'parsing' | 'uploading' | 'done' | 'error'>('idle');
   const [diagramMessage, setDiagramMessage] = useState('');
+  const [recentUploads, setRecentUploads] = useState<{ tower: string; cap: string; folder: string; filename: string }[]>([]);
 
   // Keep dirtyRef in sync for the async effect
   useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
@@ -247,6 +248,7 @@ export default function App() {
 
         const bpmnResult = await uploadBpmnToGitHub(tower, cap, file.name, buffer);
         if (bpmnResult.ok) {
+          setRecentUploads(prev => [...prev, { tower, cap, folder: 'bpmn', filename: file.name }]);
           setDiagramStatus('done');
           setDiagramMessage(
             `✓ BPMN uploaded to input/bpmn/ — will be included in the ${cap} capability documentation build.`
@@ -268,6 +270,7 @@ export default function App() {
 
         const vsdResult = await uploadDiagramToGitHub(tower, cap, file.name, buffer);
         if (vsdResult.ok) {
+          setRecentUploads(prev => [...prev, { tower, cap, folder: 'uploads', filename: file.name }]);
           setDiagramStatus('done');
           setDiagramMessage(
             `✓ Visio .vsd uploaded — background processing will extract hops. Check back in a few minutes for results in input/extracts/.`
@@ -323,6 +326,7 @@ export default function App() {
       ]);
 
       if (diagResult.ok && hopsResult.ok) {
+        setRecentUploads(prev => [...prev, { tower, cap, folder: 'uploads', filename: file.name }]);
         setDiagramStatus('done');
         setDiagramMessage(
           `✓ ${result.totalHops} hops from ${result.totalChains} chains loaded into grid. Files saved to GitHub.`
@@ -330,6 +334,7 @@ export default function App() {
         setTimeout(() => { setDiagramStatus('idle'); setDiagramMessage(''); }, 6000);
       } else {
         // Grid was populated (that's the important part), GitHub save is bonus
+        setRecentUploads(prev => [...prev, { tower, cap, folder: 'uploads', filename: file.name }]);
         setDiagramStatus('done');
         const ghMsg = !diagResult.ok ? diagResult.message : hopsResult.message;
         setDiagramMessage(
@@ -468,6 +473,7 @@ export default function App() {
           onSelectCap={handleCapChange}
           onFileClick={handleFileClick}
           loadingFile={loadingFile}
+          recentUploads={recentUploads}
         />
         <div className="app-main">
           {/* Tower / Capability / Release / State selectors + file toolbar */}

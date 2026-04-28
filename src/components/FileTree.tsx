@@ -36,43 +36,81 @@ function buildCapabilityFiles(tower: string, capId: string): FileNode[] {
   return files;
 }
 
-function buildBpmnFiles(): FileNode[] {
-  return [
-    { name: '*.bpmn', type: 'file', icon: '🔀', tag: 'universal' },
-  ];
+export interface RecentUpload {
+  tower: string;
+  cap: string;
+  folder: string;   // 'uploads' | 'bpmn' | 'extracts'
+  filename: string;
 }
 
-/** Build the full tree from the tower registry. */
-function buildTree(): FileNode[] {
+function uploadIcon(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  if (ext === 'bpmn') return '🔀';
+  if (ext === 'vsd' || ext === 'vsdx') return '📐';
+  if (ext === 'drawio') return '📐';
+  if (ext === 'xml') return '📐';
+  if (ext === 'json') return '📋';
+  return '📄';
+}
+
+/** Build the full tree from the tower registry + any recent uploads. */
+function buildTree(recentUploads: RecentUpload[] = []): FileNode[] {
   return TOWERS.map(tower => ({
     name: tower.id,
     type: 'folder' as const,
     icon: '🏗️',
-    children: (CAPABILITIES[tower.id] ?? []).map(cap => ({
-      name: cap.id,
-      type: 'folder' as const,
-      icon: '📁',
-      children: [
-        {
-          name: 'input',
-          type: 'folder' as const,
-          children: [
-            {
-              name: 'data',
-              type: 'folder' as const,
-              icon: '📂',
-              children: buildCapabilityFiles(tower.id, cap.id),
-            },
-            {
-              name: 'bpmn',
-              type: 'folder' as const,
-              icon: '📂',
-              children: buildBpmnFiles(),
-            },
-          ],
-        },
-      ],
-    })),
+    children: (CAPABILITIES[tower.id] ?? []).map(cap => {
+      // Collect recent uploads for this tower/cap grouped by folder
+      const capUploads = recentUploads.filter(u => u.tower === tower.id && u.cap === cap.id);
+      const bpmnUploads = capUploads.filter(u => u.folder === 'bpmn');
+      const diagramUploads = capUploads.filter(u => u.folder === 'uploads');
+
+      return {
+        name: cap.id,
+        type: 'folder' as const,
+        icon: '📁',
+        children: [
+          {
+            name: 'input',
+            type: 'folder' as const,
+            children: [
+              {
+                name: 'data',
+                type: 'folder' as const,
+                icon: '📂',
+                children: buildCapabilityFiles(tower.id, cap.id),
+              },
+              {
+                name: 'uploads',
+                type: 'folder' as const,
+                icon: '📐',
+                children: diagramUploads.length > 0
+                  ? diagramUploads.map(u => ({
+                      name: u.filename,
+                      type: 'file' as const,
+                      icon: uploadIcon(u.filename),
+                      tag: '✓ new',
+                    }))
+                  : [{ name: '(upload diagrams here)', type: 'file' as const, icon: '💡' }],
+              },
+              {
+                name: 'bpmn',
+                type: 'folder' as const,
+                icon: '🔀',
+                children: bpmnUploads.length > 0
+                  ? bpmnUploads.map(u => ({
+                      name: u.filename,
+                      type: 'file' as const,
+                      icon: '🔀',
+                      tag: '✓ new',
+                    }))
+                  : [{ name: '(upload .bpmn here)', type: 'file' as const, icon: '💡' }],
+              },
+            ],
+          },
+        ],
+      };
+    }),
   }));
 }
 
@@ -172,6 +210,7 @@ export default function FileTree({
   onSelectCap,
   onFileClick,
   loadingFile,
+  recentUploads,
 }: {
   collapsed: boolean;
   onToggle: () => void;
@@ -180,9 +219,11 @@ export default function FileTree({
   onSelectCap: (capId: string) => void;
   onFileClick?: (tower: string, capId: string, filename: string) => void;
   loadingFile?: string;
+  recentUploads?: RecentUpload[];
 }) {
   const [search, setSearch] = useState('');
-  const tree = useMemo(buildTree, []);
+  const uploads = recentUploads ?? [];
+  const tree = useMemo(() => buildTree(uploads), [uploads]);
 
   // Show only the selected tower's subtree
   const towerNode = tree.find(t => t.name === selectedTower);
