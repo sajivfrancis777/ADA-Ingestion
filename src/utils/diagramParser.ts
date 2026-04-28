@@ -67,6 +67,9 @@ interface DiagramPage {
 // Patterns cover: R1, Release 1, Rel 1, Rel-1, Rel.1, Wave 1, W1,
 //   Phase 1, Ph1, Cutover 1, Go-Live 1, GL1, Sprint 1, and R5–R9.
 const RELEASE_PATTERNS: [RegExp, string][] = [
+  // ADA canonical tab names: R1_CurrentFlows, R1_FutureFlows, etc.
+  [/\bR1_/i, 'R1'], [/\bR2_/i, 'R2'], [/\bR3_/i, 'R3'],
+  [/\bR4_/i, 'R4'], [/\bR5_/i, 'R5'],
   // Sub-releases → parent (must come before Rn)
   [/\bR1[._]\d\b/i, 'R1'], [/\bR2[._]\d\b/i, 'R2'],
   [/\bR3[._]\d\b/i, 'R3'], [/\bR4[._]\d\b/i, 'R4'],
@@ -102,7 +105,10 @@ const RELEASE_PATTERNS: [RegExp, string][] = [
 ];
 
 // State detection — Future vs Current (default: Current)
+// ADA canonical names (FutureFlows, CurrentFlows) checked first.
 const STATE_PATTERNS: [RegExp, string][] = [
+  [/FutureFlows/i, 'Future'],
+  [/CurrentFlows/i, 'Current'],
   [/\bfuture[\s-]?state\b/i, 'Future'],
   [/\bfuture\b/i, 'Future'],
   [/\bto[\s-]?be\b/i, 'Future'],

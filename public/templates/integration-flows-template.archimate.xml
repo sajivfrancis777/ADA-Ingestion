@@ -11,11 +11,11 @@
     4. Export as ArchiMate Open Exchange (.xml) and upload via ADA Editor
   
   VIEW NAMING CONVENTION (parser detects these automatically):
-    - "Current State"         → release=All,  state=Current
-    - "R1 - Future State"     → release=R1,   state=Future
-    - "R2 - Future State"     → release=R2,   state=Future
-    - "R3 - Future State"     → release=R3,   state=Future
-    - "R4 - Future State"     → release=R4,   state=Future
+    - "CurrentFlows(UNIVERSAL)"  → release=All,  state=Current
+    - "FutureFlows(UNIVERSAL)"   → release=All,  state=Future
+    - "R1_CurrentFlows"          → release=R1,   state=Current
+    - "R1_FutureFlows"           → release=R1,   state=Future
+    - ... through R5_CurrentFlows / R5_FutureFlows
   
   The parser extracts:
     - Source System = source element name
@@ -43,19 +43,14 @@
        Example elements shown below; replace with your actual systems.
        ═══════════════════════════════════════════════════════════════ -->
   <elements>
-    <!-- Example: Source system -->
     <element identifier="id-elem-source-example" xsi:type="ApplicationComponent">
       <name xml:lang="en">Source System (replace me)</name>
       <documentation xml:lang="en">Replace with your source application name, e.g. SAP S/4HANA</documentation>
     </element>
-    
-    <!-- Example: Target system -->
     <element identifier="id-elem-target-example" xsi:type="ApplicationComponent">
       <name xml:lang="en">Target System (replace me)</name>
       <documentation xml:lang="en">Replace with your target application name, e.g. Snowflake PDH</documentation>
     </element>
-    
-    <!-- Example: Middleware -->
     <element identifier="id-elem-middleware-example" xsi:type="ApplicationComponent">
       <name xml:lang="en">Middleware (replace me)</name>
       <documentation xml:lang="en">Replace with middleware name, e.g. MuleSoft Anypoint</documentation>
@@ -67,13 +62,10 @@
        The relationship NAME becomes "Interface / Technology" in the grid.
        ═══════════════════════════════════════════════════════════════ -->
   <relationships>
-    <!-- Example: Source → Middleware via IDoc -->
     <relationship identifier="id-rel-001" xsi:type="FlowRelationship"
                   source="id-elem-source-example" target="id-elem-middleware-example">
       <name xml:lang="en">IDoc (replace with actual interface technology)</name>
     </relationship>
-    
-    <!-- Example: Middleware → Target via REST API -->
     <relationship identifier="id-rel-002" xsi:type="FlowRelationship"
                   source="id-elem-middleware-example" target="id-elem-target-example">
       <name xml:lang="en">REST API (replace with actual interface technology)</name>
@@ -83,48 +75,82 @@
   <!-- ═══════════════════════════════════════════════════════════════
        VIEWS — Each view = one tab in the parser output.
        Name your views using the convention below.
-       Parser detects release + state from view names automatically.
        ═══════════════════════════════════════════════════════════════ -->
   <views>
     <diagrams>
-      <!-- Current State view -->
-      <view identifier="id-view-current" xsi:type="Diagram" viewpoint="Application Cooperation">
-        <name xml:lang="en">Current State</name>
-        <documentation xml:lang="en">As-is integration landscape before any releases</documentation>
-        <!-- Add your element nodes and relationship connections here -->
-        <node identifier="id-vn-01" elementRef="id-elem-source-example" x="100" y="200" w="160" h="80"/>
-        <node identifier="id-vn-02" elementRef="id-elem-target-example" x="500" y="200" w="160" h="80"/>
-        <connection identifier="id-vc-01" relationshipRef="id-rel-001" source="id-vn-01" target="id-vn-02"/>
+      <!-- Universal Current State view -->
+      <view identifier="id-view-current-univ" xsi:type="Diagram" viewpoint="Application Cooperation">
+        <name xml:lang="en">CurrentFlows(UNIVERSAL)</name>
+        <documentation xml:lang="en">As-is integration landscape across all releases</documentation>
+        <node identifier="id-vn-cu-01" elementRef="id-elem-source-example" x="100" y="200" w="160" h="80"/>
+        <node identifier="id-vn-cu-02" elementRef="id-elem-target-example" x="500" y="200" w="160" h="80"/>
+        <connection identifier="id-vc-cu-01" relationshipRef="id-rel-001" source="id-vn-cu-01" target="id-vn-cu-02"/>
       </view>
       
-      <!-- R1 - Future State view -->
-      <view identifier="id-view-r1" xsi:type="Diagram" viewpoint="Application Cooperation">
-        <name xml:lang="en">R1 - Future State</name>
-        <documentation xml:lang="en">Release 1 target integration architecture</documentation>
-        <!-- Add R1 elements and connections here -->
-        <node identifier="id-vn-r1-01" elementRef="id-elem-source-example" x="100" y="200" w="160" h="80"/>
-        <node identifier="id-vn-r1-02" elementRef="id-elem-middleware-example" x="300" y="200" w="160" h="80"/>
-        <node identifier="id-vn-r1-03" elementRef="id-elem-target-example" x="500" y="200" w="160" h="80"/>
-        <connection identifier="id-vc-r1-01" relationshipRef="id-rel-001" source="id-vn-r1-01" target="id-vn-r1-02"/>
-        <connection identifier="id-vc-r1-02" relationshipRef="id-rel-002" source="id-vn-r1-02" target="id-vn-r1-03"/>
+      <!-- Universal Future State view -->
+      <view identifier="id-view-future-univ" xsi:type="Diagram" viewpoint="Application Cooperation">
+        <name xml:lang="en">FutureFlows(UNIVERSAL)</name>
+        <documentation xml:lang="en">Overall target-state integration landscape across all releases</documentation>
+        <node identifier="id-vn-fu-01" elementRef="id-elem-source-example" x="100" y="200" w="160" h="80"/>
+        <node identifier="id-vn-fu-02" elementRef="id-elem-middleware-example" x="300" y="200" w="160" h="80"/>
+        <node identifier="id-vn-fu-03" elementRef="id-elem-target-example" x="500" y="200" w="160" h="80"/>
+        <connection identifier="id-vc-fu-01" relationshipRef="id-rel-001" source="id-vn-fu-01" target="id-vn-fu-02"/>
+        <connection identifier="id-vc-fu-02" relationshipRef="id-rel-002" source="id-vn-fu-02" target="id-vn-fu-03"/>
       </view>
       
-      <!-- R2 - Future State view -->
-      <view identifier="id-view-r2" xsi:type="Diagram" viewpoint="Application Cooperation">
-        <name xml:lang="en">R2 - Future State</name>
-        <documentation xml:lang="en">Release 2 target integration architecture</documentation>
+      <!-- R1 Current -->
+      <view identifier="id-view-r1c" xsi:type="Diagram" viewpoint="Application Cooperation">
+        <name xml:lang="en">R1_CurrentFlows</name>
+        <documentation xml:lang="en">Release 1 current-state integration flows</documentation>
+      </view>
+      <!-- R1 Future -->
+      <view identifier="id-view-r1f" xsi:type="Diagram" viewpoint="Application Cooperation">
+        <name xml:lang="en">R1_FutureFlows</name>
+        <documentation xml:lang="en">Release 1 future-state integration flows</documentation>
       </view>
       
-      <!-- R3 - Future State view -->
-      <view identifier="id-view-r3" xsi:type="Diagram" viewpoint="Application Cooperation">
-        <name xml:lang="en">R3 - Future State</name>
-        <documentation xml:lang="en">Release 3 target integration architecture</documentation>
+      <!-- R2 Current -->
+      <view identifier="id-view-r2c" xsi:type="Diagram" viewpoint="Application Cooperation">
+        <name xml:lang="en">R2_CurrentFlows</name>
+        <documentation xml:lang="en">Release 2 current-state integration flows</documentation>
+      </view>
+      <!-- R2 Future -->
+      <view identifier="id-view-r2f" xsi:type="Diagram" viewpoint="Application Cooperation">
+        <name xml:lang="en">R2_FutureFlows</name>
+        <documentation xml:lang="en">Release 2 future-state integration flows</documentation>
       </view>
       
-      <!-- R4 - Future State view -->
-      <view identifier="id-view-r4" xsi:type="Diagram" viewpoint="Application Cooperation">
-        <name xml:lang="en">R4 - Future State</name>
-        <documentation xml:lang="en">Release 4 target integration architecture</documentation>
+      <!-- R3 Current -->
+      <view identifier="id-view-r3c" xsi:type="Diagram" viewpoint="Application Cooperation">
+        <name xml:lang="en">R3_CurrentFlows</name>
+        <documentation xml:lang="en">Release 3 current-state integration flows</documentation>
+      </view>
+      <!-- R3 Future -->
+      <view identifier="id-view-r3f" xsi:type="Diagram" viewpoint="Application Cooperation">
+        <name xml:lang="en">R3_FutureFlows</name>
+        <documentation xml:lang="en">Release 3 future-state integration flows</documentation>
+      </view>
+      
+      <!-- R4 Current -->
+      <view identifier="id-view-r4c" xsi:type="Diagram" viewpoint="Application Cooperation">
+        <name xml:lang="en">R4_CurrentFlows</name>
+        <documentation xml:lang="en">Release 4 current-state integration flows</documentation>
+      </view>
+      <!-- R4 Future -->
+      <view identifier="id-view-r4f" xsi:type="Diagram" viewpoint="Application Cooperation">
+        <name xml:lang="en">R4_FutureFlows</name>
+        <documentation xml:lang="en">Release 4 future-state integration flows</documentation>
+      </view>
+      
+      <!-- R5 Current -->
+      <view identifier="id-view-r5c" xsi:type="Diagram" viewpoint="Application Cooperation">
+        <name xml:lang="en">R5_CurrentFlows</name>
+        <documentation xml:lang="en">Release 5 current-state integration flows</documentation>
+      </view>
+      <!-- R5 Future -->
+      <view identifier="id-view-r5f" xsi:type="Diagram" viewpoint="Application Cooperation">
+        <name xml:lang="en">R5_FutureFlows</name>
+        <documentation xml:lang="en">Release 5 future-state integration flows</documentation>
       </view>
     </diagrams>
   </views>

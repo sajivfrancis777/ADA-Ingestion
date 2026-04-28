@@ -4,11 +4,13 @@
  *   Row 2 (Diagrams):  Download Template, Upload Diagram, status messages
  */
 import { useRef, useState } from 'react';
+import { CAPABILITIES } from '../data/towerRegistry';
 
-const TEMPLATES = [
-  { label: 'Draw.io Template (.drawio)', file: 'integration-flows-template.drawio' },
-  { label: 'ArchiMate Template (.xml)', file: 'integration-flows-template.archimate.xml' },
-  { label: 'Template Guide (README)', file: 'README.md' },
+const TEMPLATES: { label: string; file: string; ext: string }[] = [
+  { label: 'Draw.io Template (.drawio)', file: 'integration-flows-template.drawio', ext: '.drawio' },
+  { label: 'ArchiMate Template (.xml)', file: 'integration-flows-template.archimate.xml', ext: '.archimate.xml' },
+  { label: 'Visio Template (.vsdx)', file: 'integration-flows-template.vsdx', ext: '.vsdx' },
+  { label: 'Template Guide (README)', file: 'README.md', ext: '.md' },
 ];
 
 interface ToolbarProps {
@@ -43,10 +45,20 @@ export default function Toolbar({
   const diagramRef = useRef<HTMLInputElement>(null);
   const [templateOpen, setTemplateOpen] = useState(false);
 
-  const handleDownloadTemplate = (file: string) => {
+  const handleDownloadTemplate = (t: typeof TEMPLATES[number]) => {
     const link = document.createElement('a');
-    link.href = `${import.meta.env.BASE_URL}templates/${file}`;
-    link.download = file;
+    link.href = `${import.meta.env.BASE_URL}templates/${t.file}`;
+    // Dynamic filename: {Tower}_{CapID}_{CapName}_Integration-Flows.ext
+    // README keeps its own name.
+    if (t.ext !== '.md') {
+      const capInfo = CAPABILITIES[tower]?.find(c => c.id === cap);
+      const capLabel = capInfo
+        ? capInfo.name.split(/\s+/).slice(1).join('-')  // e.g. "Product-Costing" from "DS-020 Product Costing"
+        : cap;
+      link.download = `${tower}_${cap}_${capLabel}_Integration-Flows${t.ext}`;
+    } else {
+      link.download = t.file;
+    }
     link.click();
     setTemplateOpen(false);
   };
@@ -159,7 +171,7 @@ export default function Toolbar({
               <ul className="template-dropdown">
                 {TEMPLATES.map(t => (
                   <li key={t.file}>
-                    <button onClick={() => handleDownloadTemplate(t.file)}>{t.label}</button>
+                    <button onClick={() => handleDownloadTemplate(t)}>{t.label}</button>
                   </li>
                 ))}
               </ul>

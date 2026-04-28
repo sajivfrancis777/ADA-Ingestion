@@ -246,15 +246,18 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   // Clear-column is still available via right-click context menu below.
 
   // Custom right-click context menu (AG Grid Community doesn't have built-in)
-  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; field: string } | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; field: string; rowIndex: number | null } | null>(null);
 
   const handleCellContextMenu = useCallback((e: React.MouseEvent) => {
     const cell = (e.target as HTMLElement).closest('.ag-cell');
     if (!cell) return;
     const colId = cell.getAttribute('col-id');
     if (!colId) return;
+    // Find the row element to get the row index
+    const row = (e.target as HTMLElement).closest('.ag-row');
+    const rowIdx = row ? parseInt(row.getAttribute('row-index') ?? '', 10) : null;
     e.preventDefault();
-    setCtxMenu({ x: e.clientX, y: e.clientY, field: colId });
+    setCtxMenu({ x: e.clientX, y: e.clientY, field: colId, rowIndex: Number.isFinite(rowIdx) ? rowIdx : null });
   }, []);
 
   // Close context menu on click anywhere
@@ -271,6 +274,14 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
     const selected = api.getSelectedRows();
     if (selected.length === 0) return;
     api.applyTransaction({ remove: selected });
+    notifyParent();
+  }, [notifyParent]);
+
+  const insertRowAt = useCallback((rowIndex: number | null, offset: 0 | 1) => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+    const addIndex = rowIndex != null ? rowIndex + offset : undefined;
+    api.applyTransaction({ add: [{}], addIndex });
     notifyParent();
   }, [notifyParent]);
 
@@ -392,6 +403,12 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
             className="ctx-menu"
             style={{ position: 'fixed', left: ctxMenu.x, top: ctxMenu.y, zIndex: 9999 }}
           >
+            <button onClick={() => { insertRowAt(ctxMenu.rowIndex, 0); setCtxMenu(null); }}>
+              ➕ Insert Row Above
+            </button>
+            <button onClick={() => { insertRowAt(ctxMenu.rowIndex, 1); setCtxMenu(null); }}>
+              ➕ Insert Row Below
+            </button>
             <button onClick={() => { clearColumn(ctxMenu.field); setCtxMenu(null); }}>
               {'\ud83d\uddd1\ufe0f'} Clear all &quot;{ctxMenu.field}&quot; values
             </button>

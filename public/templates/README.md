@@ -11,22 +11,31 @@ Upload via the **ADA Editor → 📐 Upload Diagram** button.
 |----------|------|--------|
 | `integration-flows-template.drawio` | Draw.io / diagrams.net | XML (multi-tab) |
 | `integration-flows-template.archimate.xml` | BiZZdesign / Archi / Sparx EA | ArchiMate Open Exchange XML |
-| *(Visio — see naming guide below)* | Microsoft Visio | .vsdx (modern) or .vsd (legacy) |
+| `integration-flows-template.vsdx` | Microsoft Visio 2013+ | OOXML/ZIP (multi-page) |
+
+> **Existing .vsd files?** No problem — the upload pipeline auto-converts `.vsd` → `.vsdx` via LibreOffice before parsing.
 
 ---
 
 ## Tab / Page / View Naming Convention
 
 The parser auto-detects **release** and **state** from tab names.  
-Use these names for guaranteed 100% detection:
+Use these exact names for guaranteed 100% detection:
 
-| Tab Name | Release | State |
-|----------|---------|-------|
-| `Current State` | All | Current |
-| `R1 - Future State` | R1 | Future |
-| `R2 - Future State` | R2 | Future |
-| `R3 - Future State` | R3 | Future |
-| `R4 - Future State` | R4 | Future |
+| Tab Name | Release | State | Maps to XLSX |
+|----------|---------|-------|-------------|
+| `CurrentFlows(UNIVERSAL)` | All | Current | `CurrentFlows.xlsx` |
+| `FutureFlows(UNIVERSAL)` | All | Future | `FutureFlows.xlsx` |
+| `R1_CurrentFlows` | R1 | Current | `R1_CurrentFlows.xlsx` |
+| `R1_FutureFlows` | R1 | Future | `R1_FutureFlows.xlsx` |
+| `R2_CurrentFlows` | R2 | Current | `R2_CurrentFlows.xlsx` |
+| `R2_FutureFlows` | R2 | Future | `R2_FutureFlows.xlsx` |
+| `R3_CurrentFlows` | R3 | Current | `R3_CurrentFlows.xlsx` |
+| `R3_FutureFlows` | R3 | Future | `R3_FutureFlows.xlsx` |
+| `R4_CurrentFlows` | R4 | Current | `R4_CurrentFlows.xlsx` |
+| `R4_FutureFlows` | R4 | Future | `R4_FutureFlows.xlsx` |
+| `R5_CurrentFlows` | R5 | Current | `R5_CurrentFlows.xlsx` |
+| `R5_FutureFlows` | R5 | Future | `R5_FutureFlows.xlsx` |
 
 ### Also Recognized (free-form)
 
@@ -40,8 +49,8 @@ The parser matches many naming variations — you don't have to use the exact na
 - `POC`, `Pilot`, `MVP` → treated as R1
 
 **State names** (all case-insensitive):
-- **Future**: `future`, `future state`, `to-be`, `target`, `proposed`, `planned`, `in-design`, `draft`, `delta`, `incremental`
-- **Current**: `current`, `current state`, `as-is`, `baseline`, `existing`, `legacy`, `pre-migration`
+- **Future**: `FutureFlows`, `future`, `future state`, `to-be`, `target`, `proposed`, `planned`, `in-design`, `draft`, `delta`, `incremental`
+- **Current**: `CurrentFlows`, `current`, `current state`, `as-is`, `baseline`, `existing`, `legacy`, `pre-migration`
 
 **Default** (if no pattern matches): `release=All`, `state=Current`
 
@@ -78,44 +87,28 @@ From each tab/page/view, the parser identifies:
 1. Import the template into BiZZdesign Enterprise Studio or Archi
 2. Each **view** = one tab in parser output
 3. Use `ApplicationComponent` elements for systems
-4. Use `FlowRelationship` between elements — **name the relationship** with the technology
-5. Export as ArchiMate Open Exchange (`.xml`) and upload
-6. BiZZdesign: File → Export → Open Exchange File
+4. Use `FlowRelationship` for data flows, `ServingRelationship` for service calls
+5. **Label every relationship** — that becomes the "Interface / Technology" column
+6. Export as ArchiMate Open Exchange XML and upload
 
 ### Visio (.vsdx / .vsd)
 
-No template file provided (Visio requires proprietary tools to create).  
-Follow these conventions:
-
-1. **Name your pages** using the tab naming convention above
-2. Use **rectangles/shapes** for systems with text labels
-3. Use **connectors** (arrows) between systems
+1. Open the `.vsdx` template in Visio 2013+
+2. Each **page** = one tab (page names match the convention above)
+3. Use rectangles/shapes for systems, connectors for hops
 4. Label connectors with the interface technology
-5. Save as `.vsdx` (preferred) or `.vsd` (legacy — converted server-side)
-6. Upload via ADA Editor
-
-**Tip:** You can also export your Visio diagram to `.drawio` format using [diagrams.net](https://app.diagrams.net) (File → Import from → Visio) and use the `.drawio` template tab names.
+5. Save as `.vsdx` and upload (or `.vsd` — auto-converted)
 
 ---
 
-## Processing Pipeline
+## Template Download Filenames
 
-| Format | Processing | Location |
-|--------|-----------|----------|
-| `.drawio` | Client-side (instant) | Browser |
-| `.archimate.xml` | Client-side (instant) | Browser |
-| `.vsdx` | Client-side (instant) | Browser |
-| `.vsd` | Server-side (GitHub Action) | ~2 min |
-| `.bpmn` | **Not parsed** — stored as-is | `input/bpmn/` |
-
----
-
-## File Layout After Upload
+When downloaded via the ADA Editor, templates are named with the active tower and capability context:
 
 ```
-towers/{TOWER}/{L1}/{CAP-ID}/input/
-├── data/       ← XLSX workbook data
-├── uploads/    ← your diagrams (.drawio, .vsdx, .vsd, .xml)
-├── extracts/   ← parsed hops JSON (auto-generated)
-└── bpmn/       ← BPMN business process files (not parsed)
+{Tower}_{CapID}_{CapName}_Integration-Flows.drawio
+{Tower}_{CapID}_{CapName}_Integration-Flows.archimate.xml
+{Tower}_{CapID}_{CapName}_Integration-Flows.vsdx
 ```
+
+Example: `FPR_DS-020_Product-Costing_Integration-Flows.drawio`

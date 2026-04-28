@@ -4,8 +4,8 @@
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="i1" value="&lt;h2&gt;ADA Integration Flows Template&lt;/h2&gt;&lt;hr&gt;&lt;p&gt;&lt;b&gt;Purpose:&lt;/b&gt; Document integration hops between systems per release.&lt;/p&gt;&lt;p&gt;&lt;b&gt;How to use:&lt;/b&gt;&lt;/p&gt;&lt;ol&gt;&lt;li&gt;Go to the tab matching your release (R1, R2, R3, R4)&lt;/li&gt;&lt;li&gt;Draw system boxes (rectangles) for each integration endpoint&lt;/li&gt;&lt;li&gt;Connect them with arrows showing data flow direction&lt;/li&gt;&lt;li&gt;Label each arrow with the interface technology (e.g. MuleSoft API, IDoc, RFC, File)&lt;/li&gt;&lt;li&gt;Save and upload via the ADA Editor &amp;quot;Upload Diagram&amp;quot; button&lt;/li&gt;&lt;/ol&gt;&lt;p&gt;&lt;b&gt;Tab naming convention:&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;Current State&lt;/b&gt; — existing as-is integration landscape&lt;/li&gt;&lt;li&gt;&lt;b&gt;R1 - Future State&lt;/b&gt; through &lt;b&gt;R4 - Future State&lt;/b&gt; — target per release&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;b&gt;Tips:&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Use full system names (e.g. &amp;quot;SAP S/4HANA&amp;quot; not &amp;quot;S4&amp;quot;)&lt;/li&gt;&lt;li&gt;One arrow = one hop. Chain multiple arrows for multi-hop flows.&lt;/li&gt;&lt;li&gt;You can add/rename tabs — the parser detects R1-R9, Wave, Phase, etc.&lt;/li&gt;&lt;li&gt;Delete unused release tabs if not needed.&lt;/li&gt;&lt;/ul&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
-          <mxGeometry x="40" y="40" width="700" height="440" as="geometry"/>
+        <mxCell id="i1" value="&lt;h2&gt;ADA Integration Flows Template&lt;/h2&gt;&lt;hr&gt;&lt;p&gt;&lt;b&gt;Purpose:&lt;/b&gt; Document integration hops between systems per release.&lt;/p&gt;&lt;p&gt;&lt;b&gt;How to use:&lt;/b&gt;&lt;/p&gt;&lt;ol&gt;&lt;li&gt;Go to the tab matching your release and state&lt;/li&gt;&lt;li&gt;Draw system boxes (rectangles) for each integration endpoint&lt;/li&gt;&lt;li&gt;Connect them with arrows showing data flow direction&lt;/li&gt;&lt;li&gt;Label each arrow with the interface technology (e.g. MuleSoft API, IDoc, RFC, File)&lt;/li&gt;&lt;li&gt;Save and upload via the ADA Editor &amp;quot;Upload Diagram&amp;quot; button&lt;/li&gt;&lt;/ol&gt;&lt;p&gt;&lt;b&gt;Tab naming convention:&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;CurrentFlows(UNIVERSAL)&lt;/b&gt; — as-is landscape across all releases&lt;/li&gt;&lt;li&gt;&lt;b&gt;FutureFlows(UNIVERSAL)&lt;/b&gt; — overall target-state across all releases&lt;/li&gt;&lt;li&gt;&lt;b&gt;R1_CurrentFlows&lt;/b&gt; through &lt;b&gt;R5_FutureFlows&lt;/b&gt; — per-release current/future&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;b&gt;Tips:&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Use full system names (e.g. &amp;quot;SAP S/4HANA&amp;quot; not &amp;quot;S4&amp;quot;)&lt;/li&gt;&lt;li&gt;One arrow = one hop. Chain multiple arrows for multi-hop flows.&lt;/li&gt;&lt;li&gt;The parser also detects free-form names (R1-R9, Wave, Phase, etc.)&lt;/li&gt;&lt;li&gt;Delete unused release tabs if not needed.&lt;/li&gt;&lt;/ul&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="700" height="480" as="geometry"/>
         </mxCell>
         <mxCell id="i2" value="&lt;b&gt;Legend&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" vertex="1" parent="1">
           <mxGeometry x="800" y="40" width="120" height="30" as="geometry"/>
@@ -28,56 +28,133 @@
       </root>
     </mxGraphModel>
   </diagram>
-  <diagram name="Current State" id="curr-001">
+  <diagram name="CurrentFlows(UNIVERSAL)" id="curr-univ-001">
     <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="c1" value="&lt;i&gt;Draw current-state integration landscape here.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="cu1" value="&lt;i&gt;Draw the current-state (as-is) integration landscape here.&lt;br&gt;This tab captures flows that apply across ALL releases.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="380" width="440" height="60" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="FutureFlows(UNIVERSAL)" id="fut-univ-001">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="fu1" value="&lt;i&gt;Draw the future-state (target) integration landscape here.&lt;br&gt;This tab captures flows that apply across ALL releases.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="380" width="440" height="60" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="R1_CurrentFlows" id="r1c-001">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="r1c" value="&lt;i&gt;R1 current-state integration flows.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="360" y="380" width="400" height="60" as="geometry"/>
         </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
-  <diagram name="R1 - Future State" id="r1-001">
+  <diagram name="R1_FutureFlows" id="r1f-001">
     <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="r1hint" value="&lt;i&gt;Draw Release 1 target integration flows here.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="r1f" value="&lt;i&gt;R1 future-state (target) integration flows.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="360" y="380" width="400" height="60" as="geometry"/>
         </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
-  <diagram name="R2 - Future State" id="r2-001">
+  <diagram name="R2_CurrentFlows" id="r2c-001">
     <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="r2hint" value="&lt;i&gt;Draw Release 2 target integration flows here.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="r2c" value="&lt;i&gt;R2 current-state integration flows.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="360" y="380" width="400" height="60" as="geometry"/>
         </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
-  <diagram name="R3 - Future State" id="r3-001">
+  <diagram name="R2_FutureFlows" id="r2f-001">
     <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="r3hint" value="&lt;i&gt;Draw Release 3 target integration flows here.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="r2f" value="&lt;i&gt;R2 future-state (target) integration flows.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="360" y="380" width="400" height="60" as="geometry"/>
         </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
-  <diagram name="R4 - Future State" id="r4-001">
+  <diagram name="R3_CurrentFlows" id="r3c-001">
     <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="r4hint" value="&lt;i&gt;Draw Release 4 target integration flows here.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="r3c" value="&lt;i&gt;R3 current-state integration flows.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="380" width="400" height="60" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="R3_FutureFlows" id="r3f-001">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="r3f" value="&lt;i&gt;R3 future-state (target) integration flows.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="380" width="400" height="60" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="R4_CurrentFlows" id="r4c-001">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="r4c" value="&lt;i&gt;R4 current-state integration flows.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="380" width="400" height="60" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="R4_FutureFlows" id="r4f-001">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="r4f" value="&lt;i&gt;R4 future-state (target) integration flows.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="380" width="400" height="60" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="R5_CurrentFlows" id="r5c-001">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="r5c" value="&lt;i&gt;R5 current-state integration flows.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="380" width="400" height="60" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="R5_FutureFlows" id="r5f-001">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="r5f" value="&lt;i&gt;R5 future-state (target) integration flows.&lt;br&gt;Delete this text box when adding your systems.&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="360" y="380" width="400" height="60" as="geometry"/>
         </mxCell>
       </root>
