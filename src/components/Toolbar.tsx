@@ -15,19 +15,24 @@ interface ToolbarProps {
   githubMessage?: string;
   hasGitHubToken: boolean;
   lastSaved?: string | null;
+  diagramStatus?: 'idle' | 'parsing' | 'uploading' | 'done' | 'error';
+  diagramMessage?: string;
   onLoadFile: (data: ArrayBuffer) => void;
   onSave: () => void;
   onPushToGitHub: () => void;
   onDownload: () => void;
   onOpenTokenSettings: () => void;
+  onUploadDiagram?: (file: File) => void;
 }
 
 export default function Toolbar({
   tower, cap, release, state, hasData, dirty,
   saveStatus, githubStatus, githubMessage, hasGitHubToken,
-  lastSaved, onLoadFile, onSave, onPushToGitHub, onDownload, onOpenTokenSettings,
+  lastSaved, diagramStatus, diagramMessage,
+  onLoadFile, onSave, onPushToGitHub, onDownload, onOpenTokenSettings, onUploadDiagram,
 }: ToolbarProps) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const diagramRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -39,6 +44,13 @@ export default function Toolbar({
       }
     };
     reader.readAsArrayBuffer(file);
+    e.target.value = '';
+  };
+
+  const handleDiagramChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (onUploadDiagram) onUploadDiagram(file);
     e.target.value = '';
   };
 
@@ -100,8 +112,32 @@ export default function Toolbar({
         >
           Download XLSX
         </button>
+        <span className="toolbar-divider" />
+        <button
+          className="btn btn-diagram"
+          onClick={() => diagramRef.current?.click()}
+          disabled={diagramStatus === 'parsing' || diagramStatus === 'uploading'}
+          title="Upload a diagram (.drawio, .bpmn, .xml, .vsdx) to extract integration hops into the Flows grid"
+        >
+          {diagramStatus === 'parsing' ? '⏳ Parsing…'
+            : diagramStatus === 'uploading' ? '⏳ Uploading…'
+            : '📐 Upload Diagram'}
+        </button>
+        <input
+          ref={diagramRef}
+          type="file"
+          accept=".drawio,.bpmn,.xml,.vsdx"
+          onChange={handleDiagramChange}
+          style={{ display: 'none' }}
+        />
       </div>
       <div className="toolbar-right">
+        {diagramMessage && diagramStatus === 'done' && (
+          <span className="diagram-success" title={diagramMessage}>📐 {diagramMessage}</span>
+        )}
+        {diagramMessage && diagramStatus === 'error' && (
+          <span className="diagram-error" title={diagramMessage}>⚠ {diagramMessage}</span>
+        )}
         {githubMessage && githubStatus === 'error' && (
           <span className="github-error" title={githubMessage}>⚠ {githubMessage}</span>
         )}

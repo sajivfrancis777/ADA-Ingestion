@@ -23,6 +23,8 @@ import { loadWorkbook, downloadWorkbook, createBlankWorkbook } from './utils/xls
 import { resolveFilePath, fetchFileContent, parseFileInfo } from './utils/githubFetch';
 import { saveToLocal, loadFromLocal, getLastSaved } from './utils/localSave';
 import { saveToGitHub, hasWriteToken } from './utils/githubSave';
+import { parseDiagram, buildHopsJson } from './utils/diagramParser';
+import { uploadDiagramToGitHub, uploadBpmnToGitHub, uploadHopsJsonToGitHub } from './utils/githubDiagramUpload';
 import type { WorkbookData } from './utils/xlsxUtils';
 import type { Release, FlowState } from './components/TowerSelector';
 import ds020Sample from './data/ds020_sample.json';
@@ -77,6 +79,8 @@ export default function App() {
   const autoFetchId = useRef(0);
   const dirtyRef = useRef(false);
   const editorRef = useRef<TabEditorHandle>(null);
+  const [diagramStatus, setDiagramStatus] = useState<'idle' | 'parsing' | 'uploading' | 'done' | 'error'>('idle');
+  const [diagramMessage, setDiagramMessage] = useState('');
 
   // Keep dirtyRef in sync for the async effect
   useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
@@ -214,6 +218,109 @@ export default function App() {
       setGithubMessage(result.message);
     }
   }, [tower, cap, release, state, sourceRepoPath]);
+
+  /**
+   * Handle diagram file upload:
+   *
+   * For .drawio, .vsdx, ArchiMate .xml:
+   *   1. Parse the diagram client-side to extract integration hops
+   *   2. Merge extracted hops into the current Flows grid
+   *   3. Upload original diagram + hops JSON to GitHub (background)
+   *
+   * For .bpmn:
+   *   1. Upload to ADA-Artifacts input/bpmn/ as a manual business process input
+   *   2. Does NOT populate the AG Grid — consumed by ADA-Artifacts
+   *      capability documentation build as a supplementary business process
+   */
+  const handleUploadDiagram = useCallback(async (file: File) => {
+    setDiagramStatus('parsing');
+    setDiagramMessage('');
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const ext = file.name.toLowerCase().split('.').pop() || '';
+
+      // ── BPMN path: upload-only (no grid population) ──────────
+      if (ext === 'bpmn') {
+        setDiagramStatus('uploading');
+        setDiagramMessage('Uploading BPMN business process to ADA-Artifacts…');
+
+        const bpmnResult = await uploadBpmnToGitHub(tower, cap, file.name, buffer);
+        if (bpmnResult.ok) {
+          setDiagramStatus('done');
+          setDiagramMessage(
+            `✓ BPMN uploaded to input/bpmn/ — will be included in the ${cap} capability documentation build.`
+          );
+          setTimeout(() => { setDiagramStatus('idle'); setDiagramMessage(''); }, 8000);
+        } else {
+          setDiagramStatus('error');
+          setDiagramMessage(bpmnResult.message);
+        }
+        return;
+      }
+
+      // ── Draw.io / Visio / ArchiMate path: parse → grid → upload ──
+      const result = await parseDiagram(file.name, buffer);
+
+      if (!result.ok) {
+        setDiagramStatus('error');
+        setDiagramMessage(result.error || 'Parse failed');
+        return;
+      }
+
+      if (result.sheets.length === 0) {
+        setDiagramStatus('error');
+        setDiagramMessage('No integration flows found in the diagram.');
+        return;
+      }
+
+      // Determine which sheet to use — match current release/state, or use first
+      const matchingSheet = result.sheets.find(
+        s => s.release === release && s.state === state
+      ) ?? result.sheets[0];
+
+      // Merge into current grid: append to existing Flows rows
+      const currentData = editorRef.current?.flush() ?? createBlankWorkbook();
+      const existingFlows = (currentData['Flows'] ?? []).filter(
+        (row: Record<string, unknown>) =>
+          Object.values(row).some(v => v != null && v !== '')
+      );
+      const hopRows = matchingSheet.hops as unknown as Record<string, unknown>[];
+      const newFlows = [...existingFlows, ...hopRows];
+      currentData['Flows'] = newFlows;
+      editorRef.current?.loadData(currentData);
+      setDirty(true);
+
+      setDiagramStatus('uploading');
+      setDiagramMessage(`${result.totalHops} hops extracted — uploading to GitHub…`);
+
+      // Background: upload original diagram + hops JSON to GitHub
+      const hopsJson = buildHopsJson(result, file.name, tower, cap);
+      const [diagResult, hopsResult] = await Promise.all([
+        uploadDiagramToGitHub(tower, cap, file.name, buffer),
+        uploadHopsJsonToGitHub(tower, cap, hopsJson),
+      ]);
+
+      if (diagResult.ok && hopsResult.ok) {
+        setDiagramStatus('done');
+        setDiagramMessage(
+          `✓ ${result.totalHops} hops from ${result.totalChains} chains loaded into grid. Files saved to GitHub.`
+        );
+        setTimeout(() => { setDiagramStatus('idle'); setDiagramMessage(''); }, 6000);
+      } else {
+        // Grid was populated (that's the important part), GitHub save is bonus
+        setDiagramStatus('done');
+        const ghMsg = !diagResult.ok ? diagResult.message : hopsResult.message;
+        setDiagramMessage(
+          `✓ ${result.totalHops} hops loaded into grid. GitHub upload note: ${ghMsg}`
+        );
+        setTimeout(() => { setDiagramStatus('idle'); setDiagramMessage(''); }, 8000);
+      }
+    } catch (e) {
+      setDiagramStatus('error');
+      setDiagramMessage(`Error: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }, [tower, cap, release, state]);
 
   const handleTokenModalClose = useCallback(() => {
     setTokenModalOpen(false);
@@ -366,11 +473,14 @@ export default function App() {
               githubMessage={githubMessage}
               hasGitHubToken={hasToken}
               lastSaved={lastSaved}
+              diagramStatus={diagramStatus}
+              diagramMessage={diagramMessage}
               onLoadFile={handleLoadFile}
               onSave={handleSave}
               onPushToGitHub={handlePushToGitHub}
               onDownload={handleDownload}
               onOpenTokenSettings={() => setTokenModalOpen(true)}
+              onUploadDiagram={handleUploadDiagram}
             />
           </div>
 
