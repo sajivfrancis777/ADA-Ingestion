@@ -20,7 +20,7 @@ import { TOWERS, CAPABILITIES } from './data/towerRegistry';
 import { PROJECTS, getDefaultProject, type ProjectInfo } from './data/projectRegistry';
 import { generateSampleData } from './data/sampleDataGenerator';
 import { loadWorkbook, downloadWorkbook, createBlankWorkbook } from './utils/xlsxUtils';
-import { resolveFilePath, resolveCapabilityBasePath, fetchFileContent, parseFileInfo, listCapabilityInputFiles } from './utils/githubFetch';
+import { resolveFilePath, resolveCapabilityBasePath, fetchFileContent, parseFileInfo, listCapabilityInputFiles, invalidateTreeCache } from './utils/githubFetch';
 import type { CapabilityInputFiles } from './utils/githubFetch';
 import { saveToLocal, loadFromLocal, getLastSaved } from './utils/localSave';
 import { saveToGitHub, hasWriteToken } from './utils/githubSave';
@@ -94,6 +94,8 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     setPersistedFiles(undefined);
+    // After an upload or manual refresh, invalidate stale tree cache so new files appear
+    if (persistedRefresh > 0) invalidateTreeCache();
     listCapabilityInputFiles(tower, cap)
       .then(files => { if (!cancelled) setPersistedFiles(files); })
       .catch(() => { /* silent — tree still works without persisted files */ });

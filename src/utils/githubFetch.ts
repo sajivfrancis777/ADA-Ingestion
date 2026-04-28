@@ -97,6 +97,16 @@ async function ensureIndex(): Promise<Map<string, string>> {
   return pathIndex;
 }
 
+/**
+ * Invalidate the in-memory + sessionStorage tree cache so the next
+ * ensureIndex() call re-fetches the tree from GitHub.
+ * Call this after uploads or when expecting new files from background processing.
+ */
+export function invalidateTreeCache(): void {
+  pathIndex = null;
+  try { sessionStorage.removeItem('iao-github-tree'); } catch { /* ok */ }
+}
+
 /* ── Public API ────────────────────────────────────────────────── */
 
 /**
