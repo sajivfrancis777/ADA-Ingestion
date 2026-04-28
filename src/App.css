@@ -658,6 +658,53 @@ body {
   opacity: 0.7;
 }
 
+/* ─── Template download dropdown ─── */
+.template-dropdown-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.btn-template {
+  background: #1565c0;
+  color: white;
+  border-color: #1565c0;
+}
+
+.btn-template:hover {
+  background: #0d47a1;
+}
+
+.template-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  min-width: 260px;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.template-dropdown li button {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.template-dropdown li button:hover {
+  background: var(--intel-light);
+}
+
 .diagram-success {
   font-size: 11px;
   color: var(--success-green);

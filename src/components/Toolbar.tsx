@@ -1,7 +1,13 @@
 /**
- * Toolbar — Load XLSX, Save, Push to GitHub, Download XLSX, and file context display.
+ * Toolbar — Load XLSX, Save, Push to GitHub, Download XLSX, Templates, and file context display.
  */
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+
+const TEMPLATES = [
+  { label: 'Draw.io Template (.drawio)', file: 'integration-flows-template.drawio' },
+  { label: 'ArchiMate Template (.xml)', file: 'integration-flows-template.archimate.xml' },
+  { label: 'Template Guide (README)', file: 'README.md' },
+];
 
 interface ToolbarProps {
   tower: string;
@@ -33,6 +39,15 @@ export default function Toolbar({
 }: ToolbarProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const diagramRef = useRef<HTMLInputElement>(null);
+  const [templateOpen, setTemplateOpen] = useState(false);
+
+  const handleDownloadTemplate = (file: string) => {
+    const link = document.createElement('a');
+    link.href = `${import.meta.env.BASE_URL}templates/${file}`;
+    link.download = file;
+    link.click();
+    setTemplateOpen(false);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -112,6 +127,25 @@ export default function Toolbar({
         >
           Download XLSX
         </button>
+        <span className="toolbar-divider" />
+        <div className="template-dropdown-wrap">
+          <button
+            className="btn btn-template"
+            onClick={() => setTemplateOpen(!templateOpen)}
+            title="Download a pre-formatted diagram template with correctly named tabs for the parser"
+          >
+            📋 Templates ▾
+          </button>
+          {templateOpen && (
+            <ul className="template-dropdown">
+              {TEMPLATES.map(t => (
+                <li key={t.file}>
+                  <button onClick={() => handleDownloadTemplate(t.file)}>{t.label}</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <span className="toolbar-divider" />
         <button
           className="btn btn-diagram"

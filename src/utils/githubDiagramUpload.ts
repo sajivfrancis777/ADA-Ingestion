@@ -35,8 +35,29 @@ function toBase64(data: ArrayBuffer): string {
   return btoa(binary);
 }
 
-function timestampPrefix(): string {
-  return new Date().toISOString().split('.')[0].split(':').join('-');
+/**
+ * Build a deterministic filename so re-uploads override the previous version.
+ * No timestamps — the same source filename always maps to the same path.
+ */
+function sanitizeFilename(filename: string): string {
+  return filename.split('/').pop()!.split('\\').pop()!;
+}
+
+/**
+ * Fetch the SHA of an existing file at `path` so we can update it in-place.
+ * Returns undefined if the file doesn't exist yet (create new).
+ */
+async function getExistingSha(path: string, token: string): Promise<string | undefined> {
+  try {
+    const res = await fetch(`${API}/${path}`, {
+      headers: authHeaders(token),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.sha;
+    }
+  } catch { /* file doesn't exist yet — that's fine */ }
+  return undefined;
 }
 
 export interface DiagramUploadResult {
@@ -72,20 +93,24 @@ export async function uploadDiagramToGitHub(
   // basePath ends with: towers/{tower}/.../{capId}/input/data/
   // We want: towers/{tower}/.../{capId}/input/uploads/
   const uploadBase = basePath.replace(/data\/$/, 'uploads/');
-  const ts = timestampPrefix();
-  const diagramPath = `${uploadBase}${ts}_${filename}`;
+  const safeName = sanitizeFilename(filename);
+  const diagramPath = `${uploadBase}${safeName}`;
 
   const headers = authHeaders(token);
   const content = toBase64(data);
+
+  // Check if file already exists → update (override) instead of create
+  const existingSha = await getExistingSha(diagramPath, token);
 
   try {
     const res = await fetch(`${API}/${diagramPath}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify({
-        message: `Upload diagram: ${tower}/${cap} — ${filename}`,
+        message: `${existingSha ? 'Update' : 'Upload'} diagram: ${tower}/${cap} — ${safeName}`,
         content,
         branch: 'main',
+        ...(existingSha ? { sha: existingSha } : {}),
       }),
     });
 
@@ -137,20 +162,24 @@ export async function uploadBpmnToGitHub(
   // basePath ends with: towers/{tower}/.../{capId}/input/data/
   // We want: towers/{tower}/.../{capId}/input/bpmn/
   const bpmnBase = basePath.replace(/data\/$/, 'bpmn/');
-  const ts = timestampPrefix();
-  const bpmnPath = `${bpmnBase}${ts}_${filename}`;
+  const safeName = sanitizeFilename(filename);
+  const bpmnPath = `${bpmnBase}${safeName}`;
 
   const headers = authHeaders(token);
   const content = toBase64(data);
+
+  // Check if file already exists → update (override) instead of create
+  const existingSha = await getExistingSha(bpmnPath, token);
 
   try {
     const res = await fetch(`${API}/${bpmnPath}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify({
-        message: `Upload BPMN business process: ${tower}/${cap} — ${filename}`,
+        message: `${existingSha ? 'Update' : 'Upload'} BPMN business process: ${tower}/${cap} — ${safeName}`,
         content,
         branch: 'main',
+        ...(existingSha ? { sha: existingSha } : {}),
       }),
     });
 
@@ -197,23 +226,26 @@ export async function uploadHopsJsonToGitHub(
   }
 
   const extractBase = basePath.replace(/data\/$/, 'extracts/');
-  const ts = timestampPrefix();
   const sourceBaseName = hopsJson.metadata.source_file.split('.')[0];
-  const hopsPath = `${extractBase}${ts}_${sourceBaseName}_hops.json`;
+  const hopsPath = `${extractBase}${sourceBaseName}_hops.json`;
 
   const headers = authHeaders(token);
   const jsonStr = JSON.stringify(hopsJson, null, 2);
   const encoder = new TextEncoder();
   const content = toBase64(encoder.encode(jsonStr).buffer as ArrayBuffer);
 
+  // Check if file already exists → update (override) instead of create
+  const existingSha = await getExistingSha(hopsPath, token);
+
   try {
     const res = await fetch(`${API}/${hopsPath}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify({
-        message: `Extract hops: ${tower}/${cap} — ${hopsJson.metadata.source_file} (${hopsJson.metadata.total_hops} hops)`,
+        message: `${existingSha ? 'Update' : 'Extract'} hops: ${tower}/${cap} — ${hopsJson.metadata.source_file} (${hopsJson.metadata.total_hops} hops)`,
         content,
         branch: 'main',
+        ...(existingSha ? { sha: existingSha } : {}),
       }),
     });
 
