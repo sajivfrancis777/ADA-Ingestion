@@ -14,6 +14,7 @@ const STATUS_VALUES = ['Open', 'In Progress', 'Completed', 'Blocked', 'Deferred'
 
 // Simplified Flows dropdowns (14-column input — enrichment script fills the rest)
 const INTERFACE_VALUES = ['IDoc', 'RFC', 'BAPI', 'REST API', 'OData', 'SOAP', 'SFTP', 'File', 'CPI', 'PI/PO', 'MuleSoft', 'Kafka', 'DB Link', 'Manual', 'Other'];
+const CONFIDENCE_VALUES = ['High', 'Medium', 'Low'];
 const DB_PLATFORM_VALUES = DB_OPTIONS;
 const TECH_PLATFORM_VALUES = PLATFORM_OPTIONS;
 const INTEGRATION_PATTERN_VALUES = ['Point-to-Point', 'Hub-Spoke', 'Publish-Subscribe', 'Batch File', 'API Gateway', 'Database Link'];
@@ -130,6 +131,18 @@ const flowsColumns: (ColDef | ColGroupDef)[] = [
       { field: 'Target Tech Platform', width: 220, ...selectEditor(TECH_PLATFORM_VALUES) },
       { field: 'Integration Pattern', width: 200, ...selectEditor(INTEGRATION_PATTERN_VALUES) },
     ],
+  },
+  {
+    field: 'Confidence',
+    width: 130,
+    ...selectEditor(CONFIDENCE_VALUES),
+    cellStyle: (params) => {
+      const v = String(params.value || '').toLowerCase();
+      if (v === 'high') return { backgroundColor: '#e6f4ea', color: '#1e7e34' };
+      if (v === 'medium') return { backgroundColor: '#fff8e1', color: '#b8860b' };
+      if (v === 'low') return { backgroundColor: '#fce4ec', color: '#c62828' };
+      return null;
+    },
   },
 ];
 
