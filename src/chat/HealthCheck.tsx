@@ -27,7 +27,11 @@ export default function HealthCheck() {
   const mountedRef = useRef(true);
   const runningRef = useRef(false);
 
-  useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => {
+    mountedRef.current = true;
+    runningRef.current = false;  // reset on StrictMode remount
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const run = useCallback(async () => {
     if (runningRef.current) return;
@@ -129,7 +133,7 @@ export default function HealthCheck() {
               <div className="hc-progress-bar">
                 <div
                   className="hc-progress-fill"
-                  style={{ width: `${Math.round((results.length / 6) * 100)}%` }}
+                  style={{ width: `${Math.round((results.length / 8) * 100)}%` }}
                 />
               </div>
             )}
@@ -142,6 +146,9 @@ export default function HealthCheck() {
                   <div className="hc-check-body">
                     <div className="hc-check-name">{r.label}</div>
                     <div className="hc-check-detail">{r.detail}</div>
+                    {r.fix && r.status !== 'pass' && (
+                      <div className="hc-check-fix">💡 {r.fix}</div>
+                    )}
                   </div>
                   {r.durationMs > 0 && (
                     <span className="hc-check-latency">{r.durationMs}ms</span>
