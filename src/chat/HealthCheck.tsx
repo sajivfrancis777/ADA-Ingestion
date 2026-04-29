@@ -25,27 +25,32 @@ export default function HealthCheck() {
   const [report, setReport] = useState<HealthReport | null>(null);
   const [running, setRunning] = useState(false);
   const mountedRef = useRef(true);
+  const runningRef = useRef(false);
 
   useEffect(() => () => { mountedRef.current = false; }, []);
 
   const run = useCallback(async () => {
-    if (running) return;
+    if (runningRef.current) return;
+    runningRef.current = true;
     setRunning(true);
     setResults([]);
     setReport(null);
 
     try {
       const r = await runHealthChecks((partial) => {
-        if (mountedRef.current) setResults(partial);
+        if (mountedRef.current) setResults([...partial]);
       });
       if (mountedRef.current) {
         setResults(r.results);
         setReport(r);
       }
+    } catch (e) {
+      console.error('[HealthCheck] run failed:', e);
     } finally {
+      runningRef.current = false;
       if (mountedRef.current) setRunning(false);
     }
-  }, [running]);
+  }, []);
 
   // Auto-run on first open
   const handleOpen = () => {
