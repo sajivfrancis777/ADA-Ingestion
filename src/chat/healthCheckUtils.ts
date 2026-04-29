@@ -244,44 +244,55 @@ async function checkContextIndex(): Promise<CheckResult> {
  * Runs all health checks respecting the dependency chain:
  *   GitHub → SSL → Context Index (chained)
  *   Env Vars, Cloudflare Worker, Ollama (independent / parallel)
+ *
+ * Each check is wrapped in its own try/catch so one failure
+ * cannot kill the entire chain.
  */
 export async function runHealthChecks(
   onProgress?: (results: CheckResult[]) => void,
 ): Promise<HealthReport> {
   const results: CheckResult[] = [];
 
-  const emit = () => onProgress?.([...results]);
+  const emit = () => {
+    console.log('[HealthCheck] emit', results.length, 'results');
+    onProgress?.([...results]);
+  };
+
+  /** Safe wrapper — guarantees a CheckResult even on unexpected throw */
+  async function safe(id: string, label: string, fn: () => Promise<CheckResult>): Promise<CheckResult> {
+    try {
+      return await fn();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[HealthCheck] ${id} threw:`, e);
+      return result(id, label, 'fail', `Unexpected: ${msg}`, 0);
+    }
+  }
 
   // ── Chain: GitHub → SSL → Context Index ──
-  const github = await checkGitHubRaw();
+  const github = await safe('github-raw', 'GitHub Raw Fetch', checkGitHubRaw);
   results.push(github);
   emit();
 
-  let ssl: CheckResult;
-  if (github.status === 'fail') {
-    ssl = result('ssl-cert', 'SSL / Cert Chain', 'fail', 'Skipped (GitHub unreachable)', 0);
-  } else {
-    ssl = await checkSSL();
-  }
+  const ssl = github.status === 'fail'
+    ? result('ssl-cert', 'SSL / Cert Chain', 'fail', 'Skipped (GitHub unreachable)', 0)
+    : await safe('ssl-cert', 'SSL / Cert Chain', checkSSL);
   results.push(ssl);
   emit();
 
   // ── Independent checks (parallel) ──
   const [envVars, worker, ollama] = await Promise.all([
     Promise.resolve(checkEnvVars()),
-    checkCloudflareWorker(),
-    checkOllama(),
+    safe('cf-worker', 'Cloudflare Worker', checkCloudflareWorker),
+    safe('ollama', 'Ollama', checkOllama),
   ]);
   results.push(envVars, worker, ollama);
   emit();
 
   // ── Context Index (depends on GitHub) ──
-  let ctx: CheckResult;
-  if (github.status === 'fail') {
-    ctx = result('context-index', 'Context Index Load', 'fail', 'Skipped (GitHub unreachable)', 0);
-  } else {
-    ctx = await checkContextIndex();
-  }
+  const ctx = github.status === 'fail'
+    ? result('context-index', 'Context Index Load', 'fail', 'Skipped (GitHub unreachable)', 0)
+    : await safe('context-index', 'Context Index Load', checkContextIndex);
   results.push(ctx);
   emit();
 
@@ -291,6 +302,7 @@ export async function runHealthChecks(
   if (statuses.includes('fail')) overallStatus = 'fail';
   else if (statuses.includes('warn')) overallStatus = 'warn';
 
+  console.log('[HealthCheck] complete:', overallStatus, results.length, 'checks');
   return {
     results,
     ranAt: new Date().toISOString(),
