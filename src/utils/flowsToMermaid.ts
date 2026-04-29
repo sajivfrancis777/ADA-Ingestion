@@ -15,6 +15,8 @@
  *   EOL = Red (#FFCDD2)
  */
 
+import { getIapmUrl } from './iapmLookup';
+
 export interface FlowRow {
   'Flow Chain'?: string;
   'Hop #'?: number | string;
@@ -39,6 +41,16 @@ export type ArchLayer = 'application' | 'data' | 'technology';
 
 function sanitizeId(prefix: string, name: string): string {
   return `${prefix}_${name.replace(/[^a-zA-Z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')}`;
+}
+
+/** Append Mermaid click directives for nodes that have IAPM URLs. */
+function appendIapmClicks(lines: string[], nodeIdToName: Map<string, string>): void {
+  for (const [nodeId, name] of nodeIdToName) {
+    const url = getIapmUrl(name);
+    if (url) {
+      lines.push(`    click ${nodeId} "${url}" _blank`);
+    }
+  }
 }
 
 function truncate(s: string, max = 28): string {
@@ -199,6 +211,11 @@ function buildApplicationDiagram(rows: FlowRow[], prefix: string): string {
     lines.push(`    style ${id} ${fill},${stroke},stroke-width:2px`);
   }
 
+  // IAPM clickable links
+  const nodeNames = new Map<string, string>();
+  for (const [nid, app] of apps) nodeNames.set(nid, app.name);
+  appendIapmClicks(lines, nodeNames);
+
   return lines.join('\n');
 }
 
@@ -307,6 +324,11 @@ function buildDataDiagram(rows: FlowRow[], prefix: string): string {
   lines.push('    end');
   lines.push('    style Legend fill:#F5F5F5,stroke:#999,stroke-width:1px');
 
+  // IAPM clickable links (app nodes in data diagram)
+  const appNodeNames = new Map<string, string>();
+  for (const [nid, app] of apps) appNodeNames.set(nid, app.name);
+  appendIapmClicks(lines, appNodeNames);
+
   return lines.join('\n');
 }
 
@@ -403,6 +425,11 @@ function buildTechnologyDiagram(rows: FlowRow[], prefix: string): string {
   for (const { id, fill, stroke } of laneStyles) {
     lines.push(`    style ${id} ${fill},${stroke},stroke-width:2px`);
   }
+
+  // IAPM clickable links (platform nodes)
+  const platNames = new Map<string, string>();
+  for (const [nid, plat] of platforms) platNames.set(nid, plat.name);
+  appendIapmClicks(lines, platNames);
 
   return lines.join('\n');
 }
