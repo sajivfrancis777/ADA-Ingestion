@@ -34,11 +34,11 @@ const CONFIG_KEY = 'iao_llm_config';
 const HISTORY_KEY = 'iao_chat_history';
 
 const DEFAULT_CONFIG: LLMConfig = {
-  provider: 'anthropic',
-  apiKey: '',
-  model: 'claude-sonnet-4-20250514',
-  endpoint: '',
-  maxTokens: 2048,
+  provider: 'azure-openai',
+  apiKey: import.meta.env.VITE_AZURE_OPENAI_KEY ?? '',
+  model: 'gpt-5.4-pro',
+  endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT ?? 'https://sajiv-moknxo97-eastus2.cognitiveservices.azure.com/openai/responses?api-version=2025-04-01-preview',
+  maxTokens: 1024,
   temperature: 0.3,
 };
 
@@ -488,15 +488,47 @@ export async function sendMessage(
       ? config.endpoint
       : 'https://api.openai.com/v1/chat/completions';
 
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (config.apiKey) {
+      headers[config.provider === 'azure-openai' ? 'api-key' : 'Authorization'] =
+        config.provider === 'azure-openai' ? config.apiKey : `Bearer ${config.apiKey}`;
+    }
+
+    // Azure OpenAI Responses API uses different request/response format
+    if (config.provider === 'azure-openai' && config.endpoint?.includes('/responses')) {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: config.model,
+          input: apiMessages,
+          max_output_tokens: Math.max(16, config.maxTokens),
+          temperature: config.temperature,
+        }),
+      });
+      if (!res.ok) throw new Error(`Azure OpenAI error ${res.status}: ${await res.text()}`);
+      const data = await res.json();
+      // Extract text from Responses API: output[].content[].text
+      const text = (data.output || [])
+        .filter((item: any) => item.type === 'message')
+        .flatMap((item: any) => item.content || [])
+        .filter((part: any) => part.type === 'output_text')
+        .map((part: any) => part.text)
+        .join('') || 'No response';
+      return {
+        id: makeId(),
+        role: 'assistant',
+        content: text,
+        timestamp: Date.now(),
+      };
+    }
+
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
-      },
+      headers,
       body: JSON.stringify({
-        model: config.model,
         messages: apiMessages,
+        model: config.model,
         max_tokens: config.maxTokens,
         temperature: config.temperature,
       }),

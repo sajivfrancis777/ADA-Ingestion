@@ -80,27 +80,41 @@ const openaiProvider: LLMProvider = {
   },
 };
 
-// ── Azure OpenAI (same payload as OpenAI, different endpoint) ───
+// ── Azure OpenAI (Responses API — /openai/responses) ────────────
 
 const azureOpenaiProvider: LLMProvider = {
   type: 'azure-openai',
-  formatPayload: openaiProvider.formatPayload,
+  formatPayload(messages: ChatMessagePayload[], config: ProviderConfig) {
+    return {
+      model: config.model,
+      input: messages.map(m => ({ role: m.role, content: m.content })),
+      max_output_tokens: Math.max(16, config.maxTokens ?? 1024),
+      ...(config.temperature != null ? { temperature: config.temperature } : {}),
+    };
+  },
   async send(messages, config): Promise<LLMResponse> {
-    if (!config.baseUrl) throw new Error('Azure OpenAI: no endpoint URL configured.');
+    if (!config.baseUrl) throw new Error('Azure OpenAI: no endpoint URL configured. Use format: https://{resource}.cognitiveservices.azure.com/openai/responses?api-version=2025-04-01-preview');
     const payload = this.formatPayload(messages, config);
     const start = performance.now();
     const res = await fetch(config.baseUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey ?? ''}`,
+        'api-key': config.apiKey ?? '',
       },
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(`Azure OpenAI error ${res.status}: ${await res.text()}`);
     const data = await res.json();
+    // Responses API: output[].content[].text
+    const text = data.output
+      ?.filter((item: any) => item.type === 'message')
+      ?.flatMap((item: any) => item.content ?? [])
+      ?.filter((part: any) => part.type === 'output_text')
+      ?.map((part: any) => part.text)
+      ?.join('') ?? 'No response';
     return {
-      content: data.choices?.[0]?.message?.content ?? 'No response',
+      content: text,
       provider: 'azure-openai',
       model: config.model,
       durationMs: Math.round(performance.now() - start),
