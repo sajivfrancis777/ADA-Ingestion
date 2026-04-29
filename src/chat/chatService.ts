@@ -22,10 +22,10 @@ export interface ChatArtifact {
 }
 
 export interface LLMConfig {
-  provider: 'anthropic' | 'openai' | 'azure-openai' | 'custom';
+  provider: 'anthropic' | 'openai' | 'azure-openai' | 'ollama' | 'custom';
   apiKey: string;
   model: string;
-  endpoint?: string;  // Custom endpoint (Azure Functions, Cloudflare Worker)
+  endpoint?: string;  // Custom endpoint (Azure Functions, Cloudflare Worker, Ollama)
   maxTokens: number;
   temperature: number;
 }
@@ -41,6 +41,8 @@ const DEFAULT_CONFIG: LLMConfig = {
   maxTokens: 2048,
   temperature: 0.3,
 };
+
+const OLLAMA_DEFAULT_URL = 'http://localhost:11434';
 
 // System prompt grounding the assistant in IAO architecture context
 const SYSTEM_PROMPT = `You are the IAO Architecture Assistant for Intel's IDM 2.0 program.
@@ -351,11 +353,11 @@ export async function sendMessage(
   config: LLMConfig,
   gridContext?: string,
 ): Promise<ChatMessage> {
-  if (!config.apiKey && !config.endpoint) {
+  if (!config.apiKey && !config.endpoint && config.provider !== 'ollama') {
     return {
       id: makeId(),
       role: 'assistant',
-      content: '⚙️ **No LLM API configured.** Click your profile icon (bottom-right) → "🔑 AI Assistant — API Key" to enter your API key.\n\nYou can use Anthropic (Claude), OpenAI (GPT), or Azure OpenAI.',
+      content: '⚙️ **No LLM API configured.** Click your profile icon (bottom-right) → "🔑 AI Assistant — API Key" to enter your API key.\n\nYou can use Anthropic (Claude), OpenAI (GPT), Azure OpenAI, or Ollama (local).',
       timestamp: Date.now(),
     };
   }
@@ -393,8 +395,38 @@ export async function sendMessage(
   ];
 
   try {
+    // Ollama local model (native format)
+    if (config.provider === 'ollama') {
+      const ollamaBase = config.endpoint || OLLAMA_DEFAULT_URL;
+      const ollamaModel = config.model || 'llama3';
+      const res = await fetch(`${ollamaBase}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: ollamaModel,
+          messages: apiMessages,
+          stream: false,
+          options: {
+            temperature: config.temperature,
+            num_predict: config.maxTokens,
+          },
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Ollama error ${res.status}: ${errText}`);
+      }
+      const data = await res.json();
+      return {
+        id: makeId(),
+        role: 'assistant',
+        content: data.message?.content ?? 'No response from Ollama',
+        timestamp: Date.now(),
+      };
+    }
+
     // If custom endpoint (Azure Functions / Cloudflare Worker), use it
-    if (config.endpoint) {
+    if (config.endpoint && config.provider === 'custom') {
       const res = await fetch(config.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -479,6 +511,19 @@ export async function sendMessage(
 
 export function createUserMessage(content: string): ChatMessage {
   return { id: makeId(), role: 'user', content, timestamp: Date.now() };
+}
+
+/** List models available on the local Ollama instance */
+export async function listOllamaModels(endpoint?: string): Promise<string[]> {
+  const base = endpoint || OLLAMA_DEFAULT_URL;
+  try {
+    const res = await fetch(`${base}/api/tags`, { cache: 'no-store' });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.models) ? data.models.map((m: { name: string }) => m.name) : [];
+  } catch {
+    return [];
+  }
 }
 
 export function clearChatHistory() {
