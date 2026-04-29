@@ -89,7 +89,6 @@ const azureOpenaiProvider: LLMProvider = {
       model: config.model,
       input: messages.map(m => ({ role: m.role, content: m.content })),
       max_output_tokens: Math.max(16, config.maxTokens ?? 1024),
-      ...(config.temperature != null ? { temperature: config.temperature } : {}),
     };
   },
   async send(messages, config): Promise<LLMResponse> {

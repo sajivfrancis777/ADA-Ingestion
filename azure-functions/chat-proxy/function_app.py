@@ -84,9 +84,6 @@ def chat_proxy(req: func.HttpRequest) -> func.HttpResponse:
         "input": messages,
         "max_output_tokens": max(16, max_tokens),
     }
-    # Pass through optional parameters
-    if "temperature" in body:
-        payload["temperature"] = body["temperature"]
 
     # Forward to Azure OpenAI Responses API
     url = f"{endpoint}/openai/responses?api-version={api_version}"

@@ -503,7 +503,6 @@ export async function sendMessage(
           model: config.model,
           input: apiMessages,
           max_output_tokens: Math.max(16, config.maxTokens),
-          temperature: config.temperature,
         }),
       });
       if (!res.ok) throw new Error(`Azure OpenAI error ${res.status}: ${await res.text()}`);
