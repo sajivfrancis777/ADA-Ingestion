@@ -65,6 +65,14 @@ const OPTIONAL_ENV: { key: string; label: string }[] = [
 
 // ── Helpers ─────────────────────────────────────────────────────
 
+const CHECK_TIMEOUT_MS = 5000;
+
+function timedFetch(url: string, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS);
+  return fetch(url, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 function timed<T>(fn: () => Promise<T>): Promise<{ value: T; ms: number }> {
   const t0 = performance.now();
   return fn().then(
@@ -90,14 +98,14 @@ async function checkGitHubRaw(): Promise<CheckResult> {
   const label = 'GitHub Raw Fetch';
   try {
     const { value: res, ms } = await timed(() =>
-      fetch(CONTEXT_INDEX_URL, { method: 'HEAD', cache: 'no-store' }),
+      timedFetch(CONTEXT_INDEX_URL, { method: 'HEAD', cache: 'no-store' }),
     );
     if (res.ok) return result(id, label, 'pass', `HTTP ${res.status}`, ms);
     return result(id, label, 'fail', `HTTP ${res.status} ${res.statusText}`, ms);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     const ms = (err as { ms?: number }).ms ?? 0;
-    return result(id, label, 'fail', msg, ms);
+    return result(id, label, 'fail', msg.includes('abort') ? `Timeout (${CHECK_TIMEOUT_MS}ms)` : msg, ms);
   }
 }
 
@@ -111,7 +119,7 @@ async function checkSSL(): Promise<CheckResult> {
     }
     // If GitHub HEAD succeeded, TLS handshake passed — lightweight re-check
     const { ms } = await timed(() =>
-      fetch(`${url.origin}/`, { method: 'HEAD', cache: 'no-store' }),
+      timedFetch(`${url.origin}/`, { method: 'HEAD', cache: 'no-store' }),
     );
     return result(id, label, 'pass', `TLS handshake OK (${ms}ms)`, ms);
   } catch (err: unknown) {
@@ -160,7 +168,7 @@ async function checkCloudflareWorker(): Promise<CheckResult> {
   }
   try {
     const { value: res, ms } = await timed(() =>
-      fetch(WORKER_URL, { method: 'OPTIONS', cache: 'no-store' }),
+      timedFetch(WORKER_URL, { method: 'OPTIONS', cache: 'no-store' }),
     );
     // Workers typically return 200 or 204 for OPTIONS
     if (res.ok || res.status === 204) {
@@ -179,7 +187,7 @@ async function checkOllama(): Promise<CheckResult> {
   const label = 'Ollama';
   try {
     const { value: res, ms } = await timed(() =>
-      fetch(`${OLLAMA_URL}/api/tags`, { cache: 'no-store' }),
+      timedFetch(`${OLLAMA_URL}/api/tags`, { cache: 'no-store' }),
     );
     if (!res.ok) {
       return result(id, label, 'fail', `HTTP ${res.status}`, ms);
@@ -190,7 +198,7 @@ async function checkOllama(): Promise<CheckResult> {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     const ms = (err as { ms?: number }).ms ?? 0;
-    return result(id, label, 'warn', `Not reachable: ${msg}`, ms);
+    return result(id, label, 'warn', msg.includes('abort') ? 'Not running (timeout)' : `Not reachable: ${msg}`, ms);
   }
 }
 
@@ -199,7 +207,7 @@ async function checkContextIndex(): Promise<CheckResult> {
   const label = 'Context Index Load';
   try {
     const { value: res, ms } = await timed(() =>
-      fetch(CONTEXT_INDEX_URL, { cache: 'no-store' }),
+      timedFetch(CONTEXT_INDEX_URL, { cache: 'no-store' }),
     );
     if (!res.ok) {
       return result(id, label, 'fail', `HTTP ${res.status}`, ms);
