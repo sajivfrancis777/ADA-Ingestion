@@ -117,6 +117,25 @@ export default function DiagramPreview({ rows, visible }: DiagramPreviewProps) {
 
   const handleMouseUp = useCallback(() => { dragRef.current.dragging = false; }, []);
 
+  // Touch panning for mobile
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0];
+    dragRef.current = { dragging: true, startX: t.clientX, startY: t.clientY, startTx: translate.x, startTy: translate.y };
+  }, [translate]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!dragRef.current.dragging || e.touches.length !== 1) return;
+    e.preventDefault(); // prevent page scroll while panning diagram
+    const t = e.touches[0];
+    setTranslate({
+      x: dragRef.current.startTx + (t.clientX - dragRef.current.startX),
+      y: dragRef.current.startTy + (t.clientY - dragRef.current.startY),
+    });
+  }, []);
+
+  const handleTouchEnd = useCallback(() => { dragRef.current.dragging = false; }, []);
+
   /** Fit the SVG to fill the visible container. */
   const fitToView = useCallback(() => {
     const container = containerRef.current;
@@ -190,7 +209,10 @@ export default function DiagramPreview({ rows, visible }: DiagramPreviewProps) {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        style={{ flex: 1, overflow: 'hidden', cursor: dragRef.current.dragging ? 'grabbing' : 'grab', position: 'relative' }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ flex: 1, overflow: 'hidden', cursor: dragRef.current.dragging ? 'grabbing' : 'grab', position: 'relative', touchAction: 'none' }}
       >
         {error && (
           <div style={{ padding: 16, color: '#c62828', fontSize: 13 }}>
