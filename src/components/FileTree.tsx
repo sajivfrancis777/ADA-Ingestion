@@ -250,6 +250,7 @@ export default function FileTree({
   loadingFile,
   recentUploads,
   persistedFiles,
+  onRefresh,
 }: {
   collapsed: boolean;
   onToggle: () => void;
@@ -260,6 +261,7 @@ export default function FileTree({
   loadingFile?: string;
   recentUploads?: RecentUpload[];
   persistedFiles?: PersistedInputFiles;
+  onRefresh?: () => void;
 }) {
   const [search, setSearch] = useState('');
   const uploads = recentUploads ?? [];
@@ -285,7 +287,12 @@ export default function FileTree({
     <aside className="ft-sidebar">
       <div className="ft-header">
         <span className="ft-title">📂 File Explorer</span>
-        <button className="ft-collapse-btn" onClick={onToggle} title="Collapse">◀</button>
+        <div className="ft-header-actions">
+          {onRefresh && (
+            <button className="ft-refresh-btn" onClick={onRefresh} title="Refresh file tree from GitHub">🔄</button>
+          )}
+          <button className="ft-collapse-btn" onClick={onToggle} title="Collapse">◀</button>
+        </div>
       </div>
       <div className="ft-search">
         <input

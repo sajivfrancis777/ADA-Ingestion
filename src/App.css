@@ -129,6 +129,28 @@ body {
   color: var(--intel-dark);
 }
 
+.ft-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ft-refresh-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: transform 0.2s;
+}
+
+.ft-refresh-btn:hover {
+  background: #e4e8ed;
+  transform: rotate(90deg);
+}
+
 .ft-collapse-btn {
   background: none;
   border: none;

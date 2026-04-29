@@ -15,6 +15,7 @@ import FileTree from './components/FileTree';
 import GitHubTokenModal from './components/GitHubTokenModal';
 import { AuthProvider } from './auth/AuthContext';
 import ChatFAB from './chat/ChatFAB';
+import HealthCheck from './chat/HealthCheck';
 import './chat/chat.css';
 import { TOWERS, CAPABILITIES } from './data/towerRegistry';
 import { PROJECTS, getDefaultProject, type ProjectInfo } from './data/projectRegistry';
@@ -616,6 +617,7 @@ export default function App() {
           loadingFile={loadingFile}
           recentUploads={recentUploads}
           persistedFiles={persistedFiles}
+          onRefresh={() => setPersistedRefresh(n => n + 1)}
         />
         <div className="app-main">
           {/* Tower / Capability / Release / State selectors + file toolbar */}
@@ -692,6 +694,7 @@ export default function App() {
 
       {/* AI Chat FAB + Profile */}
       <ChatFAB gridContext={buildGridContext()} />
+      <HealthCheck />
     </div>
     </AuthProvider>
   );
