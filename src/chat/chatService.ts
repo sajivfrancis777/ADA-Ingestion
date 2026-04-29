@@ -425,19 +425,29 @@ export async function sendMessage(
       };
     }
 
-    // If custom endpoint (Azure Functions / Cloudflare Worker), use it
+    // Custom endpoint (Azure Functions, Cloudflare Worker, iGPT, LiteLLM, vLLM)
     if (config.endpoint && config.provider === 'custom') {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (config.apiKey) headers['Authorization'] = `Bearer ${config.apiKey}`;
       const res = await fetch(config.endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, model: config.model, max_tokens: config.maxTokens }),
+        headers,
+        body: JSON.stringify({
+          messages: apiMessages,
+          model: config.model,
+          max_tokens: config.maxTokens,
+          temperature: config.temperature,
+        }),
       });
-      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Custom endpoint error ${res.status}: ${errText}`);
+      }
       const data = await res.json();
       return {
         id: makeId(),
         role: 'assistant',
-        content: data.content ?? data.choices?.[0]?.message?.content ?? 'No response',
+        content: data.content ?? data.message?.content ?? data.choices?.[0]?.message?.content ?? 'No response',
         timestamp: Date.now(),
       };
     }
