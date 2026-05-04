@@ -125,44 +125,61 @@ function mermaidCacheKey(code: string): string {
 
 /**
  * Sanitize mermaid code to fix common LLM mistakes:
- * - Split chained edges (A -->|x| B -->|y| C) into separate lines
- * - Ensure edge labels with special chars are quoted
+ * - Quote subgraph labels containing special chars (/ & etc.)
+ * - Split chained edges (labeled AND unlabeled) into separate lines
+ * - Quote edge labels with special chars
  */
 function sanitizeMermaidCode(code: string): string {
   const lines = code.split('\n');
   const out: string[] = [];
   for (const line of lines) {
     const trimmed = line.trim();
-    // Skip non-edge lines (subgraph, end, %%, declarations, empty)
-    if (!trimmed || /^(%|subgraph|end|flowchart|graph|classDef|class |style )/.test(trimmed)) {
+    // Empty or comment lines — pass through
+    if (!trimmed || trimmed.startsWith('%%')) {
+      out.push(line);
+      continue;
+    }
+    // Fix subgraph labels: quote unquoted labels containing special chars
+    const subgraphMatch = trimmed.match(/^(subgraph\s+\S+)\[([^\]]+)\](.*)$/);
+    if (subgraphMatch) {
+      const label = subgraphMatch[2];
+      // If not already quoted and contains special chars, add quotes
+      if (!label.startsWith('"') && /[\/&<>()]/.test(label)) {
+        out.push(`${subgraphMatch[1]}["${label}"]${subgraphMatch[3]}`);
+      } else {
+        out.push(line);
+      }
+      continue;
+    }
+    // Skip non-edge lines (end, flowchart, classDef, class, style, direction)
+    if (/^(end|flowchart|graph|classDef|class |style |direction )/.test(trimmed)) {
+      out.push(line);
+      continue;
+    }
+    // Skip node-only declarations (no arrow)
+    if (!trimmed.includes('-->')) {
       out.push(line);
       continue;
     }
     // Detect chained edges: lines with 2+ arrows (-->)
     const arrowCount = (trimmed.match(/-->/g) || []).length;
     if (arrowCount > 1) {
-      // Split chained edges into individual lines
-      // Match pattern: NodeID -->|"label"| NodeID or NodeID --> NodeID
-      const edgePattern = /([A-Za-z0-9_]+(?:\[.*?\])?)\s*(-->)\s*(\|[^|]*\|)?\s*/g;
-      const nodes: { id: string; label?: string }[] = [];
-      let match;
-      let lastIndex = 0;
-      while ((match = edgePattern.exec(trimmed)) !== null) {
-        nodes.push({ id: match[1], label: match[3] });
-        lastIndex = edgePattern.lastIndex;
+      // Split on --> with optional labels: -->|"text"| or --> or -->|text|
+      const parts = trimmed.split(/\s*(-->(?:\|[^|]*\|)?)\s*/);
+      // parts alternates: [node, arrow+label, node, arrow+label, node, ...]
+      const nodes: string[] = [];
+      const arrows: string[] = [];
+      for (let i = 0; i < parts.length; i++) {
+        if (i % 2 === 0) {
+          if (parts[i].trim()) nodes.push(parts[i].trim());
+        } else {
+          arrows.push(parts[i].trim());
+        }
       }
-      // Capture the final node (after the last arrow)
-      const remainder = trimmed.slice(lastIndex).trim();
-      if (remainder) {
-        nodes.push({ id: remainder });
-      }
-      // Emit one edge per line
       if (nodes.length >= 2) {
         for (let i = 0; i < nodes.length - 1; i++) {
-          const src = nodes[i].id;
-          const lbl = nodes[i].label || '';
-          const tgt = nodes[i + 1].id;
-          out.push(`  ${src} --> ${lbl} ${tgt}`.replace(/\s+/g, ' ').trim());
+          const arrow = arrows[i] || '-->';
+          out.push(`  ${nodes[i]} ${arrow} ${nodes[i + 1]}`);
         }
         continue;
       }
