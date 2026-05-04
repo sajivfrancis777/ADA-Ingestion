@@ -36,8 +36,8 @@ const HISTORY_KEY = 'iao_chat_history';
 const DEFAULT_CONFIG: LLMConfig = {
   provider: 'azure-openai',
   apiKey: import.meta.env.VITE_AZURE_OPENAI_KEY ?? '',
-  model: 'gpt-5.4-pro',
-  endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT ?? 'https://sajiv-moknxo97-eastus2.cognitiveservices.azure.com/openai/responses?api-version=2025-04-01-preview',
+  model: 'gpt-5.4-mini',
+  endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT ?? 'https://sajiv-moknxo97-eastus2.cognitiveservices.azure.com/openai/deployments/gpt-5.4-mini/chat/completions?api-version=2024-12-01-preview',
   maxTokens: 1024,
   temperature: 0.3,
 };

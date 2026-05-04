@@ -87,12 +87,13 @@ const azureOpenaiProvider: LLMProvider = {
   formatPayload(messages: ChatMessagePayload[], config: ProviderConfig) {
     return {
       model: config.model,
-      input: messages.map(m => ({ role: m.role, content: m.content })),
-      max_output_tokens: Math.max(16, config.maxTokens ?? 1024),
+      messages: messages.map(m => ({ role: m.role, content: m.content })),
+      max_tokens: config.maxTokens ?? 1024,
+      temperature: config.temperature ?? 0.3,
     };
   },
   async send(messages, config): Promise<LLMResponse> {
-    if (!config.baseUrl) throw new Error('Azure OpenAI: no endpoint URL configured. Use format: https://{resource}.cognitiveservices.azure.com/openai/responses?api-version=2025-04-01-preview');
+    if (!config.baseUrl) throw new Error('Azure OpenAI: no endpoint URL configured. Use format: https://{resource}.cognitiveservices.azure.com/openai/deployments/{model}/chat/completions?api-version=2024-12-01-preview');
     const payload = this.formatPayload(messages, config);
     const start = performance.now();
     const res = await fetch(config.baseUrl, {
@@ -105,15 +106,8 @@ const azureOpenaiProvider: LLMProvider = {
     });
     if (!res.ok) throw new Error(`Azure OpenAI error ${res.status}: ${await res.text()}`);
     const data = await res.json();
-    // Responses API: output[].content[].text
-    const text = data.output
-      ?.filter((item: any) => item.type === 'message')
-      ?.flatMap((item: any) => item.content ?? [])
-      ?.filter((part: any) => part.type === 'output_text')
-      ?.map((part: any) => part.text)
-      ?.join('') ?? 'No response';
     return {
-      content: text,
+      content: data.choices?.[0]?.message?.content ?? 'No response',
       provider: 'azure-openai',
       model: config.model,
       durationMs: Math.round(performance.now() - start),
