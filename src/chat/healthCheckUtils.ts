@@ -173,15 +173,25 @@ function checkLLMConfig(): CheckResult {
   const fix = 'Click your profile icon (bottom-right) → set Provider, API Key, and Model. For local demos use Ollama (no key needed). For iGPT use Custom Endpoint with Bearer token.';
   try {
     const raw = localStorage.getItem('iao_llm_config');
-    if (!raw) return chk(id, label, 'warn', 'No config — chat will prompt for setup', fix, 0);
-    const cfg = JSON.parse(raw);
+    const cfg = raw ? JSON.parse(raw) : {};
     const provider = cfg.provider || 'unknown';
+
+    // Check env-injected defaults even if nothing in localStorage
+    const envKey = (import.meta as any).env?.VITE_AZURE_OPENAI_KEY || '';
+    const envEndpoint = (import.meta as any).env?.VITE_AZURE_OPENAI_ENDPOINT || '';
+    const hasEnvConfig = !!(envKey && envEndpoint);
+
+    // If no localStorage config but env vars are present, it's working
+    if (!raw && hasEnvConfig) return chk(id, label, 'pass', 'Azure OpenAI / gpt-5.4-mini (env-configured)', '', 0);
+    if (!raw && !hasEnvConfig) return chk(id, label, 'warn', 'No config — chat will prompt for setup', fix, 0);
+
     if (provider === 'ollama') return chk(id, label, 'pass', `Ollama / ${cfg.model || 'llama3'} (no key needed)`, '', 0);
     if (provider === 'custom') {
       if (!cfg.endpoint) return chk(id, label, 'warn', 'Custom provider but no endpoint URL', 'Set the endpoint URL in profile settings (e.g. iGPT gateway URL).', 0);
       return chk(id, label, 'pass', `Custom / ${cfg.model || 'default'} → ${cfg.endpoint.slice(0, 40)}…`, '', 0);
     }
-    if (!cfg.apiKey) return chk(id, label, 'warn', `${provider} selected but no API key`, fix, 0);
+    // Check localStorage apiKey OR env-injected key
+    if (!cfg.apiKey && !hasEnvConfig) return chk(id, label, 'warn', `${provider} selected but no API key`, fix, 0);
     return chk(id, label, 'pass', `${provider} / ${cfg.model || 'default'}`, '', 0);
   } catch {
     return chk(id, label, 'fail', 'Config parse error', 'Clear your browser localStorage for iao_llm_config and reconfigure.', 0);
