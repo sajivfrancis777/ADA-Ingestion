@@ -110,16 +110,12 @@ export function renderMarkdown(raw: string): string {
 }
 
 // ── Mermaid Diagram Renderer ──────────────────────────────────
-// Lazy-loads mermaid.js from CDN, then renders all pending
-// .md-mermaid elements into inline SVGs.
+// Uses bundled mermaid (no CDN dependency — Intel firewall blocks CDN).
 // SVG cache persists across DOM rebuilds (maximize/minimize).
 
-declare global {
-  interface Window { mermaid?: { initialize: (cfg: object) => void; render: (id: string, code: string) => Promise<{ svg: string }> } }
-}
+import mermaid from 'mermaid';
 
-const MERMAID_CDN = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
-let mermaidLoading = false;
+let mermaidInitialized = false;
 const mermaidSvgCache: Record<string, string> = {};  // normalized code → svg
 let mermaidIdCounter = 0;
 
@@ -127,26 +123,10 @@ function mermaidCacheKey(code: string): string {
   return code.trim().replace(/\s+/g, ' ');
 }
 
-function loadMermaidCDN(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (window.mermaid) { resolve(); return; }
-    if (mermaidLoading) {
-      const check = setInterval(() => {
-        if (window.mermaid) { clearInterval(check); resolve(); }
-      }, 100);
-      return;
-    }
-    mermaidLoading = true;
-    const s = document.createElement('script');
-    s.src = MERMAID_CDN;
-    s.onload = () => {
-      window.mermaid!.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict' });
-      mermaidLoading = false;
-      resolve();
-    };
-    s.onerror = () => { mermaidLoading = false; reject(new Error('Mermaid CDN failed')); };
-    document.head.appendChild(s);
-  });
+function ensureMermaidInit(): void {
+  if (mermaidInitialized) return;
+  mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict' });
+  mermaidInitialized = true;
 }
 
 export function renderMermaidDiagrams(container?: HTMLElement | null): void {
@@ -168,30 +148,27 @@ export function renderMermaidDiagrams(container?: HTMLElement | null): void {
     }
   });
 
-  // Second pass: render uncached diagrams via mermaid.js
+  // Second pass: render uncached diagrams via bundled mermaid
   if (!pending.length) return;
-  loadMermaidCDN().then(() => {
-    pending.forEach((el) => {
-      if (el.dataset.rendered) return;
-      el.dataset.rendered = 'true';
-      const code = el.textContent || '';
-      const key = mermaidCacheKey(code);
-      const id = 'mmd-' + (++mermaidIdCounter);
-      try {
-        window.mermaid!.render(id, code).then((result) => {
-          mermaidSvgCache[key] = result.svg;
-          el.innerHTML = result.svg;
-          el.classList.add('md-mermaid-rendered');
-        }).catch(() => {
-          el.innerHTML = '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(code) + '</code></pre>';
-          el.classList.add('md-mermaid-error');
-        });
-      } catch {
+  ensureMermaidInit();
+  pending.forEach((el) => {
+    if (el.dataset.rendered) return;
+    el.dataset.rendered = 'true';
+    const code = el.textContent || '';
+    const key = mermaidCacheKey(code);
+    const id = 'mmd-' + (++mermaidIdCounter);
+    try {
+      mermaid.render(id, code).then((result) => {
+        mermaidSvgCache[key] = result.svg;
+        el.innerHTML = result.svg;
+        el.classList.add('md-mermaid-rendered');
+      }).catch(() => {
         el.innerHTML = '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(code) + '</code></pre>';
         el.classList.add('md-mermaid-error');
-      }
-    });
-  }).catch(() => {
-    console.warn('[ADA Chat] Mermaid CDN unavailable — showing code fallback');
+      });
+    } catch {
+      el.innerHTML = '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(code) + '</code></pre>';
+      el.classList.add('md-mermaid-error');
+    }
   });
 }
