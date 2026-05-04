@@ -494,13 +494,16 @@ export async function sendMessage(
         config.provider === 'azure-openai' ? config.apiKey : `Bearer ${config.apiKey}`;
     }
 
+    const useMaxCompletionTokens = config.provider === 'azure-openai';
     const res = await fetch(endpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         messages: apiMessages,
         model: config.model,
-        max_tokens: config.maxTokens,
+        ...(useMaxCompletionTokens
+          ? { max_completion_tokens: config.maxTokens }
+          : { max_tokens: config.maxTokens }),
         temperature: config.temperature,
       }),
     });

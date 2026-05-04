@@ -88,7 +88,7 @@ const azureOpenaiProvider: LLMProvider = {
     return {
       model: config.model,
       messages: messages.map(m => ({ role: m.role, content: m.content })),
-      max_tokens: config.maxTokens ?? 1024,
+      max_completion_tokens: config.maxTokens ?? 1024,
       temperature: config.temperature ?? 0.3,
     };
   },
