@@ -58,7 +58,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
     prompt: 'Generate a Mermaid data architecture diagram showing database-to-database flows with application boxes clustered above their databases.' },
   { id: 'bpmn-processes', category: 'Diagrams', icon: '🔀',
     title: 'BPMN Process Diagrams',
-    prompt: 'List all BPMN business processes for this capability. For each process, provide a brief description of its purpose and generate a Mermaid flowchart diagram showing the process steps and decision points.' },
+    prompt: 'List all BPMN business processes for this capability grouped by phase. For EACH process, provide: (1) Process ID and name, (2) one-line purpose, (3) a Mermaid flowchart with process-specific steps, decision gateways, and SAP transaction codes where applicable. Do NOT use a single generic template — each process must have its own unique diagram.' },
   { id: 'mermaid-sequence', category: 'Diagrams', icon: '⏱️',
     title: 'Sequence Diagram',
     prompt: 'Generate a Mermaid sequence diagram showing the message flow between systems for the primary integration chain in this capability.' },

@@ -114,34 +114,60 @@ export default function App() {
     }
     let cancelled = false;
     (async () => {
+      // Phase 1: Always generate structured context from filenames (guaranteed)
+      // BPMN filenames encode process ID + name, e.g. "DS-020-010A Update Cost Components for Standard costing run_Global.bpmn"
+      const filenameSummaries: string[] = persistedFiles.bpmn.map(f => {
+        const name = f.replace(/\.bpmn$/i, '');
+        // Split on first space to separate process ID from description
+        const spaceIdx = name.indexOf(' ');
+        const processId = spaceIdx > 0 ? name.slice(0, spaceIdx) : name;
+        const processName = spaceIdx > 0 ? name.slice(spaceIdx + 1).replace(/_/g, ' ') : name;
+        return `- **${processId}**: ${processName}`;
+      });
+
+      if (cancelled) return;
+
+      // Phase 2: Try to fetch and parse actual BPMN content for step-level detail
+      const parsedDetails: string[] = [];
       try {
         const basePath = await resolveCapabilityBasePath(tower, cap);
-        if (!basePath || cancelled) return;
-        const bpmnBase = basePath.replace(/data\/$/, 'bpmn/');
-        const summaries: string[] = [];
+        if (basePath && !cancelled) {
+          const bpmnBase = basePath.replace(/data\/$/, 'bpmn/');
+          for (const filename of persistedFiles.bpmn.slice(0, 10)) {
+            if (cancelled) break;
+            try {
+              const buf = await fetchFileContent(`${bpmnBase}${filename}`);
+              const result = await parseDiagram(filename, buf);
+              if (!result.ok || result.sheets.length === 0) continue;
 
-        for (const filename of persistedFiles.bpmn.slice(0, 5)) { // cap at 5 files
-          try {
-            const buf = await fetchFileContent(`${bpmnBase}${filename}`);
-            const result = await parseDiagram(filename, buf);
-            if (!result.ok || result.sheets.length === 0) continue;
-
-            for (const sheet of result.sheets) {
-              const steps = sheet.hops.map(h =>
-                `${h['Source System']} → ${h['Target System']}${h['Interface / Technology'] ? ` (${h['Interface / Technology']})` : ''}`
-              );
-              summaries.push(
-                `**${filename}** — Process: "${sheet.tabName}"\n` +
-                `  Steps: ${steps.join(' → ')}`
-              );
-            }
-          } catch { /* skip individual file errors */ }
+              for (const sheet of result.sheets) {
+                const steps = sheet.hops.map(h =>
+                  `${h['Source System']}${h['Interface / Technology'] ? ` -[${h['Interface / Technology']}]-> ` : ' → '}${h['Target System']}`
+                );
+                if (steps.length > 0) {
+                  parsedDetails.push(
+                    `#### ${filename.replace(/\.bpmn$/i, '')}\n` +
+                    `Process: "${sheet.tabName}"\n` +
+                    `Steps (${steps.length}): ${steps.join(', ')}`
+                  );
+                }
+              }
+            } catch { /* skip individual file fetch errors */ }
+          }
         }
+      } catch { /* basePath resolution failed — use filenames only */ }
 
-        if (!cancelled && summaries.length > 0) {
-          setBpmnProcessSummaries(summaries.join('\n'));
-        }
-      } catch { /* silent */ }
+      if (cancelled) return;
+
+      // Build final summary: always include filename list, append parsed steps if available
+      let summary = `**${persistedFiles.bpmn.length} BPMN processes available:**\n` +
+        filenameSummaries.join('\n');
+
+      if (parsedDetails.length > 0) {
+        summary += `\n\n**Parsed process steps (from BPMN XML):**\n` + parsedDetails.join('\n\n');
+      }
+
+      setBpmnProcessSummaries(summary);
     })();
     return () => { cancelled = true; };
   }, [persistedFiles, tower, cap]);
@@ -616,8 +642,8 @@ export default function App() {
 
     // ── BPMN Process Summaries (parsed from uploaded .bpmn files) ──
     if (bpmnProcessSummaries) {
-      ctx += `### BPMN Business Processes\n`;
-      ctx += `The following business processes have been uploaded and parsed for this capability:\n`;
+      ctx += `### BPMN Business Processes (from uploaded .bpmn files)\n`;
+      ctx += `These are the ACTUAL business processes for this capability. Use them to generate process-specific diagrams.\n`;
       ctx += bpmnProcessSummaries + '\n\n';
     }
 
