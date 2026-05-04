@@ -483,7 +483,7 @@ export async function sendMessage(
       };
     }
 
-    // OpenAI / Azure OpenAI
+    // OpenAI / Azure OpenAI (Chat Completions API)
     const endpoint = config.provider === 'azure-openai' && config.endpoint
       ? config.endpoint
       : 'https://api.openai.com/v1/chat/completions';
@@ -492,34 +492,6 @@ export async function sendMessage(
     if (config.apiKey) {
       headers[config.provider === 'azure-openai' ? 'api-key' : 'Authorization'] =
         config.provider === 'azure-openai' ? config.apiKey : `Bearer ${config.apiKey}`;
-    }
-
-    // Azure OpenAI Responses API uses different request/response format
-    if (config.provider === 'azure-openai' && config.endpoint?.includes('/responses')) {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model: config.model,
-          input: apiMessages,
-          max_output_tokens: Math.max(16, config.maxTokens),
-        }),
-      });
-      if (!res.ok) throw new Error(`Azure OpenAI error ${res.status}: ${await res.text()}`);
-      const data = await res.json();
-      // Extract text from Responses API: output[].content[].text
-      const text = (data.output || [])
-        .filter((item: any) => item.type === 'message')
-        .flatMap((item: any) => item.content || [])
-        .filter((part: any) => part.type === 'output_text')
-        .map((part: any) => part.text)
-        .join('') || 'No response';
-      return {
-        id: makeId(),
-        role: 'assistant',
-        content: text,
-        timestamp: Date.now(),
-      };
     }
 
     const res = await fetch(endpoint, {
