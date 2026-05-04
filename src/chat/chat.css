@@ -490,6 +490,22 @@
   background: #005a9e;
 }
 
+.md-mermaid-refresh {
+  background: #f0f4f8;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.md-mermaid-refresh:hover {
+  background: #e3f2fd;
+  border-color: #0071C5;
+}
+
 /* Fullscreen overlay */
 
 .md-mermaid-overlay {

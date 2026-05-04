@@ -83,6 +83,25 @@ body {
 
 /* ─── File Tree Sidebar ─── */
 
+.sidebar-resizable {
+  display: flex;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sidebar-resize-handle {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle:active {
+  background: var(--intel-blue, #0071C5);
+}
+
 .ft-collapsed {
   width: 36px;
   background: #f8fafc;
@@ -105,7 +124,7 @@ body {
 }
 
 .ft-sidebar {
-  width: 280px;
+  width: 100%;
   background: #fff;
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -1115,6 +1134,20 @@ body {
   overflow: hidden;
 }
 
+/* Split resize handle between grid and diagram preview */
+.split-resize-handle {
+  width: 5px;
+  cursor: col-resize;
+  background: #e0e4ea;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.split-resize-handle:hover,
+.split-resize-handle:active {
+  background: var(--intel-blue, #0071C5);
+}
+
 /* ─── Embedded Sheet Frame ─── */
 
 .sheet-frame {
@@ -1184,7 +1217,11 @@ body {
   }
 
   .ft-sidebar {
-    width: 220px;
+    width: 100%;
+  }
+
+  .sidebar-resizable {
+    max-width: 220px;
   }
 }
 

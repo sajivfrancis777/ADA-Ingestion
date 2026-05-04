@@ -56,6 +56,12 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
   { id: 'mermaid-data', category: 'Diagrams', icon: '🗄️',
     title: 'Data Architecture Diagram',
     prompt: 'Generate a Mermaid data architecture diagram showing database-to-database flows with application boxes clustered above their databases.' },
+  { id: 'bpmn-processes', category: 'Diagrams', icon: '🔀',
+    title: 'BPMN Process Diagrams',
+    prompt: 'List all BPMN business processes for this capability. For each process, provide a brief description of its purpose and generate a Mermaid flowchart diagram showing the process steps and decision points.' },
+  { id: 'mermaid-sequence', category: 'Diagrams', icon: '⏱️',
+    title: 'Sequence Diagram',
+    prompt: 'Generate a Mermaid sequence diagram showing the message flow between systems for the primary integration chain in this capability.' },
 ];
 
 export const TEMPLATE_CATEGORIES = [...new Set(PROMPT_TEMPLATES.map(t => t.category))];

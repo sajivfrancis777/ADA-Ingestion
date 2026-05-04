@@ -107,6 +107,26 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
         document.body.appendChild(overlay);
       });
     });
+    // Bind refresh buttons — force re-render of mermaid diagrams
+    container.querySelectorAll<HTMLButtonElement>('.md-mermaid-refresh').forEach((btn) => {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = 'true';
+      btn.addEventListener('click', () => {
+        const wrap = btn.closest('.md-mermaid-wrap');
+        const mermaidEl = wrap?.querySelector<HTMLElement>('.md-mermaid');
+        if (!mermaidEl) return;
+        // Get the raw code from the details section
+        const codeEl = wrap?.querySelector('.md-mermaid-code code');
+        const rawCode = codeEl?.textContent || '';
+        if (!rawCode) return;
+        // Reset the element so renderMermaidDiagrams picks it up again
+        mermaidEl.textContent = rawCode;
+        mermaidEl.classList.remove('md-mermaid-rendered', 'md-mermaid-error');
+        delete mermaidEl.dataset.rendered;
+        // Re-render this specific element
+        renderMermaidDiagrams(wrap as HTMLElement);
+      });
+    });
   }, [messages, maximized]);
 
   // Focus input when panel opens

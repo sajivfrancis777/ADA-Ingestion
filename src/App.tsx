@@ -66,6 +66,8 @@ export default function App() {
   );
   const [dirty, setDirty] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(280);
+  const sidebarDragRef = useRef<{ dragging: boolean; startX: number; startW: number }>({ dragging: false, startX: 0, startW: 280 });
   const [loadingFile, setLoadingFile] = useState<string | undefined>();
   const [loadedFile, setLoadedFile] = useState<string | undefined>();
   const [fetchError, setFetchError] = useState<string | undefined>();
@@ -86,6 +88,7 @@ export default function App() {
   const [recentUploads, setRecentUploads] = useState<{ tower: string; cap: string; folder: string; filename: string }[]>([]);
   const [persistedFiles, setPersistedFiles] = useState<CapabilityInputFiles | undefined>();
   const [persistedRefresh, setPersistedRefresh] = useState(0);
+  const [bpmnProcessSummaries, setBpmnProcessSummaries] = useState<string>('');
   const [dragOver, setDragOver] = useState<'xlsx' | 'diagram' | null>(null);
 
   // Keep dirtyRef in sync for the async effect
@@ -102,6 +105,46 @@ export default function App() {
       .catch(() => { /* silent — tree still works without persisted files */ });
     return () => { cancelled = true; };
   }, [tower, cap, persistedRefresh]);
+
+  // Load and parse BPMN files to produce process summaries for chat grounding
+  useEffect(() => {
+    if (!persistedFiles || persistedFiles.bpmn.length === 0) {
+      setBpmnProcessSummaries('');
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const basePath = await resolveCapabilityBasePath(tower, cap);
+        if (!basePath || cancelled) return;
+        const bpmnBase = basePath.replace(/data\/$/, 'bpmn/');
+        const summaries: string[] = [];
+
+        for (const filename of persistedFiles.bpmn.slice(0, 5)) { // cap at 5 files
+          try {
+            const buf = await fetchFileContent(`${bpmnBase}${filename}`);
+            const result = await parseDiagram(filename, buf);
+            if (!result.ok || result.sheets.length === 0) continue;
+
+            for (const sheet of result.sheets) {
+              const steps = sheet.hops.map(h =>
+                `${h['Source System']} → ${h['Target System']}${h['Interface / Technology'] ? ` (${h['Interface / Technology']})` : ''}`
+              );
+              summaries.push(
+                `**${filename}** — Process: "${sheet.tabName}"\n` +
+                `  Steps: ${steps.join(' → ')}`
+              );
+            }
+          } catch { /* skip individual file errors */ }
+        }
+
+        if (!cancelled && summaries.length > 0) {
+          setBpmnProcessSummaries(summaries.join('\n'));
+        }
+      } catch { /* silent */ }
+    })();
+    return () => { cancelled = true; };
+  }, [persistedFiles, tower, cap]);
 
   // Stable callback so TabEditor doesn't re-render when App state changes
   const handleDirty = useCallback(() => {
@@ -384,6 +427,29 @@ export default function App() {
     return null;
   }, []);
 
+  // ── Sidebar resize handlers ──
+  const handleSidebarResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    sidebarDragRef.current = { dragging: true, startX: e.clientX, startW: sidebarWidth };
+    const onMove = (ev: MouseEvent) => {
+      if (!sidebarDragRef.current.dragging) return;
+      const delta = ev.clientX - sidebarDragRef.current.startX;
+      const newWidth = Math.min(Math.max(sidebarDragRef.current.startW + delta, 180), 600);
+      setSidebarWidth(newWidth);
+    };
+    const onUp = () => {
+      sidebarDragRef.current.dragging = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [sidebarWidth]);
+
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -529,13 +595,37 @@ export default function App() {
 
   // Build context string from current grid data for the chat assistant
   const buildGridContext = useCallback((): string => {
-    if (!editorRef.current) return '';
-    const data = editorRef.current.flush();
-    const flows = data['Flows'] ?? [];
-    if (flows.length === 0) return '';
     const towerName = TOWERS.find(t => t.id === tower)?.display ?? tower;
     const capName = CAPABILITIES[tower]?.find(c => c.id === cap)?.name ?? cap;
     let ctx = `Tower: ${towerName}\nCapability: ${capName}\nRelease: ${release}\nState: ${state}\n\n`;
+
+    // ── File Explorer context ──
+    // Show the LLM what data files, uploads, and extracts are available
+    ctx += `### Available Files (from File Explorer)\n`;
+    if (persistedFiles) {
+      if (persistedFiles.data.length > 0) ctx += `Data files: ${persistedFiles.data.join(', ')}\n`;
+      if (persistedFiles.uploads.length > 0) ctx += `Uploaded diagrams: ${persistedFiles.uploads.join(', ')}\n`;
+      if (persistedFiles.bpmn.length > 0) ctx += `BPMN files: ${persistedFiles.bpmn.join(', ')}\n`;
+      if (persistedFiles.extracts.length > 0) ctx += `Parsed extracts (JSON): ${persistedFiles.extracts.join(', ')}\n`;
+    } else {
+      ctx += `(File listing not yet loaded)\n`;
+    }
+    const sessionUploads = recentUploads.filter(u => u.tower === tower && u.cap === cap);
+    if (sessionUploads.length > 0) ctx += `Session uploads (new): ${sessionUploads.map(u => u.filename).join(', ')}\n`;
+    ctx += '\n';
+
+    // ── BPMN Process Summaries (parsed from uploaded .bpmn files) ──
+    if (bpmnProcessSummaries) {
+      ctx += `### BPMN Business Processes\n`;
+      ctx += `The following business processes have been uploaded and parsed for this capability:\n`;
+      ctx += bpmnProcessSummaries + '\n\n';
+    }
+
+    // ── Grid data ──
+    if (!editorRef.current) return ctx;
+    const data = editorRef.current.flush();
+    const flows = data['Flows'] ?? [];
+    if (flows.length === 0) return ctx;
     ctx += `### Flows (${flows.length} rows)\n`;
     const cols = ['Flow Chain', 'Hop #', 'Source System', 'Source Lane', 'Target System', 'Target Lane', 'Interface / Technology', 'Frequency', 'Source DB Platform', 'Target DB Platform', 'Source Tech Platform', 'Target Tech Platform'];
     ctx += cols.join(' | ') + '\n';
@@ -543,7 +633,7 @@ export default function App() {
       ctx += cols.map(c => String((row as Record<string, unknown>)[c] ?? '').trim()).join(' | ') + '\n';
     }
     return ctx;
-  }, [tower, cap, release, state]);
+  }, [tower, cap, release, state, persistedFiles, recentUploads, bpmnProcessSummaries]);
 
   return (
     <AuthProvider>
@@ -607,18 +697,23 @@ export default function App() {
 
       {/* Sidebar + Main content */}
       <div className="app-body">
-        <FileTree
-          collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed(c => !c)}
-          selectedTower={tower}
-          selectedCap={cap}
-          onSelectCap={handleCapChange}
-          onFileClick={handleFileClick}
-          loadingFile={loadingFile}
-          recentUploads={recentUploads}
-          persistedFiles={persistedFiles}
-          onRefresh={() => setPersistedRefresh(n => n + 1)}
-        />
+        <div className="sidebar-resizable" style={sidebarCollapsed ? undefined : { width: sidebarWidth }}>
+          <FileTree
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed(c => !c)}
+            selectedTower={tower}
+            selectedCap={cap}
+            onSelectCap={handleCapChange}
+            onFileClick={handleFileClick}
+            loadingFile={loadingFile}
+            recentUploads={recentUploads}
+            persistedFiles={persistedFiles}
+            onRefresh={() => setPersistedRefresh(n => n + 1)}
+          />
+          {!sidebarCollapsed && (
+            <div className="sidebar-resize-handle" onMouseDown={handleSidebarResizeStart} title="Drag to resize sidebar" />
+          )}
+        </div>
         <div className="app-main">
           {/* Tower / Capability / Release / State selectors + file toolbar */}
           <div className="app-controls">

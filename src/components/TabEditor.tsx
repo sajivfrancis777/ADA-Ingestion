@@ -62,6 +62,9 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   // ── Diagram preview state ─────────────────────────────────
   const [showPreview, setShowPreview] = useState(false);
   const [flowRows, setFlowRows] = useState<FlowRow[]>([]);
+  const [splitPercent, setSplitPercent] = useState(55); // grid gets this %, diagram gets rest
+  const splitDragRef = useRef<{ dragging: boolean; startX: number; startPct: number; containerW: number }>({ dragging: false, startX: 0, startPct: 55, containerW: 0 });
+  const splitContainerRef = useRef<HTMLDivElement>(null);
 
   // ── Stable ref for onDirty ─────────────────────────────────
   const onDirtyRef = useRef(onDirty);
@@ -350,6 +353,37 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   // Count real (non-empty) rows for display
   const realRowCount = (tabCache.current[tab.name] ?? []).length;
 
+  // ── Split resize handler for grid/diagram ──
+  const handleSplitResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const container = splitContainerRef.current;
+    if (!container) return;
+    splitDragRef.current = {
+      dragging: true,
+      startX: e.clientX,
+      startPct: splitPercent,
+      containerW: container.clientWidth,
+    };
+    const onMove = (ev: MouseEvent) => {
+      if (!splitDragRef.current.dragging) return;
+      const delta = ev.clientX - splitDragRef.current.startX;
+      const deltaPct = (delta / splitDragRef.current.containerW) * 100;
+      const newPct = Math.min(Math.max(splitDragRef.current.startPct + deltaPct, 20), 80);
+      setSplitPercent(newPct);
+    };
+    const onUp = () => {
+      splitDragRef.current.dragging = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [splitPercent]);
+
   return (
     <div className="tab-editor" ref={containerRef} tabIndex={0}>
       {/* Clipboard toast */}
@@ -413,11 +447,11 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
       </div>
 
       {/* Grid + optional diagram preview split */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', gap: showPreview && isFlowsTab ? 8 : 0 }}>
+      <div ref={splitContainerRef} style={{ display: 'flex', flex: 1, overflow: 'hidden', gap: 0 }}>
         {/* AG Grid */}
         <div className="grid-container" onContextMenu={handleCellContextMenu}
           onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={handleTouchMove}
-          style={showPreview && isFlowsTab ? { flex: '1 1 55%', minWidth: 0 } : { flex: 1 }}>
+          style={showPreview && isFlowsTab ? { flex: `0 0 ${splitPercent}%`, minWidth: 0 } : { flex: 1 }}>
           <AgGridReact
           ref={gridRef}
           theme={excelTheme}
@@ -454,9 +488,14 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
         )}
       </div>
 
+        {/* Resize handle between grid and diagram */}
+        {showPreview && isFlowsTab && (
+          <div className="split-resize-handle" onMouseDown={handleSplitResizeStart} title="Drag to resize grid / diagram" />
+        )}
+
         {/* Diagram preview pane */}
         {showPreview && isFlowsTab && (
-          <div style={{ flex: '1 1 45%', minWidth: 300, minHeight: 0 }}>
+          <div style={{ flex: `0 0 ${100 - splitPercent}%`, minWidth: 200, minHeight: 0, overflow: 'hidden' }}>
             <DiagramPreview rows={flowRows} visible={showPreview && isFlowsTab} />
           </div>
         )}

@@ -16,19 +16,36 @@ export function renderMarkdown(raw: string): string {
   let t = raw.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang: string, code: string) => {
     const trimmed = code.trim();
     if (lang && lang.toLowerCase() === 'mermaid') {
-      // Mermaid: render as placeholder div + toolbar + collapsible code
+      // Mermaid: if SVG is cached, embed it directly (survives React re-renders)
       const id = 'mmd-' + Date.now() + '-' + blocks.length;
-      blocks.push(
-        '<div class="md-mermaid-wrap">' +
-          '<div class="md-mermaid-toolbar">' +
-            '<button class="md-mermaid-expand" title="Expand diagram">⛶ Expand</button>' +
-          '</div>' +
-          '<div class="md-mermaid" data-mermaid-id="' + id + '">' + esc(trimmed) + '</div>' +
-          '<details class="md-mermaid-code"><summary>View Mermaid Code</summary>' +
-          '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(trimmed) + '</code></pre>' +
-          '</details>' +
-        '</div>'
-      );
+      const cachedSvg = getMermaidCachedSvg(trimmed);
+      if (cachedSvg) {
+        blocks.push(
+          '<div class="md-mermaid-wrap">' +
+            '<div class="md-mermaid-toolbar">' +
+              '<button class="md-mermaid-expand" title="Expand diagram">⛶ Expand</button>' +
+              '<button class="md-mermaid-refresh" title="Re-render diagram">🔄 Refresh</button>' +
+            '</div>' +
+            '<div class="md-mermaid md-mermaid-rendered" data-mermaid-id="' + id + '" data-rendered="true">' + cachedSvg + '</div>' +
+            '<details class="md-mermaid-code"><summary>View Mermaid Code</summary>' +
+            '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(trimmed) + '</code></pre>' +
+            '</details>' +
+          '</div>'
+        );
+      } else {
+        blocks.push(
+          '<div class="md-mermaid-wrap">' +
+            '<div class="md-mermaid-toolbar">' +
+              '<button class="md-mermaid-expand" title="Expand diagram">⛶ Expand</button>' +
+              '<button class="md-mermaid-refresh" title="Re-render diagram">🔄 Refresh</button>' +
+            '</div>' +
+            '<div class="md-mermaid" data-mermaid-id="' + id + '">' + esc(trimmed) + '</div>' +
+            '<details class="md-mermaid-code"><summary>View Mermaid Code</summary>' +
+            '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(trimmed) + '</code></pre>' +
+            '</details>' +
+          '</div>'
+        );
+      }
     } else {
       blocks.push(
         '<pre class="md-pre"><code class="md-code' +
@@ -119,6 +136,13 @@ let mermaidInitialized = false;
 const mermaidSvgCache: Record<string, string> = {};  // normalized code → svg
 let mermaidIdCounter = 0;
 
+/** Exposed so renderMarkdown can embed cached SVGs directly in HTML */
+export function getMermaidCachedSvg(code: string): string | undefined {
+  const key = code.trim().replace(/\s+/g, ' ');
+  // Also check sanitized version
+  return mermaidSvgCache[key] || mermaidSvgCache[sanitizeMermaidCode(code).trim().replace(/\s+/g, ' ')];
+}
+
 function mermaidCacheKey(code: string): string {
   return code.trim().replace(/\s+/g, ' ');
 }
@@ -195,7 +219,7 @@ function ensureMermaidInit(): void {
   mermaidInitialized = true;
 }
 
-export function renderMermaidDiagrams(container?: HTMLElement | null): void {
+export function renderMermaidDiagrams(container?: HTMLElement | null, onRendered?: () => void): void {
   const els = (container || document).querySelectorAll<HTMLElement>('.md-mermaid[data-mermaid-id]');
   if (!els.length) return;
 
@@ -205,8 +229,11 @@ export function renderMermaidDiagrams(container?: HTMLElement | null): void {
     if (el.dataset.rendered) return;
     const code = el.textContent || '';
     const key = mermaidCacheKey(code);
-    if (mermaidSvgCache[key]) {
-      el.innerHTML = mermaidSvgCache[key];
+    // Also try sanitized key
+    const sanitizedKey = mermaidCacheKey(sanitizeMermaidCode(code));
+    const cached = mermaidSvgCache[key] || mermaidSvgCache[sanitizedKey];
+    if (cached) {
+      el.innerHTML = cached;
       el.classList.add('md-mermaid-rendered');
       el.dataset.rendered = 'true';
     } else {
@@ -217,6 +244,7 @@ export function renderMermaidDiagrams(container?: HTMLElement | null): void {
   // Second pass: render uncached diagrams via bundled mermaid
   if (!pending.length) return;
   ensureMermaidInit();
+  let rendered = 0;
   pending.forEach((el) => {
     if (el.dataset.rendered) return;
     el.dataset.rendered = 'true';
@@ -227,15 +255,23 @@ export function renderMermaidDiagrams(container?: HTMLElement | null): void {
     try {
       mermaid.render(id, code).then((result) => {
         mermaidSvgCache[key] = result.svg;
+        // Also cache under raw key for direct lookup
+        mermaidSvgCache[mermaidCacheKey(rawCode)] = result.svg;
         el.innerHTML = result.svg;
         el.classList.add('md-mermaid-rendered');
+        rendered++;
+        if (rendered === pending.length && onRendered) onRendered();
       }).catch(() => {
         el.innerHTML = '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(rawCode) + '</code></pre>';
         el.classList.add('md-mermaid-error');
+        rendered++;
+        if (rendered === pending.length && onRendered) onRendered();
       });
     } catch {
       el.innerHTML = '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(rawCode) + '</code></pre>';
       el.classList.add('md-mermaid-error');
+      rendered++;
+      if (rendered === pending.length && onRendered) onRendered();
     }
   });
 }
