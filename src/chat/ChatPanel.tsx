@@ -127,6 +127,19 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
         renderMermaidDiagrams(wrap as HTMLElement);
       });
     });
+    // Bind BPMN drill-down buttons — auto-send a follow-up prompt
+    container.querySelectorAll<HTMLButtonElement>('.md-bpmn-drill').forEach((btn) => {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = 'true';
+      btn.addEventListener('click', () => {
+        const processId = btn.dataset.processId || '';
+        const processName = btn.textContent?.replace(/^🔀\s*/, '').trim() || processId;
+        sendPromptRef.current(
+          `Generate a detailed Mermaid flowchart diagram for BPMN process ${processName}. ` +
+          `Include all process steps, decision gateways, SAP transaction codes, and error handling paths.`
+        );
+      });
+    });
   }, [messages, maximized]);
 
   // Focus input when panel opens
@@ -204,6 +217,34 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
     setView('chat');
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
+
+  // Auto-send a prompt (used by BPMN drill-down clicks)
+  const sendPromptDirect = useCallback(async (text: string) => {
+    if (loading) return;
+    const userMsg = createUserMessage(text);
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setInput('');
+    setLoading(true);
+
+    const config = loadLLMConfig();
+    const response = await sendMessage(
+      newMessages.filter(m => m.role !== 'system'),
+      config,
+      gridContext,
+    );
+    const final = [...newMessages, response];
+    setMessages(final);
+    setLoading(false);
+
+    const updated = [...sessions.filter(s => s.length > 0), final];
+    setSessions(updated);
+    saveChatHistory(updated);
+  }, [loading, messages, sessions, gridContext]);
+
+  // Stable ref so DOM event handlers always get the latest function
+  const sendPromptRef = useRef(sendPromptDirect);
+  sendPromptRef.current = sendPromptDirect;
 
   if (!open) return null;
 

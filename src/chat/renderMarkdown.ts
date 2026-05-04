@@ -60,11 +60,16 @@ export function renderMarkdown(raw: string): string {
   t = t.replace(/`([^`]+)`/g, '<code class="md-ic">$1</code>');
   t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   t = t.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, txt: string, url: string) =>
-    /^https?:\/\//i.test(url)
+  t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, txt: string, url: string) => {
+    if (/^#bpmn:/.test(url)) {
+      // BPMN drill-down link — rendered as clickable button
+      const processId = url.replace(/^#bpmn:/, '');
+      return '<button class="md-bpmn-drill" data-process-id="' + esc(processId) + '" title="Click to generate diagram">' + txt + '</button>';
+    }
+    return /^https?:\/\//i.test(url)
       ? '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + txt + '</a>'
-      : txt + ' (' + url + ')'
-  );
+      : txt + ' (' + url + ')';
+  });
 
   const lines = t.split('\n');
   const out: string[] = [];

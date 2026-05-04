@@ -506,6 +506,34 @@
   border-color: #0071C5;
 }
 
+/* BPMN drill-down clickable process buttons */
+.md-bpmn-drill {
+  display: inline-block;
+  background: #f8fafc;
+  color: #0071C5;
+  border: 1px solid #b0c4de;
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin: 3px 0;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  width: 100%;
+}
+
+.md-bpmn-drill:hover {
+  background: #e3f2fd;
+  border-color: #0071C5;
+  transform: translateX(2px);
+}
+
+.md-bpmn-drill:active {
+  background: #0071C5;
+  color: #fff;
+}
+
 /* Fullscreen overlay */
 
 .md-mermaid-overlay {
