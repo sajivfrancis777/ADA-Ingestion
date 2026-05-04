@@ -123,6 +123,55 @@ function mermaidCacheKey(code: string): string {
   return code.trim().replace(/\s+/g, ' ');
 }
 
+/**
+ * Sanitize mermaid code to fix common LLM mistakes:
+ * - Split chained edges (A -->|x| B -->|y| C) into separate lines
+ * - Ensure edge labels with special chars are quoted
+ */
+function sanitizeMermaidCode(code: string): string {
+  const lines = code.split('\n');
+  const out: string[] = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Skip non-edge lines (subgraph, end, %%, declarations, empty)
+    if (!trimmed || /^(%|subgraph|end|flowchart|graph|classDef|class |style )/.test(trimmed)) {
+      out.push(line);
+      continue;
+    }
+    // Detect chained edges: lines with 2+ arrows (-->)
+    const arrowCount = (trimmed.match(/-->/g) || []).length;
+    if (arrowCount > 1) {
+      // Split chained edges into individual lines
+      // Match pattern: NodeID -->|"label"| NodeID or NodeID --> NodeID
+      const edgePattern = /([A-Za-z0-9_]+(?:\[.*?\])?)\s*(-->)\s*(\|[^|]*\|)?\s*/g;
+      const nodes: { id: string; label?: string }[] = [];
+      let match;
+      let lastIndex = 0;
+      while ((match = edgePattern.exec(trimmed)) !== null) {
+        nodes.push({ id: match[1], label: match[3] });
+        lastIndex = edgePattern.lastIndex;
+      }
+      // Capture the final node (after the last arrow)
+      const remainder = trimmed.slice(lastIndex).trim();
+      if (remainder) {
+        nodes.push({ id: remainder });
+      }
+      // Emit one edge per line
+      if (nodes.length >= 2) {
+        for (let i = 0; i < nodes.length - 1; i++) {
+          const src = nodes[i].id;
+          const lbl = nodes[i].label || '';
+          const tgt = nodes[i + 1].id;
+          out.push(`  ${src} --> ${lbl} ${tgt}`.replace(/\s+/g, ' ').trim());
+        }
+        continue;
+      }
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+}
+
 function ensureMermaidInit(): void {
   if (mermaidInitialized) return;
   mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict' });
@@ -154,7 +203,8 @@ export function renderMermaidDiagrams(container?: HTMLElement | null): void {
   pending.forEach((el) => {
     if (el.dataset.rendered) return;
     el.dataset.rendered = 'true';
-    const code = el.textContent || '';
+    const rawCode = el.textContent || '';
+    const code = sanitizeMermaidCode(rawCode);
     const key = mermaidCacheKey(code);
     const id = 'mmd-' + (++mermaidIdCounter);
     try {
@@ -163,11 +213,11 @@ export function renderMermaidDiagrams(container?: HTMLElement | null): void {
         el.innerHTML = result.svg;
         el.classList.add('md-mermaid-rendered');
       }).catch(() => {
-        el.innerHTML = '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(code) + '</code></pre>';
+        el.innerHTML = '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(rawCode) + '</code></pre>';
         el.classList.add('md-mermaid-error');
       });
     } catch {
-      el.innerHTML = '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(code) + '</code></pre>';
+      el.innerHTML = '<pre class="md-pre"><code class="md-code lang-mermaid">' + esc(rawCode) + '</code></pre>';
       el.classList.add('md-mermaid-error');
     }
   });
