@@ -133,7 +133,7 @@ export default function App() {
         const basePath = await resolveCapabilityBasePath(tower, cap);
         if (basePath && !cancelled) {
           const bpmnBase = basePath.replace(/data\/$/, 'bpmn/');
-          for (const filename of persistedFiles.bpmn.slice(0, 10)) {
+          for (const filename of persistedFiles.bpmn) {
             if (cancelled) break;
             try {
               const buf = await fetchFileContent(`${bpmnBase}${filename}`);
