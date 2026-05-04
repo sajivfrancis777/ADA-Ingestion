@@ -246,18 +246,52 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
   // Clear-column is still available via right-click context menu below.
 
   // Custom right-click context menu (AG Grid Community doesn't have built-in)
+  // Also supports long-press on mobile (touch-hold ~500ms)
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; field: string; rowIndex: number | null } | null>(null);
+  const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openContextMenu = useCallback((x: number, y: number, target: HTMLElement) => {
+    const cell = target.closest('.ag-cell');
+    if (!cell) return;
+    const colId = cell.getAttribute('col-id');
+    if (!colId) return;
+    const row = target.closest('.ag-row');
+    const rowIdx = row ? parseInt(row.getAttribute('row-index') ?? '', 10) : null;
+    setCtxMenu({ x, y, field: colId, rowIndex: Number.isFinite(rowIdx) ? rowIdx : null });
+  }, []);
 
   const handleCellContextMenu = useCallback((e: React.MouseEvent) => {
     const cell = (e.target as HTMLElement).closest('.ag-cell');
     if (!cell) return;
     const colId = cell.getAttribute('col-id');
     if (!colId) return;
-    // Find the row element to get the row index
     const row = (e.target as HTMLElement).closest('.ag-row');
     const rowIdx = row ? parseInt(row.getAttribute('row-index') ?? '', 10) : null;
     e.preventDefault();
     setCtxMenu({ x: e.clientX, y: e.clientY, field: colId, rowIndex: Number.isFinite(rowIdx) ? rowIdx : null });
+  }, []);
+
+  // Long-press handler for mobile touch devices
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const target = e.target as HTMLElement;
+    touchTimerRef.current = setTimeout(() => {
+      openContextMenu(touch.clientX, touch.clientY, target);
+    }, 500);
+  }, [openContextMenu]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current);
+      touchTimerRef.current = null;
+    }
+  }, []);
+
+  const handleTouchMove = useCallback(() => {
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current);
+      touchTimerRef.current = null;
+    }
   }, []);
 
   // Close context menu on click anywhere
@@ -370,6 +404,9 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
         <span className="clipboard-hint">
           Ctrl+C Copy &nbsp;|&nbsp; Ctrl+V Paste &nbsp;|&nbsp; Ctrl+X Cut &nbsp;|&nbsp; Ctrl+A Select All &nbsp;|&nbsp; Del Clear
         </span>
+        <span className="touch-hint">
+          Long-press cell for row options
+        </span>
         <span className="row-info">
           {realRowCount > 0 ? `${realRowCount} rows` : `${DEFAULT_EMPTY_ROWS} empty rows`} in {tab.name}
         </span>
@@ -379,6 +416,7 @@ const TabEditor = forwardRef<TabEditorHandle, TabEditorProps>(
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', gap: showPreview && isFlowsTab ? 8 : 0 }}>
         {/* AG Grid */}
         <div className="grid-container" onContextMenu={handleCellContextMenu}
+          onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={handleTouchMove}
           style={showPreview && isFlowsTab ? { flex: '1 1 55%', minWidth: 0 } : { flex: 1 }}>
           <AgGridReact
           ref={gridRef}

@@ -965,6 +965,19 @@ body {
   color: var(--intel-blue);
 }
 
+/* Mobile: larger touch targets for context menu */
+@media (max-width: 768px) {
+  .ctx-menu {
+    min-width: 220px;
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+  }
+  .ctx-menu button {
+    padding: 14px 18px;
+    font-size: 15px;
+  }
+}
+
 /* ─── Dirty banner ─── */
 
 .dirty-banner {
@@ -1058,6 +1071,20 @@ body {
   margin-left: 12px;
   border-left: 1px solid var(--border-color);
   padding-left: 12px;
+}
+
+/* Touch hint: visible only on mobile */
+.touch-hint {
+  display: none;
+  font-size: 11px;
+  color: #999;
+  margin-left: 8px;
+}
+
+@media (max-width: 768px) {
+  .touch-hint {
+    display: inline;
+  }
 }
 
 /* Clipboard toast notification */
