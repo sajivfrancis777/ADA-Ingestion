@@ -1235,8 +1235,9 @@ body {
 
   /* Hide file tree sidebar on mobile — header has all context needed */
   .ft-sidebar,
-  .ft-collapsed {
-    display: none;
+  .ft-collapsed,
+  .sidebar-resizable {
+    display: none !important;
   }
 
   /* Header: compact */
