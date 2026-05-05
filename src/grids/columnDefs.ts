@@ -5,7 +5,8 @@
 import type { ColDef, ColGroupDef, ValueSetterParams } from 'ag-grid-community';
 import AutocompleteCellEditor from './AutocompleteCellEditor';
 import DropdownEditor from './DropdownEditor';
-import { ALL_SYSTEMS, DB_OPTIONS, PLATFORM_OPTIONS, SYSTEM_DEFAULTS } from '../data/systemRegistry';
+import { ALL_SYSTEMS, DB_OPTIONS, PLATFORM_OPTIONS } from '../data/systemRegistry';
+import { getPlatformDefaults } from '../utils/platformLookup';
 
 // ─── Reusable cell editors ───────────────────────────────────────
 const FREQUENCY_VALUES = ['Real-Time', 'Near Real-Time', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'On-Demand', 'Batch'];
@@ -21,7 +22,8 @@ const INTEGRATION_PATTERN_VALUES = ['Point-to-Point', 'Hub-Spoke', 'Publish-Subs
 
 /**
  * Auto-fill helper: when Source/Target System is selected and the DB Platform
- * and Tech Platform cells are still empty, pre-fill them from SYSTEM_DEFAULTS.
+ * and Tech Platform cells are still empty, pre-fill them from SYSTEM_DEFAULTS
+ * or the remote IAPM platform cache (12K+ systems).
  */
 function systemAutoFillSetter(dbField: string, platField: string) {
   return (params: ValueSetterParams) => {
@@ -29,7 +31,7 @@ function systemAutoFillSetter(dbField: string, platField: string) {
     if (!field) return false;
     params.data[field] = params.newValue;
     const sys = String(params.newValue || '');
-    const defaults = (SYSTEM_DEFAULTS as Record<string, { db: string; platform: string }>)[sys];
+    const defaults = getPlatformDefaults(sys);
     if (defaults) {
       if (!params.data[dbField]) params.data[dbField] = defaults.db;
       if (!params.data[platField]) params.data[platField] = defaults.platform;
