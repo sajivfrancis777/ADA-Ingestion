@@ -27,9 +27,11 @@ interface ChatPanelProps {
   onClose: () => void;
   /** Current grid context — injected into system prompt so the assistant has real data */
   gridContext?: string;
+  /** Raw flow rows from the grid — used for pre-built diagram generation (same as DiagramPreview) */
+  flowRows?: Record<string, unknown>[];
 }
 
-export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps) {
+export default function ChatPanel({ open, onClose, gridContext, flowRows }: ChatPanelProps) {
   const { user, isAdmin } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -164,6 +166,7 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
       newMessages.filter(m => m.role !== 'system'),
       config,
       gridContext,
+      flowRows,
     );
     const final = [...newMessages, response];
     setMessages(final);
@@ -232,6 +235,7 @@ export default function ChatPanel({ open, onClose, gridContext }: ChatPanelProps
       newMessages.filter(m => m.role !== 'system'),
       config,
       gridContext,
+      flowRows,
     );
     const final = [...newMessages, response];
     setMessages(final);

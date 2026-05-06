@@ -220,7 +220,12 @@ function sanitizeMermaidCode(code: string): string {
 
 function ensureMermaidInit(): void {
   if (mermaidInitialized) return;
-  mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict' });
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    securityLevel: 'loose',
+    fontFamily: 'Segoe UI, Arial, sans-serif',
+  });
   mermaidInitialized = true;
 }
 

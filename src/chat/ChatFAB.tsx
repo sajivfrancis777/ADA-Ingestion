@@ -8,7 +8,7 @@ import UserProfilePanel from './UserProfilePanel';
 import ChatIcon from './ChatIcon';
 import { useAuth } from '../auth/AuthContext';
 
-export default function ChatFAB({ gridContext }: { gridContext?: string }) {
+export default function ChatFAB({ gridContext, flowRows }: { gridContext?: string; flowRows?: Record<string, unknown>[] }) {
   const { user } = useAuth();
   const [chatOpen, setChatOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -47,7 +47,7 @@ export default function ChatFAB({ gridContext }: { gridContext?: string }) {
         </button>
       </div>
 
-      <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} gridContext={gridContext} />
+      <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} gridContext={gridContext} flowRows={flowRows} />
       <UserProfilePanel open={profileOpen} onClose={() => setProfileOpen(false)} />
     </>
   );

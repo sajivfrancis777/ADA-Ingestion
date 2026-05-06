@@ -724,6 +724,18 @@ export default function App() {
     return ctx;
   }, [tower, cap, release, state, persistedFiles, recentUploads, bpmnProcessSummaries]);
 
+  /** Get raw flow rows from the editor grid (for deterministic diagram generation in chat). */
+  const getFlowRows = useCallback((): Record<string, unknown>[] => {
+    if (!editorRef.current) return [];
+    const data = editorRef.current.flush();
+    const flows = data['Flows'] ?? [];
+    // Filter out empty/placeholder rows
+    return flows.filter((r: Record<string, unknown>) => {
+      const src = String(r['Source System'] ?? '').trim();
+      return src && !src.startsWith('e.g.');
+    });
+  }, []);
+
   return (
     <AuthProvider>
     <div
@@ -888,7 +900,7 @@ export default function App() {
       )}
 
       {/* AI Chat FAB + Profile */}
-      <ChatFAB gridContext={buildGridContext()} />
+      <ChatFAB gridContext={buildGridContext()} flowRows={getFlowRows()} />
       <HealthCheck />
     </div>
     </AuthProvider>

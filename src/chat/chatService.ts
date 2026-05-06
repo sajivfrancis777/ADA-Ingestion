@@ -7,6 +7,8 @@
  * Stores API config in localStorage (encrypted in production via Azure Key Vault).
  */
 
+import { flowsToMermaid, type FlowRow } from '../utils/flowsToMermaid';
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -198,6 +200,10 @@ interface FlowEntry {
   pattern: string;
   frequency: string;
   dataDesc: string;
+  srcDbPlatform?: string;
+  tgtDbPlatform?: string;
+  srcTechPlatform?: string;
+  tgtTechPlatform?: string;
 }
 
 interface CapabilityEntry {
@@ -398,10 +404,10 @@ function searchContextIndex(text: string): string {
         if (totalRows > 80) { section += `\n…(${matchingFlows.length - totalRows} more rows across additional capabilities)\n`; break; }
         const capInfo = contextIndex.capabilities[flows[0].cap];
         section += `**${capKey}** — ${capInfo?.name || ''}\n`;
-        section += '| Release | State | Flow Chain | Source | Target | Via | Pattern | Frequency | Data |\n';
-        section += '|---------|-------|------------|--------|--------|-----|---------|-----------|------|\n';
+        section += '| Release | State | Flow Chain | Source | Target | Via | Pattern | Frequency | Data | Src DB Platform | Tgt DB Platform | Src Tech Platform | Tgt Tech Platform |\n';
+        section += '|---------|-------|------------|--------|--------|-----|---------|-----------|------|-----------------|-----------------|-------------------|-------------------|\n';
         for (const f of flows.slice(0, 15)) {
-          section += `| ${f.release} | ${f.state} | ${f.chain} | ${f.source} | ${f.target} | ${f.via} | ${f.pattern} | ${f.frequency} | ${f.dataDesc} |\n`;
+          section += `| ${f.release} | ${f.state} | ${f.chain} | ${f.source} | ${f.target} | ${f.via} | ${f.pattern} | ${f.frequency} | ${f.dataDesc} | ${f.srcDbPlatform || ''} | ${f.tgtDbPlatform || ''} | ${f.srcTechPlatform || ''} | ${f.tgtTechPlatform || ''} |\n`;
           totalRows++;
         }
         if (flows.length > 15) section += `| … | | ${flows.length - 15} more rows | | | | | | |\n`;
@@ -474,14 +480,14 @@ function searchContextIndex(text: string): string {
         if (capFlows.length > 0) {
           const filterLabel = [release, state].filter(Boolean).join(' ') || 'All';
           let section = `### ${cid} Flow Data (${filterLabel}) — ${capFlows.length} rows\n`;
-          section += '| Release | State | Flow Chain | Hop | Source | Target | Via | Pattern | Frequency | Data |\n';
-          section += '|---------|-------|------------|-----|--------|--------|-----|---------|-----------|------|\n';
+          section += '| Release | State | Flow Chain | Hop | Source | Target | Via | Pattern | Frequency | Data | Src DB Platform | Tgt DB Platform | Src Tech Platform | Tgt Tech Platform |\n';
+          section += '|---------|-------|------------|-----|--------|--------|-----|---------|-----------|------|-----------------|-----------------|-------------------|-------------------|\n';
           const maxRows = Math.min(capFlows.length, 80);
           for (let i = 0; i < maxRows; i++) {
             const f = capFlows[i];
-            section += `| ${f.release} | ${f.state} | ${f.chain} | ${f.hop} | ${f.source} | ${f.target} | ${f.via} | ${f.pattern} | ${f.frequency} | ${f.dataDesc} |\n`;
+            section += `| ${f.release} | ${f.state} | ${f.chain} | ${f.hop} | ${f.source} | ${f.target} | ${f.via} | ${f.pattern} | ${f.frequency} | ${f.dataDesc} | ${f.srcDbPlatform || ''} | ${f.tgtDbPlatform || ''} | ${f.srcTechPlatform || ''} | ${f.tgtTechPlatform || ''} |\n`;
           }
-          if (capFlows.length > 80) section += `| … | | ${capFlows.length - 80} more rows | | | | | | | |\n`;
+          if (capFlows.length > 80) section += `| … | | ${capFlows.length - 80} more rows | | | | | | | | | | | |\n`;
           parts.push(section);
         }
       }
@@ -712,14 +718,115 @@ function searchContextIndex(text: string): string {
   return result.length > 16000 ? result.slice(0, 16000) + '\n\n…(context truncated)' : result;
 }
 
+// ══════════════════════════════════════════════════════════════════
+// PRE-BUILT DIAGRAM GENERATION (deterministic, same as DiagramPreview)
+// ══════════════════════════════════════════════════════════════════
+
+/** Detect if user message is requesting architecture diagrams. */
+function isDiagramRequest(text: string): boolean {
+  const lower = text.toLowerCase();
+  const diagramKeywords = [
+    'architecture diagram', 'integration diagram', 'system diagram',
+    'generate.*diagram', 'show.*diagram', 'draw.*diagram',
+    'application.*data.*technology', 'application.*architecture',
+    'data.*architecture', 'technology.*architecture',
+    'generate the architecture', 'show the architecture',
+  ];
+  return diagramKeywords.some(kw => new RegExp(kw).test(lower));
+}
+
+/**
+ * Build a deterministic response with pre-generated Mermaid diagrams.
+ * Uses the SAME flowsToMermaid() function as DiagramPreview — guarantees
+ * visual parity across Preview, Chat, and published Documents.
+ */
+function buildPreGeneratedDiagramResponse(
+  rawRows: Record<string, unknown>[],
+  userText: string,
+): ChatMessage {
+  // Cast to FlowRow[] — the grid data matches this interface
+  const rows = rawRows as FlowRow[];
+
+  // Filter rows by release/state if specified in the user message
+  const filteredRows = filterRowsByRequest(rows, userText);
+  const rowCount = filteredRows.length;
+
+  // Generate all three layers
+  const appDiagram = flowsToMermaid(filteredRows, 'application', 'APP');
+  const dataDiagram = flowsToMermaid(filteredRows, 'data', 'DAT');
+  const techDiagram = flowsToMermaid(filteredRows, 'technology', 'TECH');
+
+  // Build response
+  let content = `📐 **Architecture Diagrams** — Generated from ${rowCount} flow rows (same as Preview tab)\n\n`;
+
+  if (appDiagram) {
+    content += `## Application Architecture\nShows application components grouped by lane, with interface/technology labels on edges.\n\n\`\`\`mermaid\n${appDiagram}\n\`\`\`\n\n`;
+  } else {
+    content += `## Application Architecture\n⚠️ No application diagram — no Source/Target System data in the selected rows.\n\n`;
+  }
+
+  if (dataDiagram) {
+    content += `## Data Architecture\nShows database platforms with application boxes above, connected by data flow edges.\n\n\`\`\`mermaid\n${dataDiagram}\n\`\`\`\n\n`;
+  } else {
+    content += `## Data Architecture\n⚠️ No data diagram — DB Platform columns are empty for the selected rows. Fill in "Source DB Platform" and "Target DB Platform" in the grid to enable this view.\n\n`;
+  }
+
+  if (techDiagram) {
+    content += `## Technology Architecture\nShows technology platforms colored by category (cloud/SaaS/on-prem/middleware) with integration pattern labels.\n\n\`\`\`mermaid\n${techDiagram}\n\`\`\`\n\n`;
+  } else {
+    content += `## Technology Architecture\n⚠️ No technology diagram — Tech Platform columns are empty for the selected rows. Fill in "Source Tech Platform" and "Target Tech Platform" in the grid to enable this view.\n\n`;
+  }
+
+  content += `---\n💡 These diagrams are **deterministic** — they match the Preview tab exactly. Edit grid data to update them.`;
+
+  return {
+    id: makeId(),
+    role: 'assistant',
+    content,
+    timestamp: Date.now(),
+  };
+}
+
+/** Filter flow rows by release/state mentioned in user text. */
+function filterRowsByRequest(rows: FlowRow[], userText: string): FlowRow[] {
+  const lower = userText.toLowerCase();
+
+  // Detect release (R1, R2, R3, R4, R5, Release 3, etc.)
+  const releaseMatch = lower.match(/\b(?:r|release\s*)(\d)\b/);
+  const release = releaseMatch ? `R${releaseMatch[1]}` : null;
+
+  // Detect state (current, future)
+  const stateMatch = lower.match(/\b(current|future)\b/);
+  const state = stateMatch ? stateMatch[1].charAt(0).toUpperCase() + stateMatch[1].slice(1) : null;
+
+  let filtered = rows;
+  if (release) {
+    filtered = filtered.filter(r => {
+      const rowRelease = String(r['Release'] ?? r['release'] ?? '').trim();
+      return rowRelease.toLowerCase() === release.toLowerCase() || rowRelease.includes(releaseMatch![1]);
+    });
+  }
+  if (state) {
+    filtered = filtered.filter(r => {
+      const rowState = String(r['State'] ?? r['state'] ?? '').trim();
+      return rowState.toLowerCase() === state.toLowerCase();
+    });
+  }
+
+  // If filtering removed all rows, fall back to all rows
+  return filtered.length > 0 ? filtered : rows;
+}
+
 /**
  * Send a message to the configured LLM and get a response.
  * @param gridContext — optional stringified grid data for context-aware answers
+ * @param flowRows — optional raw flow rows for deterministic diagram generation (same as DiagramPreview)
  */
 export async function sendMessage(
   messages: ChatMessage[],
   config: LLMConfig,
   gridContext?: string,
+  flowRows?: Record<string, unknown>[],
 ): Promise<ChatMessage> {
   if (!config.apiKey && !config.endpoint && config.provider !== 'ollama') {
     return {
@@ -736,6 +843,14 @@ export async function sendMessage(
   // Extract user's latest message text for context search
   const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
   const userText = lastUserMsg?.content || '';
+
+  // ── PRE-BUILT DIAGRAM INTERCEPTION ──
+  // If the user asks for architecture diagrams and we have flow data, generate them
+  // deterministically using the SAME code as DiagramPreview (no LLM hallucination).
+  const diagramRequest = isDiagramRequest(userText);
+  if (diagramRequest && flowRows && flowRows.length > 0) {
+    return buildPreGeneratedDiagramResponse(flowRows, userText);
+  }
 
   // Search context index for cross-capability grounding
   const crossCapContext = searchContextIndex(userText);
