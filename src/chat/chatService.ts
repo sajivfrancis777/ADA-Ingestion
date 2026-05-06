@@ -818,6 +818,60 @@ function filterRowsByRequest(rows: FlowRow[], userText: string): FlowRow[] {
 }
 
 /**
+ * Extract flow rows from the context-index (cross-repo knowledge base) when
+ * the editor grid is empty. Converts FlowEntry[] → FlowRow[] format so
+ * flowsToMermaid() can generate identical diagrams.
+ */
+function extractFlowRowsFromContextIndex(userText: string): FlowRow[] {
+  if (!contextIndex?.flowIndex) return [];
+
+  const { release, state } = detectFilters(userText);
+  const capIdRe = /\b([A-Z]{1,4}-(?:IF-|IP-)?[A-Z]{0,3}-?\d{2,3})\b/gi;
+  const capIds = [...new Set((userText.match(capIdRe) || []).map(m => m.toUpperCase()))];
+  const systems = detectSystemNames(userText);
+
+  let entries: FlowEntry[] = [];
+
+  // Filter by capability ID first
+  if (capIds.length > 0) {
+    entries = contextIndex.flowIndex.filter(f => capIds.includes(f.cap.toUpperCase()));
+  } else if (systems.length > 0) {
+    // Filter by system names
+    const sysSet = new Set(systems.map(s => s.toUpperCase()));
+    entries = contextIndex.flowIndex.filter(f =>
+      sysSet.has((f.source || '').toUpperCase()) || sysSet.has((f.target || '').toUpperCase())
+    );
+  }
+
+  if (entries.length === 0) return [];
+
+  // Apply release/state filters
+  if (release) entries = entries.filter(f => f.release?.toUpperCase() === release);
+  if (state) entries = entries.filter(f => f.state?.toLowerCase() === state);
+  if (entries.length === 0) return [];
+
+  // Convert FlowEntry → FlowRow (the format flowsToMermaid expects)
+  return entries.map(f => ({
+    'Flow Chain': f.chain || '',
+    'Hop #': f.hop || '',
+    'Source System': f.source || '',
+    'Target System': f.target || '',
+    'Source Lane': '',  // Not available in context-index
+    'Target Lane': '',
+    'Interface / Technology': f.via || '',
+    'Frequency': f.frequency || '',
+    'Data Description': f.dataDesc || '',
+    'Source DB Platform': f.srcDbPlatform || '',
+    'Target DB Platform': f.tgtDbPlatform || '',
+    'Source Tech Platform': f.srcTechPlatform || '',
+    'Target Tech Platform': f.tgtTechPlatform || '',
+    'Integration Pattern': f.pattern || '',
+    'Release': f.release || '',
+    'State': f.state || '',
+  } as FlowRow));
+}
+
+/**
  * Send a message to the configured LLM and get a response.
  * @param gridContext — optional stringified grid data for context-aware answers
  * @param flowRows — optional raw flow rows for deterministic diagram generation (same as DiagramPreview)
@@ -848,8 +902,16 @@ export async function sendMessage(
   // If the user asks for architecture diagrams and we have flow data, generate them
   // deterministically using the SAME code as DiagramPreview (no LLM hallucination).
   const diagramRequest = isDiagramRequest(userText);
-  if (diagramRequest && flowRows && flowRows.length > 0) {
-    return buildPreGeneratedDiagramResponse(flowRows, userText);
+  if (diagramRequest) {
+    // Priority 1: Use grid flow rows (exact same data as Preview tab)
+    if (flowRows && flowRows.length > 0) {
+      return buildPreGeneratedDiagramResponse(flowRows, userText);
+    }
+    // Priority 2: Extract from context-index (cross-repo knowledge base)
+    const contextRows = extractFlowRowsFromContextIndex(userText);
+    if (contextRows.length > 0) {
+      return buildPreGeneratedDiagramResponse(contextRows, userText);
+    }
   }
 
   // Search context index for cross-capability grounding

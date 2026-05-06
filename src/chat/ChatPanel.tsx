@@ -176,7 +176,7 @@ export default function ChatPanel({ open, onClose, gridContext, flowRows }: Chat
     const updated = [...sessions.filter(s => s.length > 0), final];
     setSessions(updated);
     saveChatHistory(updated);
-  }, [input, loading, messages, sessions]);
+  }, [input, loading, messages, sessions, gridContext, flowRows]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -244,7 +244,7 @@ export default function ChatPanel({ open, onClose, gridContext, flowRows }: Chat
     const updated = [...sessions.filter(s => s.length > 0), final];
     setSessions(updated);
     saveChatHistory(updated);
-  }, [loading, messages, sessions, gridContext]);
+  }, [loading, messages, sessions, gridContext, flowRows]);
 
   // Stable ref so DOM event handlers always get the latest function
   const sendPromptRef = useRef(sendPromptDirect);
