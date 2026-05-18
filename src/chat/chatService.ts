@@ -98,7 +98,12 @@ You help architects across 8 towers: FPR, OTC-IF, OTC-IP, FTS-IF, FTS-IP, PTP, M
    - Before each diagram, state: "Based on X flow rows for [Capability] [Release] [State]."
    - After all 3 diagrams, add a brief summary of key integration patterns observed.
 6. Reference specific systems, capabilities, and integration patterns when relevant.
-7. **BPMN PROCESS LISTING — MANDATORY FORMAT:**
+7. **LIVE JIRA ACCESS**: You have tool functions to query JIRA live:
+   - \`jira_search\`: Look up a specific issue/test case by key (IAODTM-C43670, IAODTM-12345) or search by text/JQL
+   - \`jira_test_cases\`: Query Zephyr Scale test cases by tower, capability, release, or phase
+   - \`jira_defects\`: Query bugs with severity/status/tower filters
+   **When the user asks about a specific JIRA ticket or wants live data not in the static context, USE these tools.** Do NOT say "I cannot access JIRA" — call the appropriate tool instead.
+8. **BPMN PROCESS LISTING — MANDATORY FORMAT:**
    When the user asks to "list", "show all", or "show BPMN" business processes:
    - You MUST output each process as a MARKDOWN LINK in this EXACT format:
      [🔀 DS-020-020 Perform Cumulative Costing Run](#bpmn:DS-020-020)
@@ -128,7 +133,7 @@ You help architects across 8 towers: FPR, OTC-IF, OTC-IP, FTS-IF, FTS-IP, PTP, M
      C -->|"No"| E["Review Cost Estimates"]
      E --> F["Mark for Release"]
    \`\`\`
-8. **Release & Phase disambiguation (applies to flows, dev objects, AND test objects):**
+9. **Release & Phase disambiguation (applies to flows, dev objects, AND test objects):**
    - Data is scoped by **release** (R3, R4, etc.) and **state/phase**.
    - **Flows**: have release + state (Current, Future).
    - **Dev objects**: belong to a release (R3, R4, or all).
@@ -174,6 +179,90 @@ function makeId(): string {
 // When repos merge into one Azure repo, change CONTEXT_INDEX_BASE
 // to same-origin (or remove it) — everything else works unchanged.
 const CONTEXT_INDEX_BASE = 'https://sajivfrancis777.github.io/ADA-Artifacts/';
+
+// ── JIRA Proxy (live queries via local dev server or Azure Function) ──
+const JIRA_PROXY_BASE = import.meta.env.VITE_JIRA_PROXY_URL ?? 'http://localhost:3001';
+
+// ── JIRA Tool Definitions for Azure OpenAI Function Calling ────────
+const JIRA_TOOLS = [
+  {
+    type: 'function' as const,
+    function: {
+      name: 'jira_search',
+      description: 'Search JIRA issues or look up a specific issue/test case/test cycle by key. Use when the user asks about a specific JIRA ticket (e.g. IAODTM-12345 for bugs, IAODTM-T1234 for test cases, IAODTM-C43670 for test cycles), wants to search defects by text, or needs live JIRA data not in the static context.',
+      parameters: {
+        type: 'object',
+        properties: {
+          key: { type: 'string', description: 'Exact JIRA key. -C prefix = test cycle, -T prefix = test case, plain number = bug/issue. Example: IAODTM-C43670, IAODTM-T1234, IAODTM-12345.' },
+          jql: { type: 'string', description: 'Raw JQL query for advanced searches. If provided, other filters are ignored.' },
+          text: { type: 'string', description: 'Free text search in summary/description.' },
+          issue_type: { type: 'string', description: 'Issue type filter (Bug, Task, Issue). Default: any.' },
+          max_results: { type: 'number', description: 'Max results to return (default 20, max 200).' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'jira_test_cases',
+      description: 'Query Zephyr Scale test cases with filters. Use when the user asks about test cases, test coverage, or testing status for a tower or capability.',
+      parameters: {
+        type: 'object',
+        properties: {
+          tower: { type: 'string', description: 'Tower shortcode (FPR, OTC-IF, OTC-IP, FTS-IF, FTS-IP, PTP, MDM, E2E).' },
+          capability_id: { type: 'string', description: 'Capability ID filter (e.g. DS-020, MR-010-020).' },
+          release: { type: 'string', description: 'Release filter (R3, R4, R5).' },
+          test_phase: { type: 'string', description: 'Test phase (ITC1, ITC2, TUT, E2E, UAT).' },
+          max_results: { type: 'number', description: 'Max results (default 100).' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'jira_defects',
+      description: 'Query JIRA bugs/defects with severity, status, and tower filters. Use when the user asks about open defects, bug counts, or defect details beyond what the static summary provides.',
+      parameters: {
+        type: 'object',
+        properties: {
+          tower: { type: 'string', description: 'Tower shortcode for filtering.' },
+          severity: { type: 'string', description: 'Severity filter (Critical, High, Medium, Low).' },
+          status: { type: 'string', description: 'Status filter (Open, In Progress, Resolved, Closed).' },
+          release: { type: 'string', description: 'Release filter. Default: Release 3.' },
+          max_results: { type: 'number', description: 'Max results (default 50).' },
+        },
+      },
+    },
+  },
+];
+
+/** Execute a JIRA tool call via the proxy server. */
+async function executeJiraTool(name: string, args: Record<string, unknown>): Promise<string> {
+  const endpointMap: Record<string, string> = {
+    jira_search: '/api/jira/search',
+    jira_test_cases: '/api/jira/test-cases',
+    jira_defects: '/api/jira/defects',
+  };
+  const path = endpointMap[name];
+  if (!path) return JSON.stringify({ error: `Unknown tool: ${name}` });
+
+  try {
+    const resp = await fetch(JIRA_PROXY_BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(args),
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      return JSON.stringify({ error: `JIRA proxy error ${resp.status}: ${err}` });
+    }
+    return await resp.text();
+  } catch (e) {
+    return JSON.stringify({ error: `JIRA proxy unreachable: ${e instanceof Error ? e.message : 'unknown'}. Start the proxy with: python scripts/jira_proxy.py` });
+  }
+}
 
 interface ContextIndexMeta {
   capabilityCount: number;
@@ -1028,7 +1117,7 @@ export async function sendMessage(
       };
     }
 
-    // OpenAI / Azure OpenAI (Chat Completions API)
+    // OpenAI / Azure OpenAI (Chat Completions API) with JIRA function calling
     const endpoint = config.provider === 'azure-openai' && config.endpoint
       ? config.endpoint
       : 'https://api.openai.com/v1/chat/completions';
@@ -1040,24 +1129,71 @@ export async function sendMessage(
     }
 
     const useMaxCompletionTokens = config.provider === 'azure-openai';
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        messages: apiMessages,
+
+    // Detect if JIRA proxy is likely reachable (don't add tools if proxy is down)
+    const jiraKeyPattern = /\b(IAODTM-[A-Z]?\d+|jira|test case|defect|bug)\b/i;
+    const includeJiraTools = jiraKeyPattern.test(userText);
+
+    // Tool-calling loop: LLM may request JIRA data, we execute and send back
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const loopMessages: any[] = [...apiMessages];
+    const MAX_TOOL_ROUNDS = 3;
+
+    for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
+      const payload: Record<string, unknown> = {
+        messages: loopMessages,
         model: config.model,
         ...(useMaxCompletionTokens
           ? { max_completion_tokens: config.maxTokens }
           : { max_tokens: config.maxTokens }),
         temperature: config.temperature,
-      }),
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const data = await res.json();
+      };
+      // Only include tools on first round or if previous round had tool calls
+      if (includeJiraTools && round < MAX_TOOL_ROUNDS) {
+        payload.tools = JIRA_TOOLS;
+        payload.tool_choice = 'auto';
+      }
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const data = await res.json();
+      const choice = data.choices?.[0];
+      const msg = choice?.message;
+
+      // If no tool calls, we have the final response
+      if (!msg?.tool_calls || msg.tool_calls.length === 0) {
+        return {
+          id: makeId(),
+          role: 'assistant',
+          content: msg?.content ?? 'No response',
+          timestamp: Date.now(),
+        };
+      }
+
+      // Execute tool calls and append results
+      loopMessages.push(msg); // assistant message with tool_calls
+      for (const tc of msg.tool_calls) {
+        const fnName = tc.function?.name ?? '';
+        let fnArgs: Record<string, unknown> = {};
+        try { fnArgs = JSON.parse(tc.function?.arguments ?? '{}'); } catch { /* empty */ }
+        const result = await executeJiraTool(fnName, fnArgs);
+        loopMessages.push({
+          role: 'tool' as const,
+          tool_call_id: tc.id,
+          content: result,
+        });
+      }
+    }
+
+    // Fallback if loop exhausted (shouldn't happen)
     return {
       id: makeId(),
       role: 'assistant',
-      content: data.choices?.[0]?.message?.content ?? 'No response',
+      content: 'Tool calling loop exhausted. Please try a simpler query.',
       timestamp: Date.now(),
     };
   } catch (e) {
